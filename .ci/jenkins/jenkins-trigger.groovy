@@ -22,8 +22,7 @@
 // original script -- we only need to provide this new trigger hook.
 //
 
-// String JENKINS_BRANCH = "master"
-String JENKINS_BRANCH = "lamnguye/he-transformer"
+String JENKINS_BRANCH = "master"
 String TIMEOUTTIME = "3600"
 
 // Constants
