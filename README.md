@@ -33,7 +33,7 @@ For a full list of dependencies, see the [docker containers](https://github.com/
 #### The following dependencies are built automatically
 - [nGraph](https://github.com/NervanaSystems/ngraph) - v0.27.0-rc.0
 - [nGraph-tf](https://github.com/tensorflow/ngraph-bridge) - v0.21.0-rc0
-- [SEAL](https://github.com/Microsoft/SEAL) - v3.4.2
+- [SEAL](https://github.com/Microsoft/SEAL) - v3.4.5
 - [TensorFlow](https://github.com/tensorflow/tensorflow) - v1.14.0
 - [Boost](https://github.com/boostorg) v1.69
 - [Google protobuf](https://github.com/protocolbuffers/protobuf) v3.10.1
