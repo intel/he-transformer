@@ -54,12 +54,12 @@ inline share* relu_aby(BooleanCircuit& circ, size_t num_vals,
   NGRAPH_HE_LOG(3) << "Creating new relu aby circuit with q = " << q
                    << ", q/2 = " << q_half << " and " << num_vals
                    << " num vals, bitlen= " << bitlen;
-  check_argument_range(xs, 0UL, coeff_modulus);
-  check_argument_range(xc, 0UL, coeff_modulus);
-  check_argument_range(r, 0UL, coeff_modulus);
   print_argument(xs, "xs");
   print_argument(xc, "xc");
   print_argument(r, "r");
+  check_argument_range(xs, 0UL, coeff_modulus);
+  check_argument_range(xc, 0UL, coeff_modulus);
+  check_argument_range(r, 0UL, coeff_modulus);
 
   share* out;
   share* xs_in = circ.PutSIMDINGate(num_vals, xs.data(), bitlen, SERVER);

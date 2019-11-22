@@ -74,6 +74,7 @@ void ABYClientExecutor::run_aby_relu_circuit(
   NGRAPH_HE_LOG(3) << "Batch size " << batch_size;
   NGRAPH_HE_LOG(3) << "tensor_data.size() " << tensor_data.size();
   NGRAPH_HE_LOG(3) << "tensor_size " << tensor_size;
+  NGRAPH_HE_LOG(3) << "tensor_type " << tensor->get_element_type();
 
   std::vector<double> relu_vals(tensor_size);
   size_t num_bytes = tensor_size * tensor->get_element_type().size();
@@ -119,6 +120,7 @@ void ABYClientExecutor::run_aby_relu_circuit(
   double scale = m_he_seal_client.scale();
 
   std::vector<uint64_t> relu_result(tensor_size, 0);
+  std::vector<double> relu_double_result(tensor_size, 0);
 #pragma omp parallel for num_threads(m_num_parties)
   for (size_t party_idx = 0; party_idx < m_num_parties; ++party_idx) {
     const auto& [start_idx, end_idx] = party_data_start_end_idx[party_idx];
@@ -126,6 +128,8 @@ void ABYClientExecutor::run_aby_relu_circuit(
     if (party_data_size == 0) {
       continue;
     }
+    NGRAPH_INFO << "party " << party_idx << " party_data_size "
+                << party_data_size;
 
     BooleanCircuit* circ = get_circuit(party_idx);
 
@@ -142,7 +146,7 @@ void ABYClientExecutor::run_aby_relu_circuit(
                  m_aby_bitlen, m_lowest_coeff_modulus);
 
     NGRAPH_HE_LOG(3) << "Client party " << party_idx
-                     << " executing relu circuit";
+                     << " executing relu circuit with start idx " << start_idx;
 
     auto t1 = std::chrono::high_resolution_clock::now();
     m_ABYParties[party_idx]->ExecCircuit();
@@ -166,33 +170,52 @@ void ABYClientExecutor::run_aby_relu_circuit(
          ++party_result_idx) {
       relu_result[start_idx + party_result_idx] =
           out_vals_relu[party_result_idx];
-    }
 
+      relu_double_result[start_idx + party_result_idx] = uint64_to_double(
+          out_vals_relu[party_result_idx], m_lowest_coeff_modulus, scale);
+
+      NGRAPH_INFO << "out val[ " << party_result_idx
+                  << "] = " << out_vals_relu[party_result_idx] << " => "
+                  << relu_double_result[start_idx + party_result_idx];
+    }
     reset_party(party_idx);
   }
 
-  for (size_t result_idx = 0; result_idx < tensor_data.size(); ++result_idx) {
-    he::HEPlaintext post_relu_vals(batch_size);
-    for (size_t fill_idx = 0; fill_idx < batch_size; ++fill_idx) {
-      size_t out_idx = result_idx + fill_idx * tensor_data.size();
-      uint64_t out_val = relu_result[out_idx];
-      double d_out_val =
-          uint64_to_double(out_val, m_lowest_coeff_modulus, scale);
-      post_relu_vals[fill_idx] = d_out_val;
-    }
-
-    auto cipher = he::HESealBackend::create_empty_ciphertext();
-    NGRAPH_HE_LOG(5) << "Encrypting post-relu val " << result_idx << ": "
-                     << post_relu_vals << " at scale " << scale;
-
-    runtime::he::encrypt(
-        cipher, post_relu_vals,
-        m_he_seal_client.get_context()->first_parms_id(), element::f64, scale,
-        *m_he_seal_client.get_ckks_encoder(), *m_he_seal_client.get_encryptor(),
-        m_he_seal_client.complex_packing());
-
-    tensor->data(result_idx).set_ciphertext(cipher);
+  if (tensor->get_element_type() == element::f32) {
+    std::vector<float> relu_float_result{relu_double_result.begin(),
+                                         relu_double_result.end()};
+    tensor->write(relu_float_result.data(), num_bytes);
+  } else if (tensor->get_element_type() == element::f64) {
+    tensor->write(relu_double_result.data(), num_bytes);
+  } else {
+    throw ngraph_error("Invalid element type");
   }
+  /*
+    for (size_t result_idx = 0; result_idx < tensor_data.size(); ++result_idx) {
+      he::HEPlaintext post_relu_vals(batch_size);
+      for (size_t fill_idx = 0; fill_idx < batch_size; ++fill_idx) {
+        size_t out_idx = result_idx + fill_idx * tensor_data.size();
+
+        NGRAPH_CHECK(out_idx < relu_result.size(), "out idx out of bounds");
+        uint64_t out_val = relu_result[out_idx];
+        double d_out_val =
+            uint64_to_double(out_val, m_lowest_coeff_modulus, scale);
+        NGRAPH_INFO << "out_val " << out_val << " to double " << d_out_val;
+        post_relu_vals[fill_idx] = d_out_val;
+      }
+
+      auto cipher = he::HESealBackend::create_empty_ciphertext();
+      NGRAPH_HE_LOG(5) << "Encrypting post-relu val " << result_idx << ": "
+                       << post_relu_vals << " at scale " << scale;
+
+      runtime::he::encrypt(
+          cipher, post_relu_vals,
+          m_he_seal_client.get_context()->first_parms_id(), element::f64, scale,
+          *m_he_seal_client.get_ckks_encoder(),
+    *m_he_seal_client.get_encryptor(), m_he_seal_client.complex_packing());
+
+      tensor->data(result_idx).set_ciphertext(cipher);
+    } */
 }
 
 void ABYClientExecutor::run_aby_bounded_relu_circuit(

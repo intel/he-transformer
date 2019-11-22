@@ -273,7 +273,7 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
       for (auto& value : mask) {
         value = (value - m_lowest_coeff_modulus / 2.0) / scale;
       }
-      NGRAPH_HE_LOG(4) << "Mask after " << mask;
+      NGRAPH_HE_LOG(4) << "Mask after (using scale " << scale << "): " << mask;
       // TODO(fboemer): do subtraction mod p_0 instead of p_L
       // m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
 
@@ -415,11 +415,11 @@ void ABYServerExecutor::post_process_aby_bounded_relu_circuit(
       auto cipher = data.get_ciphertext();
 
       auto mask = m_gc_output_mask->data(tensor_idx).get_plaintext();
-      NGRAPH_HE_LOG(4) << "Mask before " << mask;
+      NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " before " << mask;
       for (auto& value : mask) {
         value = (value - m_lowest_coeff_modulus / 2.0) / scale;
       }
-      NGRAPH_HE_LOG(4) << "Mask after " << mask;
+      NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " after " << mask;
       // TODO(fboemer): do subtraction mod p_0 instead of p_L
 
       m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);

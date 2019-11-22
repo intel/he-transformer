@@ -20,7 +20,7 @@ set(SEAL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_seal)
 set(SEAL_SRC_DIR ${SEAL_PREFIX}/src/ext_seal/native/src)
 set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
 set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
-set(SEAL_GIT_TAG 3.4.4)
+set(SEAL_GIT_TAG 3.4.5)
 
 # Without these, SEAL's globals.cpp will be deallocated twice, once by
 # he_seal_backend, which loads libseal.a, and once by the global destructor.
