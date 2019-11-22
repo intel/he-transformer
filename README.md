@@ -64,11 +64,10 @@ source external/venv-tf-py3/bin/activate
 
 Note, you may need sudo permissions to install he_seal_backend to the default location. To set a custom installation prefix, add the `-DCMAKE_INSTALL_PREFIX=~/my_install_prefix` flag to the cmake command.
 
-
 #### 1a. To build documentation
-First install doxygen, i.e.
+First install the additional required dependencies:
 ```bash
-sudo apt-get install doxygen
+sudo apt-get install doxygen graphviz
 ```
 Then add the following CMake flag
 ```bash
