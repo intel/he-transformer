@@ -18,9 +18,9 @@
 
 #include "ENCRYPTO_utils/crypto/crypto.h"
 #include "ENCRYPTO_utils/parse_options.h"
+#include "aby/aby_util.hpp"
 #include "aby/kernel/bounded_relu_aby.hpp"
 #include "aby/kernel/relu_aby.hpp"
-#include "aby/util.hpp"
 #include "abycore/aby/abyparty.h"
 #include "abycore/circuit/booleancircuits.h"
 #include "abycore/circuit/share.h"

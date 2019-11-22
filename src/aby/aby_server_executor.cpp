@@ -173,14 +173,12 @@ void ABYServerExecutor::prepare_aby_relu_circuit(
 
     auto cipher = he_type.get_ciphertext();
 
-    NGRAPH_HE_LOG(4) << "Mod switching to lowest";
     // Switch modulus to lowest values since mask values are drawn
     // from (-q/2, q/2) for q the lowest coeff modulus
     m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
 
     // Divide by scale so we can encode at the same scale as existing
     // ciphertext
-    NGRAPH_HE_LOG(4) << "scaling input mask";
     double scale = cipher->ciphertext().scale();
     scales[i] = scale;
     he::HEPlaintext scaled_gc_input_mask(gc_input_mask.get_plaintext());
@@ -190,11 +188,9 @@ void ABYServerExecutor::prepare_aby_relu_circuit(
     }
     NGRAPH_HE_LOG(4) << "scaled_gc_input_mask " << scaled_gc_input_mask;
 
-    NGRAPH_HE_LOG(4) << "scalar_subtract_seal";
     scalar_subtract_seal(*cipher, scaled_gc_input_mask, cipher,
                          he_type.complex_packing(),
                          m_he_seal_executable.he_seal_backend());
-    NGRAPH_HE_LOG(4) << "donew with scalar_subtract_seal";
   }
 
   for (const auto& scale : scales) {
@@ -283,9 +279,6 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
 
       scalar_subtract_seal(*cipher, mask, cipher, data.complex_packing(),
                            m_he_seal_executable.he_seal_backend());
-
-      auto& int_array = cipher->ciphertext().int_array();
-      NGRAPH_HE_LOG(4) << "int_array.size " << int_array.size();
     }
   }
 }

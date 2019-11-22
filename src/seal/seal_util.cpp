@@ -543,12 +543,18 @@ void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
     q_over_scale = 1.0 / input.ciphertext().scale();
     NGRAPH_CHECK(!coeff_moduli.empty(),
                  "Empty coeff moduli in decrypting ciphertext");
-    // q_over_scale *= coeff_moduli[0].value();
-    for (const auto& coeff_mod : coeff_moduli) {
-      q_over_scale *= coeff_mod.value();
+
+    // TODO(fboemer): remove
+    bool dec_all = flag_to_bool(std::getenv("ABY_DECRYPT"), false);
+    if (dec_all) {
+      for (const auto& coeff_mod : coeff_moduli) {
+        q_over_scale *= coeff_mod.value();
+      }
+    } else {
+      q_over_scale *= coeff_moduli[0].value();
     }
-    NGRAPH_HE_LOG(5) << "q_over_scale " << q_over_scale;
-    NGRAPH_HE_LOG(5) << "scale " << input.ciphertext().scale();
+    NGRAPH_HE_LOG(5) << "q_over_scale " << q_over_scale << " ( scale "
+                     << input.ciphertext().scale() << ")";
   }
   decode(output, plaintext_wrapper, ckks_encoder, batch_size, q_over_scale);
 }

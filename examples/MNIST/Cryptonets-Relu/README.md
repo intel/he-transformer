@@ -49,7 +49,7 @@ See the [examples](https://github.com/NervanaSystems/he-transformer/blob/master/
 ## Debugging
 For debugging purposes, enable the `NGRAPH_HE_LOG_LEVEL` or `NGRAPH_HE_VERBOSE_OPS` flags. See [here](https://github.com/NervanaSystems/he-transformer/blob/master/examples/README.md) for more details.
 
-## HE_SEAL client
+## Garbled Circuits
 To test the network with inputs from a client, first install the [python client](https://github.com/NervanaSystems/he-transformer/tree/master/python). Then, in one terminal, run
 ```bash
 source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate

@@ -158,16 +158,10 @@ void ABYClientExecutor::run_aby_relu_circuit(
                               // and sent to server
     relu_out->get_clear_value_vec(&out_vals_relu, &out_bitlen_relu,
                                   &result_count);
-    NGRAPH_HE_LOG(3) << "result_count " << result_count;
 
     NGRAPH_CHECK(result_count == party_data_size,
                  "Wrong number of ABY result values, result_count=",
                  result_count, ", expected ", party_data_size);
-
-    NGRAPH_HE_LOG(3) << "party_data_size " << party_data_size;
-    NGRAPH_HE_LOG(3) << "start_idx " << start_idx;
-    NGRAPH_HE_LOG(3) << "end_idx " << end_idx;
-
     for (size_t party_result_idx = 0; party_result_idx < party_data_size;
          ++party_result_idx) {
       relu_result[start_idx + party_result_idx] =
@@ -188,8 +182,8 @@ void ABYClientExecutor::run_aby_relu_circuit(
     }
 
     auto cipher = he::HESealBackend::create_empty_ciphertext();
-    NGRAPH_HE_LOG(5) << "Encrypting " << post_relu_vals << " at scale "
-                     << scale;
+    NGRAPH_HE_LOG(5) << "Encrypting post-relu val " << result_idx << ": "
+                     << post_relu_vals << " at scale " << scale;
 
     runtime::he::encrypt(
         cipher, post_relu_vals,

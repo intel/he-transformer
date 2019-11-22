@@ -170,7 +170,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
     server_config.parameter_map['mask_gc_inputs'].s = (str(
         FLAGS.mask_gc_inputs)).encode()
     server_config.parameter_map['mask_gc_outputs'].s = (str(
-        FLAGS.mask_gc_inputs)).encode()
+        FLAGS.mask_gc_outputs)).encode()
     server_config.parameter_map['num_gc_threads'].s = (str(
         FLAGS.num_gc_threads)).encode()
 
