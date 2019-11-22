@@ -518,12 +518,16 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
     ckks_encoder.decode(input.plaintext(), output);
   }
   output.resize(batch_size);
-  NGRAPH_HE_LOG(5) << "before centering " << output;
+  // NGRAPH_HE_LOG(5) << "before centering " << output;
   // TODO: pass in batch size?
   for (size_t i = 0; i < output.size(); ++i) {
     output[i] = runtime::aby::mod_reduce_zero_centered(output[i], mod_interval);
   }
-  NGRAPH_HE_LOG(5) << "after centering " << output;
+
+  static int decode_count = 0;
+  NGRAPH_HE_LOG(5) << "decode " << decode_count << " after centering "
+                   << output;
+  decode_count++;
 }
 
 void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
@@ -553,8 +557,8 @@ void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
     } else {
       q_over_scale *= coeff_moduli[0].value();
     }
-    NGRAPH_HE_LOG(5) << "q_over_scale " << q_over_scale << " ( scale "
-                     << input.ciphertext().scale() << ")";
+    // NGRAPH_HE_LOG(5) << "q_over_scale " << q_over_scale << " ( scale "
+    //                 << input.ciphertext().scale() << ")";
   }
   decode(output, plaintext_wrapper, ckks_encoder, batch_size, q_over_scale);
 }

@@ -34,20 +34,28 @@
 namespace ngraph::runtime::aby {
 template <typename T>
 void print_argument(const std::vector<T>& values, const std::string& name) {
-  size_t print_size = std::min(values.size(), 1000UL);
+  size_t print_size = std::min(values.size(), 200UL);
+
+  if (values.size() > 1) {
+    if (values[0] == 0 && values[1] == 0) {
+      NGRAPH_INFO << "All zeros";
+      return;
+    }
+  }
+
   for (size_t i = 0; i < print_size; ++i) {
     NGRAPH_HE_LOG(5) << "\t" << name << "[" << i << "] = " << values[i];
   }
 
   // print in compact mode.
-  std::cout << name << "{";
+  /* std::cout << name << "{";
   for (size_t i = 0; i < print_size; ++i) {
     std::cout << values[i];
     if (i < print_size - 1) {
       std::cout << ", ";
     }
   }
-  std::cout << "};" << std::endl;
+  std::cout << "};" << std::endl; */
 }
 
 template <typename T>

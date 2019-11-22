@@ -269,11 +269,11 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
       auto cipher = data.get_ciphertext();
 
       auto mask = m_gc_output_mask->data(tensor_idx).get_plaintext();
-      NGRAPH_HE_LOG(4) << "Mask before " << mask;
+      NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " before " << mask;
       for (auto& value : mask) {
         value = (value - m_lowest_coeff_modulus / 2.0) / scale;
       }
-      NGRAPH_HE_LOG(4) << "Mask after (using scale " << scale << "): " << mask;
+      NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " after " << mask;
       // TODO(fboemer): do subtraction mod p_0 instead of p_L
       // m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
 
@@ -286,6 +286,8 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
 void ABYServerExecutor::prepare_aby_bounded_relu_circuit(
     std::vector<he::HEType>& cipher_batch, double bound) {
   NGRAPH_HE_LOG(4) << "prepare_aby_bounded_relu_circuit with bound " << bound;
+
+  /*
 
   bool plaintext_packing = cipher_batch[0].plaintext_packing();
   bool complex_packing = cipher_batch[0].complex_packing();
@@ -340,7 +342,7 @@ void ABYServerExecutor::prepare_aby_bounded_relu_circuit(
   for (const auto& scale : scales) {
     NGRAPH_CHECK(std::abs(scale - scales[0]) < 1e-3f, "Scale ", scale,
                  " does not match first scale ", scales[0]);
-  }
+  } */
 }
 
 void ABYServerExecutor::run_aby_bounded_relu_circuit(
@@ -400,34 +402,35 @@ void ABYServerExecutor::run_aby_bounded_relu_circuit(
 
 void ABYServerExecutor::post_process_aby_bounded_relu_circuit(
     std::shared_ptr<he::HETensor>& tensor, double bound) {
-  if (m_he_seal_executable.he_seal_backend().mask_gc_outputs()) {
-    NGRAPH_HE_LOG(4) << "post_process_aby_bounded_relu_circuit with bound "
-                     << bound;
-    size_t tensor_size = tensor->data().size();
-    double scale = m_he_seal_executable.he_seal_backend().get_scale();
+  /*
+if (m_he_seal_executable.he_seal_backend().mask_gc_outputs()) {
+NGRAPH_HE_LOG(4) << "post_process_aby_bounded_relu_circuit with bound "
+                 << bound;
+size_t tensor_size = tensor->data().size();
+double scale = m_he_seal_executable.he_seal_backend().get_scale();
 
-    NGRAPH_HE_LOG(4) << "Scale " << scale;
-    NGRAPH_HE_LOG(4) << "tensor_size " << tensor_size;
+NGRAPH_HE_LOG(4) << "Scale " << scale;
+NGRAPH_HE_LOG(4) << "tensor_size " << tensor_size;
 
-    for (size_t tensor_idx = 0; tensor_idx < tensor_size; ++tensor_idx) {
-      auto& data = tensor->data(tensor_idx);
-      NGRAPH_CHECK(data.is_ciphertext(), "Data is not ciphertext");
-      auto cipher = data.get_ciphertext();
+for (size_t tensor_idx = 0; tensor_idx < tensor_size; ++tensor_idx) {
+  auto& data = tensor->data(tensor_idx);
+  NGRAPH_CHECK(data.is_ciphertext(), "Data is not ciphertext");
+  auto cipher = data.get_ciphertext();
 
-      auto mask = m_gc_output_mask->data(tensor_idx).get_plaintext();
-      NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " before " << mask;
-      for (auto& value : mask) {
-        value = (value - m_lowest_coeff_modulus / 2.0) / scale;
-      }
-      NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " after " << mask;
-      // TODO(fboemer): do subtraction mod p_0 instead of p_L
-
-      m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
-
-      scalar_subtract_seal(*cipher, mask, cipher, data.complex_packing(),
-                           m_he_seal_executable.he_seal_backend());
-    }
+  auto mask = m_gc_output_mask->data(tensor_idx).get_plaintext();
+  NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " before " << mask;
+  for (auto& value : mask) {
+    value = (value - m_lowest_coeff_modulus / 2.0) / scale;
   }
+  NGRAPH_HE_LOG(4) << "Mask " << tensor_idx << " aft  er " << mask;
+  // TODO(fboemer): do subtraction mod p_0 instead of p_L
+
+  // m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
+
+  scalar_subtract_seal(*cipher, mask, cipher, data.complex_packing(),
+                       m_he_seal_executable.he_seal_backend());
+}
+} */
 }
 
 }  // namespace ngraph::runtime::aby
