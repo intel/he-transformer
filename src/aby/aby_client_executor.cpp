@@ -190,32 +190,6 @@ void ABYClientExecutor::run_aby_relu_circuit(
   } else {
     throw ngraph_error("Invalid element type");
   }
-  /*
-    for (size_t result_idx = 0; result_idx < tensor_data.size(); ++result_idx) {
-      he::HEPlaintext post_relu_vals(batch_size);
-      for (size_t fill_idx = 0; fill_idx < batch_size; ++fill_idx) {
-        size_t out_idx = result_idx + fill_idx * tensor_data.size();
-
-        NGRAPH_CHECK(out_idx < relu_result.size(), "out idx out of bounds");
-        uint64_t out_val = relu_result[out_idx];
-        double d_out_val =
-            uint64_to_double(out_val, m_lowest_coeff_modulus, scale);
-        NGRAPH_INFO << "out_val " << out_val << " to double " << d_out_val;
-        post_relu_vals[fill_idx] = d_out_val;
-      }
-
-      auto cipher = he::HESealBackend::create_empty_ciphertext();
-      NGRAPH_HE_LOG(5) << "Encrypting post-relu val " << result_idx << ": "
-                       << post_relu_vals << " at scale " << scale;
-
-      runtime::he::encrypt(
-          cipher, post_relu_vals,
-          m_he_seal_client.get_context()->first_parms_id(), element::f64, scale,
-          *m_he_seal_client.get_ckks_encoder(),
-    *m_he_seal_client.get_encryptor(), m_he_seal_client.complex_packing());
-
-      tensor->data(result_idx).set_ciphertext(cipher);
-    } */
 }
 
 void ABYClientExecutor::run_aby_bounded_relu_circuit(

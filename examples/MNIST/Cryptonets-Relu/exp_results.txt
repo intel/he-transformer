@@ -7,6 +7,19 @@ Final results
 
  post-relu values (GC, no masking)
 
+pre-relu value HEPlaintext( -1.20583 -53.0127 -3.04965 10.2248 )
+post-relu value HEPlaintext( 0 0 0 10.2248 )
+pre-relu value HEPlaintext( 1.54557 2.80662 -17.1617 -32.7399 )
+post-relu value HEPlaintext( 1.54557 2.80662 0 0 )
+pre-relu value HEPlaintext( 12.3678 -16.0357 -12.7387 -7.04955 )
+post-relu value HEPlaintext( 12.3678 0 0 0 )
+pre-relu value HEPlaintext( -2.77876 -50.0617 -6.44606 -33.8424 )
+post-relu value HEPlaintext( 0 0 0 0 )
+pre-relu value HEPlaintext( 3.11295 -28.1354 9.97959 -6.81535 )
+post-relu value HEPlaintext( 3.11295 0 9.97959 0 )
+
+
+
 
 post-relu value (encrypted, no GC)
 post-relu value HEPlaintext( 0 0 0 10.2249 )
