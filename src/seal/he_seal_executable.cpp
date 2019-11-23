@@ -332,6 +332,17 @@ void HESealExecutable::start_server() {
   });
 }
 
+void HESealExecutable::load_secret_key(const pb::TCPMessage& proto_msg) {
+  NGRAPH_HE_LOG(5) << "Server loading evaluation key";
+  NGRAPH_CHECK(proto_msg.has_public_key(), "proto_msg doesn't have public key");
+
+  seal::SecretKey key;
+  const std::string& sk_str = proto_msg.secret_key().secret_key();
+  std::stringstream key_stream(sk_str);
+  key.load(m_context, key_stream);
+  m_he_seal_backend.set_secret_key(key);
+}
+
 void HESealExecutable::load_public_key(const pb::TCPMessage& proto_msg) {
   NGRAPH_HE_LOG(5) << "Server loading evaluation key";
   NGRAPH_CHECK(proto_msg.has_public_key(), "proto_msg doesn't have public key");
@@ -473,6 +484,9 @@ void HESealExecutable::handle_message(const TCPMessage& message) {
     case pb::TCPMessage_Type_RESPONSE: {
       if (proto_msg->has_public_key()) {
         load_public_key(*proto_msg);
+      }
+      if (proto_msg->has_secret_key()) {
+        load_secret_key(*proto_msg);
       }
       if (proto_msg->has_eval_key()) {
         load_eval_key(*proto_msg);

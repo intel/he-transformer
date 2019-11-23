@@ -38,7 +38,6 @@ void print_argument(const std::vector<T>& values, const std::string& name) {
 
   if (values.size() > 1) {
     if (values[0] == 0 && values[1] == 0) {
-      NGRAPH_INFO << "All zeros";
       return;
     }
   }

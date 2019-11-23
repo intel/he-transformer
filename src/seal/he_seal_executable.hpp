@@ -156,6 +156,9 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] proto_msg from which to load the public key
   void load_public_key(const pb::TCPMessage& proto_msg);
 
+  // TODO(fboemer): remove! FOR DEBUGGING ONLY
+  void load_secret_key(const pb::TCPMessage& proto_msg);
+
   /// \brief Loads the evaluation key from the message
   /// \param[in] proto_msg from which to load the evluation key
   void load_eval_key(const pb::TCPMessage& proto_msg);

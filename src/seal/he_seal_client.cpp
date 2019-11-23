@@ -121,6 +121,14 @@ void HESealClient::send_public_and_relin_keys() {
   public_key.set_public_key(pk_stream.str());
   *message.mutable_public_key() = public_key;
 
+  // Set secret key
+  NGRAPH_ERR << "WARNING: SENDING SECRET KEY!!!!";
+  std::stringstream sk_stream;
+  m_secret_key->save(sk_stream);
+  pb::SecretKey secret_key;
+  secret_key.set_secret_key(sk_stream.str());
+  *message.mutable_secret_key() = secret_key;
+
   // Set relinearization keys
   if (m_context->using_keyswitching()) {
     std::stringstream evk_stream;

@@ -243,6 +243,12 @@ class HESealBackend : public runtime::Backend {
     m_encryptor = std::make_shared<seal::Encryptor>(m_context, *m_public_key);
   }
 
+  void set_secret_key(const seal::SecretKey& key) {
+    NGRAPH_INFO << "Set secret key";
+    m_secret_key = std::make_shared<seal::SecretKey>(key);
+    m_decryptor = std::make_shared<seal::Decryptor>(m_context, *m_secret_key);
+  }
+
   /// \brief Returns the top-level scale used for encoding
   double get_scale() const { return m_encryption_params.scale(); }
 

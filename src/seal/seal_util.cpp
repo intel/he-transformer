@@ -525,7 +525,7 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
   }
 
   static int decode_count = 0;
-  NGRAPH_HE_LOG(5) << "decode " << decode_count << " after centering "
+  NGRAPH_HE_LOG(5) << "\t\tdecode " << decode_count << " after centering "
                    << output;
   decode_count++;
 }

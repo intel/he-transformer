@@ -229,7 +229,6 @@ void ABYServerExecutor::run_aby_relu_circuit(
     NGRAPH_HE_LOG(3) << "num_aby_vals " << num_aby_vals;
     NGRAPH_HE_LOG(3) << "gc_input_mask_vals " << gc_input_mask_vals.size();
     NGRAPH_HE_LOG(3) << "gc_output_mask_vals " << gc_output_mask_vals.size();
-    NGRAPH_INFO << "party_data_size " << party_data_size;
 
     std::vector<uint64_t> gc_input_party_mask_vals(party_data_size);
     std::vector<uint64_t> gc_output_party_mask_vals(party_data_size);
@@ -269,16 +268,26 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
       auto cipher = data.get_ciphertext();
 
       auto mask = m_gc_output_mask->data(tensor_idx).get_plaintext();
-      NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " before " << mask;
+      // NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " before " << mask;
       for (auto& value : mask) {
         value = (value - m_lowest_coeff_modulus / 2.0) / scale;
       }
-      NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " after " << mask;
+      // NGRAPH_HE_LOG(4) << "Mask at " << tensor_idx << " after " << mask;
       // TODO(fboemer): do subtraction mod p_0 instead of p_L
       // m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
 
       scalar_subtract_seal(*cipher, mask, cipher, data.complex_packing(),
                            m_he_seal_executable.he_seal_backend());
+      // DEBUGGING
+      // TODO(fboemer): remove
+      // m_he_seal_executable.he_seal_backend().decrypt(mask, *cipher,
+      // mask.size(),
+      //                                               false);
+      // m_he_seal_executable.he_seal_backend().encrypt(cipher, mask,
+      // element::f64,
+      //                                               false);
+      // NGRAPH_INFO << "Decrypyed post-mask val " << tensor_idx << ": " <<
+      // mask;
     }
   }
 }

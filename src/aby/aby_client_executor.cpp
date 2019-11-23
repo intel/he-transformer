@@ -174,9 +174,9 @@ void ABYClientExecutor::run_aby_relu_circuit(
       relu_double_result[start_idx + party_result_idx] = uint64_to_double(
           out_vals_relu[party_result_idx], m_lowest_coeff_modulus, scale);
 
-      NGRAPH_INFO << "out val[ " << party_result_idx
-                  << "] = " << out_vals_relu[party_result_idx] << " => "
-                  << relu_double_result[start_idx + party_result_idx];
+      // NGRAPH_INFO << "out val[ " << party_result_idx
+      //            << "] = " << out_vals_relu[party_result_idx] << " => "
+      //            << relu_double_result[start_idx + party_result_idx];
     }
     reset_party(party_idx);
   }
