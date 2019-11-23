@@ -37,27 +37,18 @@ void scalar_relu_seal(const HEType& arg, HEType& out,
                       seal::CKKSEncoder& ckks_encoder,
                       seal::Encryptor& encryptor, seal::Decryptor& decryptor,
                       std::shared_ptr<seal::SEALContext> context) {
-  static int relu_count = 0;
-
   if (arg.is_plaintext()) {
     out.set_plaintext(arg.get_plaintext());
-    NGRAPH_INFO << "pre-relu " << relu_count << " value "
-                << arg.get_plaintext();
     scalar_relu_seal(arg.get_plaintext(), out.get_plaintext());
-    NGRAPH_INFO << "post-relu " << relu_count << " value "
-                << out.get_plaintext();
   } else {
     HEPlaintext plain;
     decrypt(plain, *arg.get_ciphertext(), arg.complex_packing(), decryptor,
             ckks_encoder, context, arg.batch_size());
-    NGRAPH_INFO << "pre-relu " << relu_count << " value " << plain;
     scalar_relu_seal(plain, plain);
-    NGRAPH_INFO << "post-relu " << relu_count << " value " << plain;
     encrypt(out.get_ciphertext(), plain, parms_id, element::f32, scale,
             ckks_encoder, encryptor, arg.complex_packing());
     out.set_ciphertext(out.get_ciphertext());
   }
-  relu_count++;
 }
 
 void scalar_relu_seal(const HEType& arg, HEType& out,
