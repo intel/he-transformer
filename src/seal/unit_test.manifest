@@ -72,4 +72,4 @@ divide_2_3_plain_cipher_complex_packed
 server_client_add_3_multiple_parameters_plain
 
 # Error not caught if using multi-threading
-mult_end_of_deptqh
+mult_end_of_depth
