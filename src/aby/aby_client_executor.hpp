@@ -50,10 +50,6 @@ class ABYClientExecutor : public ABYExecutor {
   void run_aby_relu_circuit(const std::string& function,
                             std::shared_ptr<he::HETensor>& tensor);
 
-  // BoundedRelu circuits
-  void run_aby_bounded_relu_circuit(const std::string& function,
-                                    std::shared_ptr<he::HETensor>& tensor);
-
  private:
   const he::HESealClient& m_he_seal_client;
 };

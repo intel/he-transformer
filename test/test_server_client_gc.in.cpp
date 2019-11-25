@@ -22,7 +22,6 @@
 #include "he_op_annotations.hpp"
 #include "ngraph/ngraph.hpp"
 #include "ngraph/op/util/op_annotations.hpp"
-#include "op/bounded_relu.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/he_seal_client.hpp"
 #include "seal/he_seal_executable.hpp"
@@ -146,9 +145,7 @@ auto server_client_gc_relu_packed_test = [](size_t element_count,
                                             size_t batch_size,
                                             bool complex_packing,
                                             bool mask_gc_inputs,
-                                            bool mask_gc_outputs,
-                                            bool bounded = false,
-                                            double bound_value = 0.) {
+                                            bool mask_gc_outputs) {
   auto backend = Backend::create("${BACKEND_NAME}");
   auto he_backend = static_cast<HESealBackend*>(backend.get());
 
@@ -160,14 +157,9 @@ auto server_client_gc_relu_packed_test = [](size_t element_count,
   Shape shape{batch_size, element_count};
   auto a = std::make_shared<op::Parameter>(element::f32, shape);
   std::shared_ptr<Function> f;
-  if (bounded) {
-    NGRAPH_INFO << "Bounded relu bound " << bound_value;
-    auto bounded_relu_op = std::make_shared<op::BoundedRelu>(a, bound_value);
-    f = std::make_shared<Function>(bounded_relu_op, ParameterVector{a});
-  } else {
-    auto relu_op = std::make_shared<op::Relu>(a);
-    f = std::make_shared<Function>(relu_op, ParameterVector{a});
-  }
+
+  auto relu_op = std::make_shared<op::Relu>(a);
+  f = std::make_shared<Function>(relu_op, ParameterVector{a});
 
   bool packed = batch_size > 1;
 
@@ -190,9 +182,6 @@ auto server_client_gc_relu_packed_test = [](size_t element_count,
   NGRAPH_INFO << "mask_gc_outputs " << mask_gc_outputs;
 
   auto relu = [](double d) { return d > 0 ? d : 0.; };
-  auto bounded_relu = [bound_value](double d) {
-    return d > bound_value ? bound_value : ((d > 0) ? d : 0.);
-  };
 
   // Server inputs which are not used
   auto t_dummy = he_backend->create_packed_plain_tensor(element::f32, shape);
@@ -212,13 +201,7 @@ auto server_client_gc_relu_packed_test = [](size_t element_count,
       inputs[i] = fmod(inputs[i], 32);
     }
 
-    // NGRAPH_HE_LOG(3) << "Inputs[" << i << "] = " << inputs[i];
-    if (bounded) {
-      exp_results[i] = bounded_relu(inputs[i]);
-    } else {
-      exp_results[i] = relu(inputs[i]);
-    }
-    // NGRAPH_HE_LOG(3) << "ExpResults[" << i << "] = " << exp_results[i];
+    exp_results[i] = relu(inputs[i]);
   }
 
   std::vector<float> results;
@@ -305,78 +288,6 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_2_relu_complex_mask_in_out) {
   server_client_gc_relu_packed_test(10, 2, true, true, true);
 }
 
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_1_bounded_relu_real) {
-  server_client_gc_relu_packed_test(10, 1, false, false, false, true, 1.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_1_bounded_relu_real_mask_out) {
-  server_client_gc_relu_packed_test(10, 1, false, false, true, true, 2.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_1_bounded_relu_real_mask_in) {
-  server_client_gc_relu_packed_test(10, 1, false, true, false, true, 3.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_1_bounded_relu_real_mask_in_out) {
-  server_client_gc_relu_packed_test(10, 1, false, true, true, true, 4.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_2_bounded_relu_real) {
-  server_client_gc_relu_packed_test(10, 2, false, false, false, true, 5.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_2_bounded_relu_real_mask_out) {
-  server_client_gc_relu_packed_test(10, 2, false, false, true, true, 6.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_2_bounded_relu_real_mask_in) {
-  server_client_gc_relu_packed_test(10, 2, false, true, false, true, 7.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_2_bounded_relu_real_mask_in_out) {
-  server_client_gc_relu_packed_test(10, 2, false, true, true, true, 8.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_1_bounded_relu_complex) {
-  server_client_gc_relu_packed_test(10, 1, true, false, false, true, 9.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_1_bounded_relu_complex_mask_out) {
-  server_client_gc_relu_packed_test(10, 1, true, false, true, true, 10.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_1_bounded_relu_complex_mask_in) {
-  server_client_gc_relu_packed_test(10, 1, true, true, false, true, 11.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_1_bounded_relu_complex_mask_in_out) {
-  server_client_gc_relu_packed_test(10, 1, true, true, true, true, 12.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_10_2_bounded_relu_complex) {
-  server_client_gc_relu_packed_test(10, 2, true, false, false, true, 13.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_2_bounded_relu_complex_mask_out) {
-  server_client_gc_relu_packed_test(10, 2, true, false, true, true, 14.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_2_bounded_relu_complex_mask_in) {
-  server_client_gc_relu_packed_test(10, 2, true, true, false, true, 15.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_10_2_bounded_relu_complex_mask_in_out) {
-  server_client_gc_relu_packed_test(10, 2, true, true, true, true, 16.0);
-}
-
 NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_1_relu_real) {
   server_client_gc_relu_packed_test(100, 1, false, false, false);
 }
@@ -451,80 +362,6 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in) {
 
 NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in_out) {
   server_client_gc_relu_packed_test(100, 2, true, true, true);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_1_bounded_relu_real) {
-  server_client_gc_relu_packed_test(100, 1, false, false, false, true, 1.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_1_bounded_relu_real_mask_out) {
-  server_client_gc_relu_packed_test(100, 1, false, false, true, true, 2.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_1_bounded_relu_real_mask_in) {
-  server_client_gc_relu_packed_test(100, 1, false, true, false, true, 3.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_1_bounded_relu_real_mask_in_out) {
-  server_client_gc_relu_packed_test(100, 1, false, true, true, true, 4.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_bounded_relu_real) {
-  server_client_gc_relu_packed_test(100, 2, false, false, false, true, 5.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_2_bounded_relu_real_mask_out) {
-  server_client_gc_relu_packed_test(100, 2, false, false, true, true, 6.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_bounded_relu_real_mask_in) {
-  server_client_gc_relu_packed_test(100, 2, false, true, false, true, 7.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_2_bounded_relu_real_mask_in_out) {
-  server_client_gc_relu_packed_test(100, 2, false, true, true, true, 8.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_1_bounded_relu_complex) {
-  server_client_gc_relu_packed_test(100, 1, true, false, false, true, 9.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_1_bounded_relu_complex_mask_out) {
-  server_client_gc_relu_packed_test(100, 1, true, false, true, true, 100.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_1_bounded_relu_complex_mask_in) {
-  server_client_gc_relu_packed_test(100, 1, true, true, false, true, 11.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_1_bounded_relu_complex_mask_in_out) {
-  server_client_gc_relu_packed_test(100, 1, true, true, true, true, 12.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_bounded_relu_complex) {
-  server_client_gc_relu_packed_test(100, 2, true, false, false, true, 13.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_2_bounded_relu_complex_mask_out) {
-  server_client_gc_relu_packed_test(100, 2, true, false, true, true, 14.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_2_bounded_relu_complex_mask_in) {
-  server_client_gc_relu_packed_test(100, 2, true, true, false, true, 15.0);
-}
-
-NGRAPH_TEST(${BACKEND_NAME},
-            server_client_gc_100_2_bounded_relu_complex_mask_in_out) {
-  server_client_gc_relu_packed_test(100, 2, true, true, true, true, 16.0);
 }
 
 }  // namespace ngraph::runtime::he
