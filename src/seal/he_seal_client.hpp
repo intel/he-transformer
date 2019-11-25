@@ -195,5 +195,5 @@ class HESealClient {
   HETensorConfigMap<double> m_input_config;
   std::shared_ptr<HETensor> m_result_tensor;
   std::vector<double> m_results;  // Function outputs
-};                                // namespace ngraph::runtime::he
+};
 }  // namespace ngraph::runtime::he

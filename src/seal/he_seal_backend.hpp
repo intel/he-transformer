@@ -332,9 +332,6 @@ class HESealBackend : public runtime::Backend {
   HESealEncryptionParameters m_encryption_params;
   std::shared_ptr<seal::CKKSEncoder> m_ckks_encoder;
 
-  // Stores Barrett64 ratios for moduli under 30 bits
-  std::unordered_map<std::uint64_t, std::uint64_t> m_barrett64_ratio_map;
-
   std::unordered_set<size_t> m_supported_types{
       element::f32.hash(), element::i32.hash(), element::i64.hash(),
       element::f64.hash()};

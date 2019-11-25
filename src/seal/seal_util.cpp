@@ -200,10 +200,10 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
 void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
                                      const seal::SmallModulus& modulus,
-                                     uint64_t* result) {
+                                     std::uint64_t* result) {
   const uint64_t modulus_value = modulus.value();
-  const uint64_t const_ratio_0 = modulus.const_ratio()[0];
   const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+
   // NOLINTNEXTLINE
   for (; coeff_count--; poly++, result++) {
     // Multiplication
@@ -549,8 +549,6 @@ void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
     } else {
       q_over_scale *= coeff_moduli[0].value();
     }
-    // NGRAPH_HE_LOG(5) << "q_over_scale " << q_over_scale << " ( scale "
-    //                 << input.ciphertext().scale() << ")";
   }
   decode(output, plaintext_wrapper, ckks_encoder, batch_size, q_over_scale);
 }
