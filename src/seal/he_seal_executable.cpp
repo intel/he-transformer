@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <limits>
+#include <optional>
 #include <tuple>
 #include <unordered_set>
 
@@ -261,14 +262,14 @@ bool HESealExecutable::server_setup() {
     std::stringstream param_stream;
     m_he_seal_backend.get_encryption_parameters().save(param_stream);
 
-    pb::EncryptionParameters proto_parms;
-    *proto_parms.mutable_encryption_parameters() = param_stream.str();
+    pb::EncryptionParameters pb_params;
+    *pb_params.mutable_encryption_parameters() = param_stream.str();
 
-    pb::TCPMessage proto_msg;
-    *proto_msg.mutable_encryption_parameters() = proto_parms;
-    proto_msg.set_type(pb::TCPMessage_Type_RESPONSE);
+    pb::TCPMessage pb_message;
+    *pb_message.mutable_encryption_parameters() = pb_params;
+    pb_message.set_type(pb::TCPMessage_Type_RESPONSE);
 
-    TCPMessage parms_message(std::move(proto_msg));
+    TCPMessage parms_message(std::move(pb_message));
     NGRAPH_HE_LOG(3) << "Server waiting until session started";
     std::unique_lock<std::mutex> mlock(m_session_mutex);
     m_session_cond.wait(mlock, [this]() { return this->session_started(); });
@@ -332,35 +333,25 @@ void HESealExecutable::start_server() {
   });
 }
 
-void HESealExecutable::load_secret_key(const pb::TCPMessage& proto_msg) {
+void HESealExecutable::load_public_key(const pb::TCPMessage& pb_message) {
   NGRAPH_HE_LOG(5) << "Server loading evaluation key";
-  NGRAPH_CHECK(proto_msg.has_public_key(), "proto_msg doesn't have public key");
-
-  seal::SecretKey key;
-  const std::string& sk_str = proto_msg.secret_key().secret_key();
-  std::stringstream key_stream(sk_str);
-  key.load(m_context, key_stream);
-  m_he_seal_backend.set_secret_key(key);
-}
-
-void HESealExecutable::load_public_key(const pb::TCPMessage& proto_msg) {
-  NGRAPH_HE_LOG(5) << "Server loading evaluation key";
-  NGRAPH_CHECK(proto_msg.has_public_key(), "proto_msg doesn't have public key");
+  NGRAPH_CHECK(pb_message.has_public_key(),
+               "pb_message doesn't have public key");
 
   seal::PublicKey key;
-  const std::string& pk_str = proto_msg.public_key().public_key();
+  const std::string& pk_str = pb_message.public_key().public_key();
   std::stringstream key_stream(pk_str);
   key.load(m_context, key_stream);
   m_he_seal_backend.set_public_key(key);
   m_client_public_key_set = true;
 }
 
-void HESealExecutable::load_eval_key(const pb::TCPMessage& proto_msg) {
+void HESealExecutable::load_eval_key(const pb::TCPMessage& pb_message) {
   NGRAPH_HE_LOG(5) << "Server loading evaluation key";
-  NGRAPH_CHECK(proto_msg.has_eval_key(), "proto_msg doesn't have eval key");
+  NGRAPH_CHECK(pb_message.has_eval_key(), "pb_message doesn't have eval key");
 
   seal::RelinKeys keys;
-  const std::string& evk_str = proto_msg.eval_key().eval_key();
+  const std::string& evk_str = pb_message.eval_key().eval_key();
   std::stringstream key_stream(evk_str);
   keys.load(m_context, key_stream);
   m_he_seal_backend.set_relin_keys(keys);
@@ -372,15 +363,15 @@ void HESealExecutable::send_inference_shape() {
 
   const ParameterVector& input_parameters = get_parameters();
 
-  pb::TCPMessage proto_msg;
-  proto_msg.set_type(pb::TCPMessage_Type_REQUEST);
+  pb::TCPMessage pb_message;
+  pb_message.set_type(pb::TCPMessage_Type_REQUEST);
 
   for (const auto& input_param : input_parameters) {
     if (HEOpAnnotations::from_client(*input_param)) {
-      pb::HETensor* proto_he_tensor = proto_msg.add_he_tensors();
+      pb::HETensor* pb_tensor = pb_message.add_he_tensors();
 
       std::vector<uint64_t> shape{input_param->get_shape()};
-      *proto_he_tensor->mutable_shape() = {shape.begin(), shape.end()};
+      *pb_tensor->mutable_shape() = {shape.begin(), shape.end()};
 
       std::string name = input_param->get_provenance_tags().empty()
                              ? input_param->get_name()
@@ -391,45 +382,43 @@ void HESealExecutable::send_inference_shape() {
                        << input_param->get_name() << "), with "
                        << input_param->get_shape();
 
-      proto_he_tensor->set_name(name);
+      pb_tensor->set_name(name);
 
       if (HEOpAnnotations::plaintext_packed(*input_param)) {
         NGRAPH_HE_LOG(1) << "Setting parameter " << input_param->get_name()
                          << " to packed";
-        proto_he_tensor->set_packed(true);
+        pb_tensor->set_packed(true);
       }
     }
   }
 
   NGRAPH_HE_LOG(1) << "Server sending inference of "
-                   << proto_msg.he_tensors_size() << " parameters";
+                   << pb_message.he_tensors_size() << " parameters";
 
   json js = {{"function", "Parameter"}};
   pb::Function f;
   f.set_function(js.dump());
   NGRAPH_HE_LOG(3) << "js " << js.dump();
-  *proto_msg.mutable_function() = f;
-
-  TCPMessage execute_msg(std::move(proto_msg));
-  m_session->write_message(std::move(execute_msg));
+  *pb_message.mutable_function() = f;
+  m_session->write_message(TCPMessage(std::move(pb_message)));
 }
 
-void HESealExecutable::handle_relu_result(const pb::TCPMessage& proto_msg) {
+void HESealExecutable::handle_relu_result(const pb::TCPMessage& pb_message) {
   NGRAPH_HE_LOG(3) << "Server handling relu result";
   std::lock_guard<std::mutex> guard(m_relu_mutex);
 
-  NGRAPH_CHECK(proto_msg.he_tensors_size() == 1,
+  NGRAPH_CHECK(pb_message.he_tensors_size() == 1,
                "Can only handle one tensor at a time, got ",
-               proto_msg.he_tensors_size());
+               pb_message.he_tensors_size());
 
-  const auto& proto_tensor = proto_msg.he_tensors(0);
-  auto he_tensor = HETensor::load_from_proto_tensor(
-      proto_tensor, *m_he_seal_backend.get_ckks_encoder(),
+  const auto& pb_tensor = pb_message.he_tensors(0);
+  auto he_tensor = HETensor::load_from_pb_tensor(
+      pb_tensor, *m_he_seal_backend.get_ckks_encoder(),
       m_he_seal_backend.get_context(), *m_he_seal_backend.get_encryptor(),
       *m_he_seal_backend.get_decryptor(),
       m_he_seal_backend.get_encryption_parameters());
 
-  size_t result_count = proto_tensor.data_size();
+  size_t result_count = pb_tensor.data_size();
   for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
     m_relu_data[m_unknown_relu_idx[result_idx + m_relu_done_count]] =
         he_tensor->data(result_idx);
@@ -446,25 +435,26 @@ void HESealExecutable::handle_relu_result(const pb::TCPMessage& proto_msg) {
 }
 
 void HESealExecutable::handle_bounded_relu_result(
-    const pb::TCPMessage& proto_msg) {
-  handle_relu_result(proto_msg);
+    const pb::TCPMessage& pb_message) {
+  handle_relu_result(pb_message);
 }
 
-void HESealExecutable::handle_max_pool_result(const pb::TCPMessage& proto_msg) {
+void HESealExecutable::handle_max_pool_result(
+    const pb::TCPMessage& pb_message) {
   std::lock_guard<std::mutex> guard(m_max_pool_mutex);
 
-  NGRAPH_CHECK(proto_msg.he_tensors_size() == 1,
+  NGRAPH_CHECK(pb_message.he_tensors_size() == 1,
                "Can only handle one tensor at a time, got ",
-               proto_msg.he_tensors_size());
+               pb_message.he_tensors_size());
 
-  const auto& proto_tensor = proto_msg.he_tensors(0);
-  size_t result_count = proto_tensor.data_size();
+  const auto& pb_tensor = pb_message.he_tensors(0);
+  size_t result_count = pb_tensor.data_size();
 
   NGRAPH_CHECK(result_count == 1, "Maxpool only supports result_count 1, got ",
                result_count);
 
-  auto he_tensor = HETensor::load_from_proto_tensor(
-      proto_tensor, *m_he_seal_backend.get_ckks_encoder(),
+  auto he_tensor = HETensor::load_from_pb_tensor(
+      pb_tensor, *m_he_seal_backend.get_ckks_encoder(),
       m_he_seal_backend.get_context(), *m_he_seal_backend.get_encryptor(),
       *m_he_seal_backend.get_decryptor(),
       m_he_seal_backend.get_encryption_parameters());
@@ -476,28 +466,25 @@ void HESealExecutable::handle_max_pool_result(const pb::TCPMessage& proto_msg) {
 
 void HESealExecutable::handle_message(const TCPMessage& message) {
   NGRAPH_HE_LOG(3) << "Server handling message";
-  std::shared_ptr<pb::TCPMessage> proto_msg = message.proto_message();
+  std::shared_ptr<pb::TCPMessage> pb_message = message.pb_message();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wswitch-enum"
-  switch (proto_msg->type()) {
+  switch (pb_message->type()) {
     case pb::TCPMessage_Type_RESPONSE: {
-      if (proto_msg->has_public_key()) {
-        load_public_key(*proto_msg);
+      if (pb_message->has_public_key()) {
+        load_public_key(*pb_message);
       }
-      if (proto_msg->has_secret_key()) {
-        load_secret_key(*proto_msg);
-      }
-      if (proto_msg->has_eval_key()) {
-        load_eval_key(*proto_msg);
+      if (pb_message->has_eval_key()) {
+        load_eval_key(*pb_message);
       }
       if (!m_sent_inference_shape && m_client_public_key_set &&
           m_client_eval_key_set) {
         send_inference_shape();
       }
 
-      if (proto_msg->has_function()) {
-        const std::string& function = proto_msg->function().function();
+      if (pb_message->has_function()) {
+        const std::string& function = pb_message->function().function();
         json js = json::parse(function);
 
         auto name = js.at("function");
@@ -509,18 +496,18 @@ void HESealExecutable::handle_message(const TCPMessage& message) {
             "Unknown function name ", name);
 
         if (name == "Relu") {
-          handle_relu_result(*proto_msg);
+          handle_relu_result(*pb_message);
         } else if (name == "BoundedRelu") {
-          handle_bounded_relu_result(*proto_msg);
+          handle_bounded_relu_result(*pb_message);
         } else if (name == "MaxPool") {
-          handle_max_pool_result(*proto_msg);
+          handle_max_pool_result(*pb_message);
         }
       }
       break;
     }
     case pb::TCPMessage_Type_REQUEST: {
-      if (proto_msg->he_tensors_size() > 0) {
-        handle_client_ciphers(*proto_msg);
+      if (pb_message->he_tensors_size() > 0) {
+        handle_client_ciphers(*pb_message);
       }
       break;
     }
@@ -531,23 +518,23 @@ void HESealExecutable::handle_message(const TCPMessage& message) {
 #pragma clang diagnostic pop
 }
 
-void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& proto_msg) {
+void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& pb_message) {
   NGRAPH_HE_LOG(3) << "Handling client tensors";
 
-  NGRAPH_CHECK(proto_msg.he_tensors_size() > 0,
+  NGRAPH_CHECK(pb_message.he_tensors_size() > 0,
                "Client received empty tensor message");
-  NGRAPH_CHECK(proto_msg.he_tensors_size() == 1,
+  NGRAPH_CHECK(pb_message.he_tensors_size() == 1,
                "Client only supports 1 client tensor");
   // TODO(fboemer): check for uniqueness of batch size if > 1 input tensor
 
   const ParameterVector& input_parameters = get_parameters();
 
-  /// \brief Looks for a parameter which matches a given tensor name
-  /// \param[in] tensor_name Tensor name to match against
-  /// \param[out] matching_idx Will be populated if a match is found
-  /// \returns Whether or not a matching parameter shape has been found
-  auto find_matching_parameter_index = [&](const std::string& tensor_name,
-                                           size_t& matching_idx) {
+  /// Looks for a parameter which matches a given tensor name
+  /// tensor_name Tensor name to match against
+  /// \returns parameter_idx if a matching parameter shape has been found,
+  /// std::nullopt otherwise
+  auto find_matching_parameter_index =
+      [&](const std::string& tensor_name) -> std::optional<size_t> {
     NGRAPH_HE_LOG(5) << "Calling find_matching_parameter_index(" << tensor_name
                      << ")";
     for (size_t param_idx = 0; param_idx < input_parameters.size();
@@ -561,35 +548,35 @@ void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& proto_msg) {
       if (param_originates_from_name(*parameter, tensor_name)) {
         NGRAPH_HE_LOG(5) << "Param " << tensor_name << " matches at index "
                          << param_idx;
-        matching_idx = param_idx;
-        return true;
+        return std::optional<size_t>{param_idx};
       }
     }
     NGRAPH_HE_LOG(5) << "Could not find tensor " << tensor_name;
-    return false;
+    return std::nullopt;
   };
 
-  auto& proto_tensor = proto_msg.he_tensors(0);
-  ngraph::Shape shape{proto_tensor.shape().begin(), proto_tensor.shape().end()};
+  auto& pb_tensor = pb_message.he_tensors(0);
+  ngraph::Shape shape{pb_tensor.shape().begin(), pb_tensor.shape().end()};
 
-  NGRAPH_HE_LOG(5) << "proto_tensor.packed() " << proto_tensor.packed();
-  set_batch_size(HETensor::batch_size(shape, proto_tensor.packed()));
-  NGRAPH_HE_LOG(5) << "Offset " << proto_tensor.offset();
+  NGRAPH_HE_LOG(5) << "pb_tensor.packed() " << pb_tensor.packed();
+  set_batch_size(HETensor::batch_size(shape, pb_tensor.packed()));
+  NGRAPH_HE_LOG(5) << "Offset " << pb_tensor.offset();
 
-  size_t param_idx;
-  NGRAPH_CHECK(find_matching_parameter_index(proto_tensor.name(), param_idx),
-               "Could not find matching parameter name ", proto_tensor.name());
+  std::optional<size_t> param_idx =
+      find_matching_parameter_index(pb_tensor.name());
+  NGRAPH_CHECK(param_idx, "Could not find matching parameter name ",
+               pb_tensor.name());
 
-  if (m_client_inputs[param_idx] == nullptr) {
-    auto he_tensor = HETensor::load_from_proto_tensor(
-        proto_tensor, *m_he_seal_backend.get_ckks_encoder(),
+  if (m_client_inputs[param_idx.value()] == nullptr) {
+    auto he_tensor = HETensor::load_from_pb_tensor(
+        pb_tensor, *m_he_seal_backend.get_ckks_encoder(),
         m_he_seal_backend.get_context(), *m_he_seal_backend.get_encryptor(),
         *m_he_seal_backend.get_decryptor(),
         m_he_seal_backend.get_encryption_parameters());
-    m_client_inputs[param_idx] = he_tensor;
+    m_client_inputs[param_idx.value()] = he_tensor;
   } else {
-    HETensor::load_from_proto_tensor(m_client_inputs[param_idx], proto_tensor,
-                                     m_he_seal_backend.get_context());
+    HETensor::load_from_pb_tensor(m_client_inputs[param_idx.value()], pb_tensor,
+                                  m_he_seal_backend.get_context());
   }
 
   auto done_loading = [&]() {
@@ -905,8 +892,7 @@ void HESealExecutable::send_client_results() {
                "HESealExecutable only supports output size 1 (got ",
                get_results().size(), "");
 
-  std::vector<pb::HETensor> pb_tensors;
-  m_client_outputs[0]->write_to_protos(pb_tensors);
+  auto pb_tensors = m_client_outputs[0]->write_to_pb_tensors();
 
   for (const auto& pb_tensor : pb_tensors) {
     pb::TCPMessage result_msg;
@@ -1380,13 +1366,13 @@ void HESealExecutable::handle_server_max_pool_op(
   m_max_pool_data.clear();
 
   for (const auto& maximize_list : maximize_lists) {
-    pb::TCPMessage proto_msg;
-    proto_msg.set_type(pb::TCPMessage_Type_REQUEST);
+    pb::TCPMessage pb_message;
+    pb_message.set_type(pb::TCPMessage_Type_REQUEST);
 
     json js = {{"function", op->description()}};
     pb::Function f;
     f.set_function(js.dump());
-    *proto_msg.mutable_function() = f;
+    *pb_message.mutable_function() = f;
 
     std::vector<HEType> cipher_batch;
     cipher_batch.reserve(maximize_list.size());
@@ -1402,11 +1388,10 @@ void HESealExecutable::handle_server_max_pool_op(
         cipher_batch[0].plaintext_packing(), cipher_batch[0].complex_packing(),
         true, m_he_seal_backend);
     max_pool_tensor.data() = cipher_batch;
-    std::vector<pb::HETensor> proto_tensors;
-    max_pool_tensor.write_to_protos(proto_tensors);
-    NGRAPH_CHECK(proto_tensors.size() == 1,
+    const auto& pb_tensors = max_pool_tensor.write_to_pb_tensors();
+    NGRAPH_CHECK(pb_tensors.size() == 1,
                  "Only support MaxPool with 1 proto tensor");
-    *proto_msg.add_he_tensors() = proto_tensors[0];
+    *pb_message.add_he_tensors() = pb_tensors[0];
 
     // Send list of ciphertexts to maximize over to client
     if (verbose) {
@@ -1414,8 +1399,7 @@ void HESealExecutable::handle_server_max_pool_op(
                        << " Maxpool ciphertexts to client";
     }
 
-    TCPMessage max_pool_message(std::move(proto_msg));
-    m_session->write_message(std::move(max_pool_message));
+    m_session->write_message(TCPMessage(std::move(pb_message)));
 
     // Acquire lock
     std::unique_lock<std::mutex> mlock(m_max_pool_mutex);

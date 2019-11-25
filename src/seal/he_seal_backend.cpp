@@ -82,7 +82,7 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
   for (const auto& [option, setting] : config) {
     // Check whether client is enabled
     if (option == "enable_client") {
-      bool client_enabled = flag_to_bool(setting.c_str(), false);
+      bool client_enabled = string_to_bool(setting, false);
       if (client_enabled) {
         NGRAPH_HE_LOG(3) << "Enabling client from config";
         m_enable_client = true;

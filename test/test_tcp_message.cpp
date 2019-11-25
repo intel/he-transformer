@@ -35,13 +35,13 @@ TEST(tcp_message, decode_small) {
 }
 
 TEST(tcp_message, create) {
-  pb::TCPMessage proto_msg;
+  pb::TCPMessage pb_msg;
   pb::Function f;
   f.set_function("123");
-  *proto_msg.mutable_function() = f;
+  *pb_msg.mutable_function() = f;
   std::stringstream s;
-  proto_msg.SerializeToOstream(&s);
-  pb::TCPMessage tcp_message(std::move(proto_msg));
+  pb_msg.SerializeToOstream(&s);
+  pb::TCPMessage tcp_message(std::move(pb_msg));
   EXPECT_EQ(1, 1);
 }
 
@@ -59,13 +59,13 @@ TEST(tcp_message, encode_decode) {
 TEST(tcp_message, pack_unpack) {
   using data_buffer = std::vector<char>;
 
-  pb::TCPMessage proto_msg;
+  pb::TCPMessage pb_msg;
   pb::Function f;
   f.set_function("123");
-  *proto_msg.mutable_function() = f;
+  *pb_msg.mutable_function() = f;
   std::stringstream s;
-  proto_msg.SerializeToOstream(&s);
-  TCPMessage message1(std::move(proto_msg));
+  pb_msg.SerializeToOstream(&s);
+  TCPMessage message1(std::move(pb_msg));
 
   data_buffer buffer;
   message1.pack(buffer);
@@ -74,7 +74,7 @@ TEST(tcp_message, pack_unpack) {
   message2.unpack(buffer);
 
   EXPECT_TRUE(google::protobuf::util::MessageDifferencer::Equals(
-      *message1.proto_message(), *message2.proto_message()));
+      *message1.pb_message(), *message2.pb_message()));
 }
 
 }  // namespace ngraph::runtime::he

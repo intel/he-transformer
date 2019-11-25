@@ -35,18 +35,18 @@ namespace ngraph::runtime::he {
 
 /// \brief Unpacks complex values to real values
 /// (a+bi, c+di) => (a,b,c,d)
-/// \param[out] output Vector to store unpacked real values
 /// \param[in] input Vector of complex values to unpack
-void complex_vec_to_real_vec(std::vector<double>& output,
-                             const std::vector<std::complex<double>>& input);
+/// \returns Vector storing unpacked real values
+std::vector<double> complex_vec_to_real_vec(
+    const std::vector<std::complex<double>>& input);
 
 /// \brief Packs elements of input into complex values
 /// (a,b,c,d) => (a+bi, c+di)
 /// (a,b,c) => (a+bi, c+0i)
-/// \param[out] output Vector to store packed complex values
 /// \param[in] input Vector of real values to unpack
-void real_vec_to_complex_vec(std::vector<std::complex<double>>& output,
-                             const std::vector<double>& input);
+/// \returns Vector storing packed complex values
+std::vector<std::complex<double>> real_vec_to_complex_vec(
+    const std::vector<double>& input);
 
 template <typename T>
 inline std::unordered_map<std::string,
@@ -67,10 +67,15 @@ map_to_double_map(
 }
 
 /// \brief Interprets a string as a boolean value
-/// \param[in] flag Flag value
+/// \param[in] string to interpret as a boolean value
 /// \param[in] default_value Value to return if flag is not able to be parsed
-/// \returns True if flag represents a True value, False otherwise
-bool flag_to_bool(const char* flag, bool default_value = false);
+/// \returns True if flag represents a true value, false otherwise
+bool string_to_bool(const char* string, bool default_value = false);
+
+inline bool string_to_bool(const std::string& string,
+                           bool default_value = false) {
+  return string_to_bool(string.c_str(), default_value);
+}
 
 inline bool flag_to_bool(const std::string& flag, bool default_value = false) {
   return flag_to_bool(flag.c_str(), default_value);

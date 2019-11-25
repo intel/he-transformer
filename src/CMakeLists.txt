@@ -66,9 +66,9 @@ set(HE_SRC
     tcp/tcp_client.cpp
     tcp/tcp_session.cpp
     # protobuf files
-    ${message_proto_srcs})
+    ${message_pb_srcs})
 
-set_source_files_properties(${message_proto_srcs}
+set_source_files_properties(${message_pb_srcs}
                             PROPERTIES
                             GENERATED
                             TRUE)
@@ -84,7 +84,7 @@ target_link_libraries(he_seal_backend
                              libngraph_tf
                              libaby
                              protobuf::libprotobuf
-                             generated_proto_files
+                             generated_pb_files
                              ngraph)
 
 # TODO: better condition if we don't link with OpenMP

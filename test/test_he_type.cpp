@@ -103,16 +103,16 @@ TEST(he_type, save_load) {
     bool complex_packing = false;
     auto he_type = HEType(plain, complex_packing);
 
-    pb::HEType proto_type;
+    pb::HEType pb_type;
 
-    he_type.save(proto_type);
+    he_type.save(pb_type);
 
-    EXPECT_EQ(proto_type.is_plaintext(), he_type.is_plaintext());
-    EXPECT_EQ(proto_type.plaintext_packing(), he_type.plaintext_packing());
-    EXPECT_EQ(proto_type.complex_packing(), he_type.complex_packing());
-    EXPECT_EQ(proto_type.batch_size(), he_type.batch_size());
+    EXPECT_EQ(pb_type.is_plaintext(), he_type.is_plaintext());
+    EXPECT_EQ(pb_type.plaintext_packing(), he_type.plaintext_packing());
+    EXPECT_EQ(pb_type.complex_packing(), he_type.complex_packing());
+    EXPECT_EQ(pb_type.batch_size(), he_type.batch_size());
 
-    auto loaded_he_type = HEType::load(proto_type, nullptr);
+    auto loaded_he_type = HEType::load(pb_type, nullptr);
     EXPECT_EQ(loaded_he_type.is_plaintext(), he_type.is_plaintext());
     EXPECT_EQ(loaded_he_type.plaintext_packing(), he_type.plaintext_packing());
     EXPECT_EQ(loaded_he_type.complex_packing(), he_type.complex_packing());
@@ -126,16 +126,16 @@ TEST(he_type, save_load) {
     bool complex_packing = true;
     auto he_type = HEType(plain, complex_packing);
 
-    pb::HEType proto_type;
+    pb::HEType pb_type;
 
-    he_type.save(proto_type);
+    he_type.save(pb_type);
 
-    EXPECT_EQ(proto_type.is_plaintext(), he_type.is_plaintext());
-    EXPECT_EQ(proto_type.plaintext_packing(), he_type.plaintext_packing());
-    EXPECT_EQ(proto_type.complex_packing(), he_type.complex_packing());
-    EXPECT_EQ(proto_type.batch_size(), he_type.batch_size());
+    EXPECT_EQ(pb_type.is_plaintext(), he_type.is_plaintext());
+    EXPECT_EQ(pb_type.plaintext_packing(), he_type.plaintext_packing());
+    EXPECT_EQ(pb_type.complex_packing(), he_type.complex_packing());
+    EXPECT_EQ(pb_type.batch_size(), he_type.batch_size());
 
-    auto loaded_he_type = HEType::load(proto_type, nullptr);
+    auto loaded_he_type = HEType::load(pb_type, nullptr);
     EXPECT_EQ(loaded_he_type.is_plaintext(), he_type.is_plaintext());
     EXPECT_EQ(loaded_he_type.plaintext_packing(), he_type.plaintext_packing());
     EXPECT_EQ(loaded_he_type.complex_packing(), he_type.complex_packing());

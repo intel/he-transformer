@@ -129,27 +129,26 @@ TEST(he_tensor, save) {
   copy_data(tensor, tensor_data);
   auto he_tensor = std::static_pointer_cast<HETensor>(tensor);
 
-  std::vector<pb::HETensor> protos;
-  he_tensor->write_to_protos(protos);
+  auto pb_tensors = he_tensor->write_to_pb_tensors();
 
-  // Validate saved protos
-  EXPECT_EQ(protos.size(), 1);
-  const auto& proto = protos[0];
-  EXPECT_EQ(proto.name(), he_tensor->get_name());
+  // Validate saved pb_tensors
+  EXPECT_EQ(pb_tensors.size(), 1);
+  const auto& pb_tensor = pb_tensors[0];
+  EXPECT_EQ(pb_tensor.name(), he_tensor->get_name());
 
   std::vector<uint64_t> expected_shape{shape};
   for (size_t shape_idx = 0; shape_idx < expected_shape.size(); ++shape_idx) {
-    EXPECT_EQ(proto.shape(shape_idx), expected_shape[shape_idx]);
+    EXPECT_EQ(pb_tensor.shape(shape_idx), expected_shape[shape_idx]);
   }
 
-  EXPECT_EQ(proto.offset(), 0);
-  EXPECT_EQ(proto.packed(), he_tensor->is_packed());
-  EXPECT_EQ(proto.data_size(), he_tensor->data().size());
+  EXPECT_EQ(pb_tensor.offset(), 0);
+  EXPECT_EQ(pb_tensor.packed(), he_tensor->is_packed());
+  EXPECT_EQ(pb_tensor.data_size(), he_tensor->data().size());
   for (size_t i = 0; i < he_tensor->data().size(); ++i) {
-    EXPECT_TRUE(proto.data(i).is_plaintext());
+    EXPECT_TRUE(pb_tensor.data(i).is_plaintext());
 
-    std::vector<float> plain = {proto.data(i).plain().begin(),
-                                proto.data(i).plain().end()};
+    std::vector<float> plain = {pb_tensor.data(i).plain().begin(),
+                                pb_tensor.data(i).plain().end()};
     EXPECT_EQ(plain.size(), 1);
     EXPECT_FLOAT_EQ(plain[0], tensor_data[i]);
   }
@@ -169,11 +168,10 @@ TEST(he_tensor, load) {
   copy_data(tensor, tensor_data);
   auto saved_he_tensor = std::static_pointer_cast<HETensor>(tensor);
 
-  std::vector<pb::HETensor> protos;
-  saved_he_tensor->write_to_protos(protos);
+  auto pb_tensors = saved_he_tensor->write_to_pb_tensors();
 
-  auto loaded_he_tensor = HETensor::load_from_proto_tensors(
-      protos, *he_backend->get_ckks_encoder(), he_backend->get_context(),
+  auto loaded_he_tensor = HETensor::load_from_pb_tensors(
+      pb_tensors, *he_backend->get_ckks_encoder(), he_backend->get_context(),
       *he_backend->get_encryptor(), *he_backend->get_decryptor(),
       he_backend->get_encryption_parameters());
 
@@ -214,11 +212,10 @@ TEST(he_tensor, load_from_context) {
           saved_he_tensor->get_element_type(), saved_he_tensor->get_shape(),
           saved_he_tensor->is_packed(), saved_he_tensor->get_name()));
 
-  std::vector<pb::HETensor> protos;
-  saved_he_tensor->write_to_protos(protos);
+  auto pb_tensors = saved_he_tensor->write_to_pb_tensors();
 
-  HETensor::load_from_proto_tensor(loaded_he_tensor, protos[0],
-                                   he_backend->get_context());
+  HETensor::load_from_pb_tensor(loaded_he_tensor, pb_tensors[0],
+                                he_backend->get_context());
 
   EXPECT_EQ(loaded_he_tensor->get_name(), saved_he_tensor->get_name());
   EXPECT_EQ(loaded_he_tensor->is_packed(), saved_he_tensor->is_packed());

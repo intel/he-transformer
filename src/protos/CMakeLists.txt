@@ -19,34 +19,34 @@ if(NOT Protobuf_FOUND)
 endif()
 
 # Generate protobuf headers for message
-get_filename_component(message_proto ${CMAKE_CURRENT_SOURCE_DIR}/message.proto
+get_filename_component(message_pb ${CMAKE_CURRENT_SOURCE_DIR}/message.proto
                        ABSOLUTE)
-get_filename_component(message_proto_path "${message_proto}" PATH)
-set(message_proto_srcs ${CMAKE_CURRENT_BINARY_DIR}/message.pb.cc PARENT_SCOPE)
-set(message_proto_hdrs ${CMAKE_CURRENT_BINARY_DIR}/message.pb.h)
+get_filename_component(message_pb_path "${message_pb}" PATH)
+set(message_pb_srcs ${CMAKE_CURRENT_BINARY_DIR}/message.pb.cc PARENT_SCOPE)
+set(message_pb_hdrs ${CMAKE_CURRENT_BINARY_DIR}/message.pb.h)
 
-add_custom_command(OUTPUT ${message_proto_srcs} ${message_proto_hdrs}
+add_custom_command(OUTPUT ${message_pb_srcs} ${message_pb_hdrs}
                    COMMAND ${Protobuf_PROTOC_EXECUTABLE}
                            ARGS
                            --cpp_out
                            ${CMAKE_CURRENT_BINARY_DIR}
                            -I
-                           ${message_proto_path}
-                           ${message_proto}
-                   DEPENDS ${message_proto} protobuf::protoc
+                           ${message_pb_path}
+                           ${message_pb}
+                   DEPENDS ${message_pb} protobuf::protoc
                            protobuf::libprotobuf)
 
-add_custom_target(generated_proto_files_target
-                  DEPENDS ${message_proto_srcs} ${message_proto_hdrs})
+add_custom_target(generated_pb_files_target
+                  DEPENDS ${message_pb_srcs} ${message_pb_hdrs})
 
 # Create interface library; link against it to include the generated protobuf
 # files
-add_library(generated_proto_files INTERFACE)
-target_link_libraries(generated_proto_files)
-add_dependencies(generated_proto_files generated_proto_files_target)
+add_library(generated_pb_files INTERFACE)
+target_link_libraries(generated_pb_files)
+add_dependencies(generated_pb_files generated_pb_files_target)
 
 # Use include protos/*.pb.h
-target_include_directories(generated_proto_files
+target_include_directories(generated_pb_files
                            INTERFACE ${CMAKE_CURRENT_BINARY_DIR}/../)
 
 # Install generated protobuf files
