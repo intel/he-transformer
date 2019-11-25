@@ -428,7 +428,6 @@ void HESealExecutable::handle_relu_result(const pb::TCPMessage& pb_message) {
 
 #ifdef NGRAPH_HE_ABY_ENABLE
   if (enable_garbled_circuits()) {
-    NGRAPH_INFO << "Performing garbled circuits output mask correction";
     m_aby_executor->post_process_aby_circuit(proto_msg.function().function(),
                                              he_tensor);
   }
@@ -1487,8 +1486,6 @@ void HESealExecutable::handle_server_relu_op(
         Shape{cipher_batch[0].batch_size(), cipher_batch.size()},
         arg->is_packed(), false, true, m_he_seal_backend);
     relu_tensor->data() = cipher_batch;
-    NGRAPH_INFO << "relu tensor shape " << relu_tensor->get_shape()
-                << " with batch size " << relu_tensor->get_batch_size();
 
 #ifdef NGRAPH_HE_ABY_ENABLE
     if (enable_garbled_circuits()) {
@@ -1516,7 +1513,6 @@ void HESealExecutable::handle_server_relu_op(
 #ifdef NGRAPH_HE_ABY_ENABLE
       if (enable_garbled_circuits()) {
         m_aby_executor->run_aby_circuit(function_str, relu_tensor);
-        NGRAPH_INFO << "Server done running relu circuit";
       }
 #endif
     }

@@ -54,9 +54,6 @@ ABYExecutor::ABYExecutor(const std::string& role,
                security_level);
   m_security_level = security_level;
 
-  NGRAPH_INFO << "Creating " << num_parties << " ABYParties with role " << role
-              << " at " << hostname << ":" << port;
-
   m_ABYParties.resize(num_parties);
   for (size_t idx = 0; idx < num_parties; ++idx) {
     m_ABYParties[idx] = new ABYParty(

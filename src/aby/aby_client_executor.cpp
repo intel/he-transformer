@@ -125,9 +125,6 @@ void ABYClientExecutor::run_aby_relu_circuit(
     if (party_data_size == 0) {
       continue;
     }
-    NGRAPH_INFO << "party " << party_idx << " party_data_size "
-                << party_data_size;
-
     BooleanCircuit* circ = get_circuit(party_idx);
 
     std::vector<uint64_t> zeros(party_data_size, 0);

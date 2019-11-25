@@ -296,7 +296,7 @@ class HESealBackend : public runtime::Backend {
       get_evaluator()->mod_switch_to_inplace(cipher.ciphertext(),
                                              last_parms_id);
     } catch (const std::exception& e) {
-      NGRAPH_INFO << "Error mod_switch_to_inplace: " << e.what();
+      NGRAPH_ERR << "Error mod_switch_to_inplace: " << e.what();
       throw(e);
     }
   }
@@ -308,7 +308,7 @@ class HESealBackend : public runtime::Backend {
     try {
       get_evaluator()->rescale_to_inplace(cipher.ciphertext(), last_parms_id);
     } catch (const std::exception& e) {
-      NGRAPH_INFO << "Error rescale_to_inplace: " << e.what();
+      NGRAPH_ERR << "Error rescale_to_inplace: " << e.what();
       throw(e);
     }
   }

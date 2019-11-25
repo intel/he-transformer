@@ -132,9 +132,6 @@ class HESealClient {
 
 #ifdef NGRAPH_HE_ABY_ENABLE
   inline void init_aby_executor(size_t num_parties) {
-    NGRAPH_INFO << "Initializing ABY executor with " << num_parties
-                << " aby parties";
-
     if (m_aby_executor == nullptr) {
       m_aby_executor = std::make_unique<aby::ABYClientExecutor>(
           std::string("yao"), *this, m_hostname, 34001, 128, 64, 2,

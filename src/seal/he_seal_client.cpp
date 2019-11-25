@@ -278,13 +278,11 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
   auto he_tensor = HETensor::load_from_pb_tensor(
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
-  NGRAPH_INFO << "Loaded from pb tensor";
 
   const std::string& function = message.function().function();
   const json& js = json::parse(function);
 
   bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
-  NGRAPH_INFO << "Client relu with gc? " << enable_gc;
 
   if (enable_gc) {
 #ifdef NGRAPH_HE_ABY_ENABLE
@@ -292,22 +290,18 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
     NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
                  "Number of ABY parties not specified");
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
-    NGRAPH_INFO << "parsed num_aby_parties " << num_aby_parties;
     init_aby_executor(num_aby_parties);
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
     m_aby_executor->run_aby_circuit(function, he_tensor);
-    NGRAPH_INFO << "Client done running aby circuit";
 #endif
   } else {
     size_t result_count = pb_tensor->data_size();
-    NGRAPH_INFO << "Performing relu without gc";
 #pragma omp parallel for
     for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
       scalar_relu_seal(he_tensor->data(result_idx), he_tensor->data(result_idx),
                        m_context->first_parms_id(), scale(), *m_ckks_encoder,
                        *m_encryptor, *m_decryptor, m_context);
     }
-    NGRAPH_INFO << "Done performing relu without gc";
   }
 
   const auto pb_output_tensors = he_tensor->write_to_pb_tensors();
@@ -347,11 +341,9 @@ void HESealClient::handle_bounded_relu_request(pb::TCPMessage&& message) {
     NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
                  "Number of ABY parties not specified");
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
-    NGRAPH_INFO << "parsed num_aby_parties " << num_aby_parties;
     init_aby_executor(num_aby_parties);
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
     m_aby_executor->run_aby_circuit(function, he_tensor);
-    NGRAPH_INFO << "Client done running aby circuit";
 #endif
   } else {
     size_t result_count = pb_tensor->data_size();
