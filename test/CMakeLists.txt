@@ -115,7 +115,7 @@ target_include_directories(unit-test
                            PRIVATE ${NGRAPH_TF_BUILD_DIR}/ngraph/test/)
 
 target_link_libraries(unit-test PRIVATE ngraph_test_util)
-target_link_libraries(unit-test PRIVATE ngraph libgtest)
+target_link_libraries(unit-test PRIVATE ngraph libgtest pthread)
 target_link_libraries(unit-test PRIVATE he_seal_backend libseal)
 target_link_libraries(unit-test PRIVATE protobuf::libprotobuf)
 
