@@ -29,8 +29,7 @@ namespace ngraph::runtime::he {
 TEST(he_util, complex_vec_to_real_vec) {
   {
     std::vector<std::complex<double>> complex_vec{{1, 2}, {3, 4}};
-    std::vector<double> real_vec;
-    complex_vec_to_real_vec(real_vec, complex_vec);
+    auto real_vec = complex_vec_to_real_vec(complex_vec);
 
     EXPECT_EQ(real_vec.size(), 2 * complex_vec.size());
     EXPECT_TRUE(test::all_close(real_vec, std::vector<double>{1, 2, 3, 4}));
@@ -38,8 +37,7 @@ TEST(he_util, complex_vec_to_real_vec) {
 
   {
     std::vector<std::complex<double>> complex_vec{{-2, -1}, {3, 0}};
-    std::vector<double> real_vec;
-    complex_vec_to_real_vec(real_vec, complex_vec);
+    auto real_vec = complex_vec_to_real_vec(complex_vec);
 
     EXPECT_EQ(real_vec.size(), 2 * complex_vec.size());
     EXPECT_TRUE(test::all_close(real_vec, std::vector<double>{-2, -1, 3, 0}));
@@ -48,9 +46,8 @@ TEST(he_util, complex_vec_to_real_vec) {
 
 TEST(he_util, real_vec_to_complex_vec) {
   {
-    std::vector<std::complex<double>> complex_vec;
     std::vector<double> real_vec{1, 2, 3, 4};
-    real_vec_to_complex_vec(complex_vec, real_vec);
+    auto complex_vec = real_vec_to_complex_vec(real_vec);
 
     EXPECT_EQ(complex_vec.size(), 2);
     EXPECT_TRUE(test::all_close(
@@ -58,9 +55,8 @@ TEST(he_util, real_vec_to_complex_vec) {
   }
 
   {
-    std::vector<std::complex<double>> complex_vec;
     std::vector<double> real_vec{-2, -1, 3};
-    real_vec_to_complex_vec(complex_vec, real_vec);
+    auto complex_vec = real_vec_to_complex_vec(real_vec);
 
     EXPECT_EQ(complex_vec.size(), 2);
     EXPECT_TRUE(test::all_close(
@@ -68,21 +64,21 @@ TEST(he_util, real_vec_to_complex_vec) {
   }
 }
 
-TEST(he_util, flag_to_bool) {
-  EXPECT_TRUE(flag_to_bool(nullptr, true));
-  EXPECT_FALSE(flag_to_bool(nullptr, false));
+TEST(he_util, string_to_bool) {
+  EXPECT_TRUE(string_to_bool(nullptr, true));
+  EXPECT_FALSE(string_to_bool(nullptr, false));
 
   for (const auto& on_str : std::vector<std::string>{
            "1", "on", "ON", "y", "Y", "yes", "YES", "true", "TRUE"}) {
-    EXPECT_TRUE(flag_to_bool(on_str.c_str(), false));
+    EXPECT_TRUE(string_to_bool(on_str.c_str(), false));
   }
 
   for (const auto& off_str : std::vector<std::string>{
            "0", "off", "OFF", "n", "N", "no", "NO", "false", "FALSE"}) {
-    EXPECT_FALSE(flag_to_bool(off_str.c_str(), true));
+    EXPECT_FALSE(string_to_bool(off_str.c_str(), true));
   }
 
-  EXPECT_ANY_THROW(flag_to_bool("DUMMY_VAL"));
+  EXPECT_ANY_THROW(string_to_bool("DUMMY_VAL"));
 }
 
 TEST(he_util, type_to_double) {
