@@ -77,9 +77,9 @@ class SealCiphertextWrapper {
 
   /// \brief Loads a ciphertext from a protobuf object
   /// \param[out] dst Destination to load ciphertext to
-  /// \param[in] proto_he_type Protobuf object to load object from
+  /// \param[in] pb_he_type Protobuf object to load object from
   /// \param[in] context SEAL context to validate loaded ciphertext against
-  static void load(SealCiphertextWrapper& dst, const pb::HEType& proto_he_type,
+  static void load(SealCiphertextWrapper& dst, const pb::HEType& pb_he_type,
                    std::shared_ptr<seal::SEALContext> context);
 
  private:

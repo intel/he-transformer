@@ -37,9 +37,9 @@ class HEType {
   HEType(const std::shared_ptr<SealCiphertextWrapper>& cipher,
          bool complex_packing, size_t batch_size);
 
-  void save(pb::HEType& proto_he_type) const;
+  void save(pb::HEType& pb_he_type) const;
 
-  static HEType load(const pb::HEType& proto_he_type,
+  static HEType load(const pb::HEType& pb_he_type,
                      std::shared_ptr<seal::SEALContext> context);
 
   bool is_plaintext() const { return m_is_plain; }

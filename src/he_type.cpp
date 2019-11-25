@@ -39,35 +39,33 @@ HEType::HEType(const std::shared_ptr<SealCiphertextWrapper>& cipher,
   m_cipher = cipher;
 }
 
-HEType HEType::load(const pb::HEType& proto_he_type,
+HEType HEType::load(const pb::HEType& pb_he_type,
                     std::shared_ptr<seal::SEALContext> context) {
-  if (proto_he_type.is_plaintext()) {
+  if (pb_he_type.is_plaintext()) {
     // TODO(fboemer): HEPlaintext::load function
-    HEPlaintext vals{proto_he_type.plain().begin(),
-                     proto_he_type.plain().end()};
+    HEPlaintext vals{pb_he_type.plain().begin(), pb_he_type.plain().end()};
 
-    return HEType(vals, proto_he_type.complex_packing());
+    return HEType(vals, pb_he_type.complex_packing());
   }
 
   auto cipher = HESealBackend::create_empty_ciphertext();
-  SealCiphertextWrapper::load(*cipher, proto_he_type, std::move(context));
-  return HEType(cipher, proto_he_type.complex_packing(),
-                proto_he_type.batch_size());
+  SealCiphertextWrapper::load(*cipher, pb_he_type, std::move(context));
+  return HEType(cipher, pb_he_type.complex_packing(), pb_he_type.batch_size());
 }
 
-void HEType::save(pb::HEType& proto_he_type) const {
-  proto_he_type.set_is_plaintext(is_plaintext());
-  proto_he_type.set_plaintext_packing(plaintext_packing());
-  proto_he_type.set_complex_packing(complex_packing());
-  proto_he_type.set_batch_size(batch_size());
+void HEType::save(pb::HEType& pb_he_type) const {
+  pb_he_type.set_is_plaintext(is_plaintext());
+  pb_he_type.set_plaintext_packing(plaintext_packing());
+  pb_he_type.set_complex_packing(complex_packing());
+  pb_he_type.set_batch_size(batch_size());
 
   if (is_plaintext()) {
     // TODO(fboemer): more efficient
     for (auto& elem : get_plaintext()) {
-      proto_he_type.add_plain(static_cast<float>(elem));
+      pb_he_type.add_plain(static_cast<float>(elem));
     }
   } else {
-    get_ciphertext()->save(proto_he_type);
+    get_ciphertext()->save(pb_he_type);
   }
 }
 

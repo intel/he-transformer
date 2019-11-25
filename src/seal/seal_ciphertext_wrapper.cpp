@@ -43,12 +43,12 @@ void SealCiphertextWrapper::save(pb::HEType& he_type) const {
 }
 
 void SealCiphertextWrapper::load(SealCiphertextWrapper& dst,
-                                 const pb::HEType& proto_he_type,
+                                 const pb::HEType& pb_he_type,
                                  std::shared_ptr<seal::SEALContext> context) {
-  NGRAPH_CHECK(!proto_he_type.is_plaintext(),
+  NGRAPH_CHECK(!pb_he_type.is_plaintext(),
                "Cannot load ciphertext from plaintext HEType");
 
-  const std::string& cipher_str = proto_he_type.ciphertext();
+  const std::string& cipher_str = pb_he_type.ciphertext();
   ngraph::runtime::he::load(
       dst.ciphertext(), std::move(context),
       reinterpret_cast<const std::byte*>(cipher_str.data()), cipher_str.size());

@@ -30,12 +30,11 @@ namespace ngraph::runtime::he {
 
 TCPMessage::TCPMessage() = default;
 
-TCPMessage::TCPMessage(pb::TCPMessage&& proto_message)
-    : m_proto_message(
-          std::make_shared<pb::TCPMessage>(std::move(proto_message))) {}
+TCPMessage::TCPMessage(pb::TCPMessage&& pb_message)
+    : m_pb_message(std::make_shared<pb::TCPMessage>(std::move(pb_message))) {}
 
-std::shared_ptr<pb::TCPMessage> TCPMessage::proto_message() const {
-  return m_proto_message;
+std::shared_ptr<pb::TCPMessage> TCPMessage::pb_message() const {
+  return m_pb_message;
 }
 
 void TCPMessage::encode_header(TCPMessage::data_buffer& buffer, size_t size) {
@@ -53,19 +52,19 @@ size_t TCPMessage::decode_header(const TCPMessage::data_buffer& buffer) {
 }
 
 bool TCPMessage::pack(TCPMessage::data_buffer& buffer) {
-  NGRAPH_CHECK(m_proto_message != nullptr, "Can't pack empty proto message");
-  size_t msg_size = m_proto_message->ByteSize();
+  NGRAPH_CHECK(m_pb_message != nullptr, "Can't pack empty proto message");
+  size_t msg_size = m_pb_message->ByteSize();
   buffer.resize(TCPMessage::header_length + msg_size);
   encode_header(buffer, msg_size);
-  return m_proto_message->SerializeToArray(&buffer[TCPMessage::header_length],
-                                           msg_size);
+  return m_pb_message->SerializeToArray(&buffer[TCPMessage::header_length],
+                                        msg_size);
 }
 
 bool TCPMessage::unpack(const TCPMessage::data_buffer& buffer) {
-  if (!m_proto_message) {
-    m_proto_message = std::make_shared<pb::TCPMessage>();
+  if (!m_pb_message) {
+    m_pb_message = std::make_shared<pb::TCPMessage>();
   }
-  return m_proto_message->ParseFromArray(
+  return m_pb_message->ParseFromArray(
       &buffer[TCPMessage::header_length],
       buffer.size() - TCPMessage::header_length);
 }
