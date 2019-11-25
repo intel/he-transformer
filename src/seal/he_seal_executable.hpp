@@ -47,8 +47,6 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] function Function in the executable
   /// \param[in] enable_performance_collection Unused: TODO(fboemer) use
   /// \param[in] he_seal_backend Backend storing encryption context
-  /// \param[in] enable_client Whether or not to rely on a client to store the
-  /// secret key
   HESealExecutable(const std::shared_ptr<Function>& function,
                    bool enable_performance_collection,
                    HESealBackend& he_seal_backend);
@@ -115,22 +113,22 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Processes a client message with ciphertexts to call the appropriate
   /// function
-  /// \param[in] proto_msg Message to process
-  void handle_client_ciphers(const pb::TCPMessage& proto_msg);
+  /// \param[in] pb_message Message to process
+  void handle_client_ciphers(const pb::TCPMessage& pb_message);
 
-  /// \brief Processes a client message with ciphertextss after a ReLU function
-  /// \param[in] proto_msg Message to process
-  void handle_relu_result(const pb::TCPMessage& proto_msg);
+  /// \brief Processes a client message with ciphertexts after a ReLU function
+  /// \param[in] pb_message Message to process
+  void handle_relu_result(const pb::TCPMessage& pb_message);
 
   /// \brief Processes a client message with ciphertextss after a BoundedReLU
   /// function
-  /// \param[in] proto_msg Message to process
-  void handle_bounded_relu_result(const pb::TCPMessage& proto_msg);
+  /// \param[in] pb_message Message to process
+  void handle_bounded_relu_result(const pb::TCPMessage& pb_message);
 
   /// \brief Processes a client message with ciphertextss after a MaxPool
   /// function
-  /// \param[in] proto_msg Message to process
-  void handle_max_pool_result(const pb::TCPMessage& proto_msg);
+  /// \param[in] pb_message Message to process
+  void handle_max_pool_result(const pb::TCPMessage& pb_message);
 
   /// \brief Sends results to the client
   void send_client_results();
@@ -139,12 +137,12 @@ class HESealExecutable : public runtime::Executable {
   void send_inference_shape();
 
   /// \brief Loads the public key from the message
-  /// \param[in] proto_msg from which to load the public key
-  void load_public_key(const pb::TCPMessage& proto_msg);
+  /// \param[in] pb_message from which to load the public key
+  void load_public_key(const pb::TCPMessage& pb_message);
 
   /// \brief Loads the evaluation key from the message
-  /// \param[in] proto_msg from which to load the evluation key
-  void load_eval_key(const pb::TCPMessage& proto_msg);
+  /// \param[in] pb_message from which to load the evluation key
+  void load_eval_key(const pb::TCPMessage& pb_message);
 
   /// \brief Processes the ReLU operation if the client is enabled
   /// \param[in] arg Tensor argumnet
@@ -256,6 +254,6 @@ class HESealExecutable : public runtime::Executable {
                       const std::vector<std::shared_ptr<HETensor>>& out,
                       const std::vector<std::shared_ptr<HETensor>>& args);
 
-  bool m_stop_const_fold{flag_to_bool(std::getenv("STOP_CONST_FOLD"))};
+  bool m_stop_const_fold{string_to_bool(std::getenv("STOP_CONST_FOLD"))};
 };
 }  // namespace ngraph::runtime::he

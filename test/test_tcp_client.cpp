@@ -33,15 +33,13 @@ namespace ngraph::runtime::he {
 
 auto dummy_tcp_message = []() {
   // Write message
-  pb::TCPMessage proto_msg;
+  pb::TCPMessage pb_msg;
   pb::Function f;
   f.set_function("123");
-  *proto_msg.mutable_function() = f;
+  *pb_msg.mutable_function() = f;
   std::stringstream s;
-  proto_msg.SerializeToOstream(&s);
-  TCPMessage tcp_message(std::move(proto_msg));
-
-  return tcp_message;
+  pb_msg.SerializeToOstream(&s);
+  return TCPMessage(std::move(pb_msg));
 };
 
 class MockServer {

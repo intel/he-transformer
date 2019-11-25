@@ -29,19 +29,20 @@
 
 namespace ngraph::runtime::he {
 
-void complex_vec_to_real_vec(std::vector<double>& output,
-                             const std::vector<std::complex<double>>& input) {
-  NGRAPH_CHECK(output.empty(), "Output vector is not empty");
+std::vector<double> complex_vec_to_real_vec(
+    const std::vector<std::complex<double>>& input) {
+  std::vector<double> output;
   output.reserve(input.size() * 2);
   for (const std::complex<double>& value : input) {
     output.emplace_back(value.real());
     output.emplace_back(value.imag());
   }
+  return output;
 }
 
-void real_vec_to_complex_vec(std::vector<std::complex<double>>& output,
-                             const std::vector<double>& input) {
-  NGRAPH_CHECK(output.empty(), "Output vector is not empty");
+std::vector<std::complex<double>> real_vec_to_complex_vec(
+    const std::vector<double>& input) {
+  std::vector<std::complex<double>> output;
   output.reserve(input.size() / 2);
   std::vector<double> complex_parts(2, 0);
   for (size_t i = 0; i < input.size(); ++i) {
@@ -53,9 +54,10 @@ void real_vec_to_complex_vec(std::vector<std::complex<double>>& output,
       complex_parts = {0, 0};
     }
   }
+  return output;
 }
 
-bool flag_to_bool(const char* flag, bool default_value) {
+bool string_to_bool(const char* flag, bool default_value) {
   if (flag == nullptr) {
     return default_value;
   }

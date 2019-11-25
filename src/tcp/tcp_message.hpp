@@ -30,14 +30,14 @@ class TCPMessage {
   /// \brief Creates empty message
   TCPMessage();
 
-  TCPMessage(pb::TCPMessage& proto_message) = delete;
+  TCPMessage(pb::TCPMessage& pb_message) = delete;
 
   /// \brief Creates message from given protobuf message
-  /// \param[in,out] proto_message Protobuf message to populate TCPMessage
-  explicit TCPMessage(pb::TCPMessage&& proto_message);
+  /// \param[in,out] pb_message Protobuf message to populate TCPMessage
+  explicit TCPMessage(pb::TCPMessage&& pb_message);
 
   /// \brief Returns pointer to udnerlying protobuf message
-  std::shared_ptr<pb::TCPMessage> proto_message() const;
+  std::shared_ptr<pb::TCPMessage> pb_message() const;
 
   /// \brief Stores a size in the buffer header
   /// \param[in,out] buffer Buffer to write size to
@@ -62,6 +62,6 @@ class TCPMessage {
   bool unpack(const data_buffer& buffer);
 
  private:
-  std::shared_ptr<pb::TCPMessage> m_proto_message;
+  std::shared_ptr<pb::TCPMessage> m_pb_message;
 };
 }  // namespace ngraph::runtime::he
