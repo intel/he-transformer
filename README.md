@@ -58,12 +58,23 @@ export HE_TRANSFORMER=$(pwd)
 mkdir build
 cd $HE_TRANSFORMER/build
 cmake .. -DCMAKE_CXX_COMPILER=clang++-6.0
+```
+Note, you may need sudo permissions to install he_seal_backend to the default location. To set a custom installation prefix, add the `-DCMAKE_INSTALL_PREFIX=~/my_install_prefix` flag to the above cmake command.
+
+See 1a and 1b for additional configuration options. To install, run the below command (note, this may take several hours. To speed up compilation with multiple threads, call `make -j install`)
+```bash
 make install
 ```
 
-Note, you may need sudo permissions to install he_seal_backend to the default location. To set a custom installation prefix, add the `-DCMAKE_INSTALL_PREFIX=~/my_install_prefix` flag to the cmake command.
+### 1a. Multi-party computation (MPC) with garbled circuits (GC)
+To enable an integration with an experimental multi-party computation backend using garbled circuits via [ABY](https://github.com/encryptogroup/ABY), call
+```bash
+cmake .. -DNGRAPH_HE_ABY_ENABLE=ON
+```
+Note: this feature is experimental, and may suffer from performance and memory issues.
+To use this feature, build python bindings for the client, and see `3. python examples`.
 
-#### 1a. To build documentation
+#### 1b. To build documentation
 First install the additional required dependencies:
 ```bash
 sudo apt-get install doxygen graphviz
@@ -78,7 +89,7 @@ make docs
 ```
 to create doxygen documentation in `$HE_TRANSFORMER/build/doc/doxygen`.
 
-#### 1b. Python bindings for client
+#### 1c. Python bindings for client
 To build a client-server model with python bindings (recommended for running neural networks through TensorFlow):
 ```bash
 cd $HE_TRANSFORMER/build

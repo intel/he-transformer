@@ -428,7 +428,7 @@ void HESealExecutable::handle_relu_result(const pb::TCPMessage& pb_message) {
 
 #ifdef NGRAPH_HE_ABY_ENABLE
   if (enable_garbled_circuits()) {
-    m_aby_executor->post_process_aby_circuit(proto_msg.function().function(),
+    m_aby_executor->post_process_aby_circuit(pb_message.function().function(),
                                              he_tensor);
   }
 #endif

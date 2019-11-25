@@ -22,7 +22,7 @@ set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
 set(SEAL_GIT_TAG 3.4.5)
 if (NGRAPH_HE_ABY_ENABLE)
   set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
-  set(SEAL_PATCH_COMMAND "git apply S{SEAL_PATCH}")
+  set(SEAL_PATCH_COMMAND git apply ${SEAL_PATCH})
 else()
   set(SEAL_PATCH_COMMAND "")
 endif()
@@ -80,7 +80,7 @@ ExternalProject_Add(
                     -DZLIB_ROOT=${ZLIB_PREFIX}
   PATCH_COMMAND ${SEAL_PATCH_COMMAND}
   # Skip updates
-  # UPDATE_COMMAND ""
+  UPDATE_COMMAND ""
 )
 
 # ExternalProject_Get_Property(ext_seal SOURCE_DIR)

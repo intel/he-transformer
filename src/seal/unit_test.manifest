@@ -85,8 +85,9 @@ server_client_add_3_multiple_parameters_plain
 # server_client_provenance_tag
 server_client_add_3_multiple_parameters_plain
 
-# Segfault in ABY
-server_client_gc_845_400_relu_real_mask_in_out
-
 # Inaccurate values
 server_client_gc_300000_1_relu_real_mask_in_out
+
+# ABY
+server_client_gc_845_400_relu_real_mask_in_out
+# server_client_gc_add_3_relu

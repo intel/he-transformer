@@ -237,6 +237,9 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 /// \brief Decode SEAL plaintext into plaintext values
 /// \param[out] output Decoded values
 /// \param[in] input Plaintext to decode
+/// \param[in] batch_size Number of output values
+/// \param[in] mod_interval If NGRAPH_HE_ABY_ENABLE, the output values will be
+/// reduced to the range (-mod_interval/2, mod_interval/2)
 /// \param[in] ckks_encoder Used for decoding
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
             seal::CKKSEncoder& ckks_encoder, size_t batch_size,
@@ -249,6 +252,9 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
 /// packing
 /// \param[in] decryptor Used for decryption
 /// \param[in] ckks_encoder Used for decoding
+/// \param[in] context If not nullptr, used to determine modulus wrapping
+/// interval during decoding
+/// \param[in] batch_size Number of output values
 void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
              bool complex_packing, seal::Decryptor& decryptor,
              seal::CKKSEncoder& ckks_encoder,

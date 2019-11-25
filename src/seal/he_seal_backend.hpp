@@ -318,7 +318,7 @@ class HESealBackend : public runtime::Backend {
   bool m_enable_garbled_circuit{false};
   bool m_mask_gc_inputs{false};
   bool m_mask_gc_outputs{false};
-  size_t m_num_garbled_circuit_threads{0};
+  size_t m_num_garbled_circuit_threads{1};
 
   std::shared_ptr<seal::SecretKey> m_secret_key;
   std::shared_ptr<seal::PublicKey> m_public_key;

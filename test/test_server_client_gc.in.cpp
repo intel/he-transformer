@@ -33,6 +33,26 @@
 
 static std::string s_manifest = "${MANIFEST}";
 
+static std::string gc_param_real_str = R"(
+    {
+        "scheme_name" : "HE_SEAL",
+        "poly_modulus_degree" : 2048,
+        "security_level" : 0,
+        "coeff_modulus" : [44, 24, 24, 24, 30],
+        "scale" : 16777216,
+        "complex_packing": false
+    })";
+
+static std::string gc_param_complex_str = R"(
+    {
+        "scheme_name" : "HE_SEAL",
+        "poly_modulus_degree" : 2048,
+        "security_level" : 0,
+        "coeff_modulus" : [44, 24, 24, 24, 30],
+        "scale" : 16777216,
+        "complex_packing": true
+    })";
+
 namespace ngraph::runtime::he {
 
 NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_add_3_multiple_parameters_plain) {
@@ -54,9 +74,11 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_add_3_multiple_parameters_plain) {
 
   std::string error_str;
   he_backend->set_config(
-      std::map<std::string, std::string>{{"enable_client", "true"},
-                                         {"enable_gc", "true"},
-                                         {b->get_name(), "client_input"}},
+      std::map<std::string, std::string>{
+          {"enable_client", "true"},
+          {"enable_gc", "true"},
+          {"encryption_parameters", gc_param_real_str},
+          {b->get_name(), "client_input"}},
       error_str);
 
   auto t_c = he_backend->create_plain_tensor(element::f32, shape_c);
@@ -107,7 +129,8 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_add_3_relu) {
       std::map<std::string, std::string>{
           {"enable_client", "true"},
           {"enable_gc", "true"},
-          {"mask_gc_inputs", "false"},
+          {"encryption_parameters", gc_param_real_str},
+          {"mask_gc_inputs", "true"},
           {"mask_gc_outputs", "true"},
           {b->get_name(), "client_input,encrypt"}},
       error_str);
@@ -138,7 +161,7 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_add_3_relu) {
   handle->call_with_validate({t_result}, {t_dummy});
 
   client_thread.join();
-  EXPECT_TRUE(test::all_close(results, std::vector<float>{0, 0, 3.3}, 1e-3f));
+  EXPECT_TRUE(test::all_close(results, std::vector<float>{0, 0, 3.3}, 1e-1f));
 }
 
 auto server_client_gc_relu_packed_test = [](size_t element_count,
@@ -149,33 +172,31 @@ auto server_client_gc_relu_packed_test = [](size_t element_count,
   auto backend = Backend::create("${BACKEND_NAME}");
   auto he_backend = static_cast<HESealBackend*>(backend.get());
 
-  if (complex_packing) {
-    he_backend->update_encryption_parameters(
-        HESealEncryptionParameters::default_complex_packing_parms());
-  }
-
   Shape shape{batch_size, element_count};
   auto a = std::make_shared<op::Parameter>(element::f32, shape);
-  std::shared_ptr<Function> f;
-
   auto relu_op = std::make_shared<op::Relu>(a);
-  f = std::make_shared<Function>(relu_op, ParameterVector{a});
+  auto f = std::make_shared<Function>(relu_op, ParameterVector{a});
 
   bool packed = batch_size > 1;
-
   std::string tensor_config{"client_input,encrypt"};
   if (packed) {
     tensor_config.append(",packed");
   }
+  std::map<std::string, std::string> config_map{
+      {"enable_client", "true"},
+      {"enable_gc", "true"},
+      {a->get_name(), tensor_config},
+      {"mask_gc_inputs", bool_to_string(mask_gc_inputs)},
+      {"mask_gc_outputs", bool_to_string(mask_gc_outputs)}};
+
+  if (complex_packing) {
+    config_map["encryption_parameters"] = gc_param_real_str;
+  } else {
+    config_map["encryption_parameters"] = gc_param_complex_str;
+  }
+
   std::string error_str;
-  he_backend->set_config(
-      std::map<std::string, std::string>{
-          {"enable_client", "true"},
-          {"enable_gc", "true"},
-          {a->get_name(), tensor_config},
-          {"mask_gc_inputs", bool_to_string(mask_gc_inputs)},
-          {"mask_gc_outputs", bool_to_string(mask_gc_outputs)}},
-      error_str);
+  he_backend->set_config(config_map, error_str);
 
   NGRAPH_INFO << "complex_packing " << complex_packing;
   NGRAPH_INFO << "mask_gc_inputs " << mask_gc_inputs;
@@ -363,5 +384,4 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in) {
 NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in_out) {
   server_client_gc_relu_packed_test(100, 2, true, true, true);
 }
-
 }  // namespace ngraph::runtime::he
