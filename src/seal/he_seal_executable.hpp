@@ -47,8 +47,6 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] function Function in the executable
   /// \param[in] enable_performance_collection Unused: TODO(fboemer) use
   /// \param[in] he_seal_backend Backend storing encryption context
-  /// \param[in] enable_client Whether or not to rely on a client to store the
-  /// secret key
   HESealExecutable(const std::shared_ptr<Function>& function,
                    bool enable_performance_collection,
                    HESealBackend& he_seal_backend);
@@ -118,7 +116,7 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] pb_message Message to process
   void handle_client_ciphers(const pb::TCPMessage& pb_message);
 
-  /// \brief Processes a client message with ciphertextss after a ReLU function
+  /// \brief Processes a client message with ciphertexts after a ReLU function
   /// \param[in] pb_message Message to process
   void handle_relu_result(const pb::TCPMessage& pb_message);
 

@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <limits>
+#include <optional>
 #include <tuple>
 #include <unordered_set>
 
@@ -515,12 +516,12 @@ void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& pb_message) {
 
   const ParameterVector& input_parameters = get_parameters();
 
-  /// \brief Looks for a parameter which matches a given tensor name
-  /// \param[in] tensor_name Tensor name to match against
-  /// \param[out] matching_idx Will be populated if a match is found
-  /// \returns Whether or not a matching parameter shape has been found
-  auto find_matching_parameter_index = [&](const std::string& tensor_name,
-                                           size_t& matching_idx) {
+  /// Looks for a parameter which matches a given tensor name
+  /// tensor_name Tensor name to match against
+  /// \returns parameter_idx if a matching parameter shape has been found,
+  /// std::nullopt otherwise
+  auto find_matching_parameter_index =
+      [&](const std::string& tensor_name) -> std::optional<size_t> {
     NGRAPH_HE_LOG(5) << "Calling find_matching_parameter_index(" << tensor_name
                      << ")";
     for (size_t param_idx = 0; param_idx < input_parameters.size();
@@ -534,12 +535,11 @@ void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& pb_message) {
       if (param_originates_from_name(*parameter, tensor_name)) {
         NGRAPH_HE_LOG(5) << "Param " << tensor_name << " matches at index "
                          << param_idx;
-        matching_idx = param_idx;
-        return true;
+        return std::optional<size_t>{param_idx};
       }
     }
     NGRAPH_HE_LOG(5) << "Could not find tensor " << tensor_name;
-    return false;
+    return std::nullopt;
   };
 
   auto& pb_tensor = pb_message.he_tensors(0);
@@ -549,19 +549,20 @@ void HESealExecutable::handle_client_ciphers(const pb::TCPMessage& pb_message) {
   set_batch_size(HETensor::batch_size(shape, pb_tensor.packed()));
   NGRAPH_HE_LOG(5) << "Offset " << pb_tensor.offset();
 
-  size_t param_idx;
-  NGRAPH_CHECK(find_matching_parameter_index(pb_tensor.name(), param_idx),
-               "Could not find matching parameter name ", pb_tensor.name());
+  std::optional<size_t> param_idx =
+      find_matching_parameter_index(pb_tensor.name());
+  NGRAPH_CHECK(param_idx, "Could not find matching parameter name ",
+               pb_tensor.name());
 
-  if (m_client_inputs[param_idx] == nullptr) {
+  if (m_client_inputs[param_idx.value()] == nullptr) {
     auto he_tensor = HETensor::load_from_pb_tensor(
         pb_tensor, *m_he_seal_backend.get_ckks_encoder(),
         m_he_seal_backend.get_context(), *m_he_seal_backend.get_encryptor(),
         *m_he_seal_backend.get_decryptor(),
         m_he_seal_backend.get_encryption_parameters());
-    m_client_inputs[param_idx] = he_tensor;
+    m_client_inputs[param_idx.value()] = he_tensor;
   } else {
-    HETensor::load_from_pb_tensor(m_client_inputs[param_idx], pb_tensor,
+    HETensor::load_from_pb_tensor(m_client_inputs[param_idx.value()], pb_tensor,
                                   m_he_seal_backend.get_context());
   }
 
