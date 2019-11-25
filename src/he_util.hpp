@@ -77,10 +77,6 @@ inline bool string_to_bool(const std::string& string,
   return string_to_bool(string.c_str(), default_value);
 }
 
-inline bool flag_to_bool(const std::string& flag, bool default_value = false) {
-  return flag_to_bool(flag.c_str(), default_value);
-}
-
 inline std::string bool_to_string(const bool b) {
   std::ostringstream ss;
   ss << std::boolalpha << b;
@@ -107,7 +103,7 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type);
 
 element::Type pb_type_to_type(pb::HETensor_ElementType pb_type);
 
-inline pb::Function node_to_proto_function(
+inline pb::Function node_to_pb_function(
     const NodeWrapper& node_wrapper,
     std::unordered_map<std::string, std::string> extra_configs = {}) {
   const Node& node = *node_wrapper.get_node();

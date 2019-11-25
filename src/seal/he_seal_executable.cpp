@@ -253,11 +253,13 @@ bool HESealExecutable::server_setup() {
     NGRAPH_HE_LOG(1) << "Starting server";
     start_server();
 
+#ifdef NGRAPH_HE_ABY_ENABLE
     if (enable_garbled_circuits()) {
       m_aby_executor = std::make_unique<aby::ABYServerExecutor>(
           *this, std::string("yao"), std::string("0.0.0.0"), 34001, 128, 64, 2,
           m_he_seal_backend.num_garbled_circuit_threads());
     }
+#endif
 
     std::stringstream param_stream;
     m_he_seal_backend.get_encryption_parameters().save(param_stream);
@@ -424,11 +426,13 @@ void HESealExecutable::handle_relu_result(const pb::TCPMessage& pb_message) {
         he_tensor->data(result_idx);
   }
 
+#ifdef NGRAPH_HE_ABY_ENABLE
   if (enable_garbled_circuits()) {
     NGRAPH_INFO << "Performing garbled circuits output mask correction";
     m_aby_executor->post_process_aby_circuit(proto_msg.function().function(),
                                              he_tensor);
   }
+#endif
 
   m_relu_done_count += result_count;
   m_relu_cond.notify_all();
@@ -1341,7 +1345,7 @@ void HESealExecutable::generate_calls(
       throw unsupported_op("Unsupported op '" + op->description() + "'");
 #pragma clang diagnostic pop
   }
-}  // namespace he
+}
 
 void HESealExecutable::handle_server_max_pool_op(
     const std::shared_ptr<HETensor>& arg, const std::shared_ptr<HETensor>& out,
@@ -1470,7 +1474,7 @@ void HESealExecutable::handle_server_relu_op(
 
     pb::TCPMessage proto_msg;
     proto_msg.set_type(pb::TCPMessage_Type_REQUEST);
-    *proto_msg.mutable_function() = node_to_proto_function(
+    *proto_msg.mutable_function() = node_to_pb_function(
         node_wrapper,
         {{"enable_gc", bool_to_string(enable_garbled_circuits())},
          {"num_aby_parties",
@@ -1486,32 +1490,35 @@ void HESealExecutable::handle_server_relu_op(
     NGRAPH_INFO << "relu tensor shape " << relu_tensor->get_shape()
                 << " with batch size " << relu_tensor->get_batch_size();
 
+#ifdef NGRAPH_HE_ABY_ENABLE
     if (enable_garbled_circuits()) {
       // Masks input values
       m_aby_executor->prepare_aby_circuit(function_str, relu_tensor);
     }
+#endif
 
-    std::vector<pb::HETensor> proto_tensors;
-    relu_tensor->write_to_protos(proto_tensors);
-    for (const auto& proto_tensor : proto_tensors) {
+    const auto pb_tensors = relu_tensor->write_to_pb_tensors();
+    for (const auto& pb_tensor : pb_tensors) {
       pb::TCPMessage write_msg;
       write_msg.set_type(pb::TCPMessage_Type_REQUEST);
-      *write_msg.mutable_function() = node_to_proto_function(
+      *write_msg.mutable_function() = node_to_pb_function(
           node_wrapper,
           {{"enable_gc", bool_to_string(enable_garbled_circuits())},
            {"num_aby_parties",
             std::to_string(m_he_seal_backend.num_garbled_circuit_threads())}});
 
-      *write_msg.add_he_tensors() = proto_tensor;
+      *write_msg.add_he_tensors() = pb_tensor;
       TCPMessage relu_message(std::move(write_msg));
 
       NGRAPH_HE_LOG(5) << "Server writing relu request message";
       m_session->write_message(std::move(relu_message));
 
+#ifdef NGRAPH_HE_ABY_ENABLE
       if (enable_garbled_circuits()) {
         m_aby_executor->run_aby_circuit(function_str, relu_tensor);
         NGRAPH_INFO << "Server done running relu circuit";
       }
+#endif
     }
   };
 

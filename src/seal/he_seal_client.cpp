@@ -99,16 +99,6 @@ void HESealClient::set_seal_context() {
   m_ckks_encoder = std::make_shared<seal::CKKSEncoder>(m_context);
 }
 
-void HESealClient::init_aby_executor(size_t num_parties) {
-  NGRAPH_INFO << "Initializing ABY executor with " << num_parties
-              << " aby parties";
-
-  if (m_aby_executor == nullptr) {
-    m_aby_executor = std::make_unique<aby::ABYClientExecutor>(
-        std::string("yao"), *this, m_hostname, 34001, 128, 64, 2, num_parties);
-  }
-}
-
 void HESealClient::send_public_and_relin_keys() {
   NGRAPH_HE_LOG(3) << "Client sending public and relin keys";
   pb::TCPMessage message;
@@ -300,23 +290,24 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
 
   const std::string& function = message.function().function();
   const json& js = json::parse(function);
-  bool enable_gc = flag_to_bool(std::string(js.at("enable_gc")));
+
+  bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
   NGRAPH_INFO << "Client relu with gc? " << enable_gc;
 
   if (enable_gc) {
+#ifdef NGRAPH_HE_ABY_ENABLE
     NGRAPH_HE_LOG(3) << "Client relu with GC";
-
     NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
                  "Number of ABY parties not specified");
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
     NGRAPH_INFO << "parsed num_aby_parties " << num_aby_parties;
     init_aby_executor(num_aby_parties);
-
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
     m_aby_executor->run_aby_circuit(function, he_tensor);
     NGRAPH_INFO << "Client done running aby circuit";
+#endif
   } else {
-    size_t result_count = proto_tensor->data_size();
+    size_t result_count = pb_tensor->data_size();
     NGRAPH_INFO << "Performing relu without gc";
 #pragma omp parallel for
     for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
@@ -356,23 +347,22 @@ void HESealClient::handle_bounded_relu_request(pb::TCPMessage&& message) {
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
 
-  bool enable_gc = flag_to_bool(std::string(js.at("enable_gc")));
+  bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
 
   if (enable_gc) {
+#ifdef NGRAPH_HE_ABY_ENABLE
     NGRAPH_HE_LOG(3) << "Client bounded relu with GC";
-
     NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
                  "Number of ABY parties not specified");
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
     NGRAPH_INFO << "parsed num_aby_parties " << num_aby_parties;
     init_aby_executor(num_aby_parties);
-
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
     m_aby_executor->run_aby_circuit(function, he_tensor);
     NGRAPH_INFO << "Client done running aby circuit";
-
+#endif
   } else {
-    size_t result_count = proto_tensor->data_size();
+    size_t result_count = pb_tensor->data_size();
 #pragma omp parallel for
     for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
       scalar_bounded_relu_seal(

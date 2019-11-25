@@ -25,7 +25,6 @@
 #include <thread>
 #include <vector>
 
-#include "aby/aby_server_executor.hpp"
 #include "boost/asio.hpp"
 #include "he_op_annotations.hpp"
 #include "he_tensor.hpp"
@@ -39,9 +38,12 @@
 #include "tcp/tcp_message.hpp"
 #include "tcp/tcp_session.hpp"
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+#include "aby/aby_server_executor.hpp"
 namespace ngraph::runtime::aby {
 class ABYServerExecutor;
 }
+#endif
 
 namespace ngraph::runtime::he {
 
@@ -156,9 +158,6 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] pb_message from which to load the public key
   void load_public_key(const pb::TCPMessage& pb_message);
 
-  // TODO(fboemer): remove! FOR DEBUGGING ONLY
-  void load_secret_key(const pb::TCPMessage& proto_msg);
-
   /// \brief Loads the evaluation key from the message
   /// \param[in] pb_message from which to load the evluation key
   void load_eval_key(const pb::TCPMessage& pb_message);
@@ -219,8 +218,10 @@ class HESealExecutable : public runtime::Executable {
   size_t m_batch_size;
   size_t m_port;  // Which port the server is hosted at
 
-  // ABY-related members
+// ABY-related members
+#ifdef NGRAPH_HE_ABY_ENABLE
   std::unique_ptr<aby::ABYServerExecutor> m_aby_executor;
+#endif
 
   std::unordered_map<std::shared_ptr<const Node>, stopwatch> m_timer_map;
   std::vector<NodeWrapper> m_wrapped_nodes;

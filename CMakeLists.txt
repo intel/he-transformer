@@ -22,8 +22,7 @@ project(he_transformer LANGUAGES CXX)
 
 # set directory where the custom finders live
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-
-message("CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
 
 if(CMAKE_BUILD_TYPE)
   set(RELEASE_TYPES
@@ -131,6 +130,10 @@ if (NGRAPH_HE_CODE_COVERAGE)
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -g -fprofile-instr-generate -fcoverage-mapping")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
+if (NGRAPH_HE_ABY_ENABLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNGRAPH_HE_ABY_ENABLE")
 endif()
 
 if(NGRAPH_HE_CLANG_TIDY)
@@ -258,7 +261,9 @@ endif()
 include(cmake/seal.cmake)
 include(cmake/boost.cmake)
 include(cmake/protobuf.cmake)
-include(cmake/aby.cmake)
+if (NGRAPH_HE_ABY_ENABLE)
+  include(cmake/aby.cmake)
+endif()
 
 # HE transformer source and test directories
 add_subdirectory(src)

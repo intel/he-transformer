@@ -22,7 +22,9 @@
 #include <string>
 #include <vector>
 
+#ifdef NGRAPH_HE_ABY_ENABLE
 #include "aby/aby_client_executor.hpp"
+#endif
 #include "boost/asio.hpp"
 #include "he_tensor.hpp"
 #include "he_util.hpp"
@@ -128,7 +130,18 @@ class HESealClient {
   /// packing
   bool complex_packing() const { return m_encryption_params.complex_packing(); }
 
-  void init_aby_executor(size_t num_parties);
+#ifdef NGRAPH_HE_ABY_ENABLE
+  inline void init_aby_executor(size_t num_parties) {
+    NGRAPH_INFO << "Initializing ABY executor with " << num_parties
+                << " aby parties";
+
+    if (m_aby_executor == nullptr) {
+      m_aby_executor = std::make_unique<aby::ABYClientExecutor>(
+          std::string("yao"), *this, m_hostname, 34001, 128, 64, 2,
+          num_parties);
+    }
+  }
+#endif
 
   /// \brief Returns the scale of the encryption parameters
   double scale() const { return m_encryption_params.scale(); }
@@ -156,7 +169,10 @@ class HESealClient {
   std::string m_hostname;  // Hostname of server to connect to
 
   std::unique_ptr<TCPClient> m_tcp_client;
+
+#ifdef NGRAPH_HE_ABY_ENABLE
   std::unique_ptr<aby::ABYClientExecutor> m_aby_executor;
+#endif
   HESealEncryptionParameters m_encryption_params;
   std::shared_ptr<seal::PublicKey> m_public_key;
   std::shared_ptr<seal::SecretKey> m_secret_key;
@@ -179,5 +195,5 @@ class HESealClient {
   HETensorConfigMap<double> m_input_config;
   std::shared_ptr<HETensor> m_result_tensor;
   std::vector<double> m_results;  // Function outputs
-};
+};                                // namespace ngraph::runtime::he
 }  // namespace ngraph::runtime::he

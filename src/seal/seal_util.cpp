@@ -22,7 +22,9 @@
 #include <limits>
 #include <utility>
 
+#ifdef NGRAPH_HE_ABY_ENABLE
 #include "aby/aby_util.hpp"
+#endif
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/runtime/tensor.hpp"
 #include "seal/he_seal_backend.hpp"
@@ -309,13 +311,14 @@ void encode(double value, const element::Type& element_type, double scale,
   int coeff_bit_count = static_cast<int>(log2(fabs(value))) + 2;
   if (coeff_bit_count >= context_data.total_coeff_modulus_bit_count()) {
     {
-      // NGRAPH_ERR << "Failed to encode " << value / scale << " at scale "
-      //           << scale;
-      // NGRAPH_ERR << "coeff_bit_count " << coeff_bit_count;
-      // NGRAPH_ERR << "coeff_mod_count " << coeff_mod_count;
-      // NGRAPH_ERR << "total coeff modulus bit count "
-      //           << context_data.total_coeff_modulus_bit_count();
-      // throw ngraph_error("encoded value is too large");
+#ifndef NGRAPH_HE_ABY_ENABLE
+      NGRAPH_ERR << "Failed to encode " << value / scale << " at scale "
+                 << scale;
+      NGRAPH_ERR << "coeff_bit_count " << coeff_bit_count;
+      NGRAPH_ERR << "total coeff modulus bit count "
+                 << context_data.total_coeff_modulus_bit_count();
+      throw ngraph_error("encoded value is too large");
+#endif
     }
   }
 
@@ -503,13 +506,6 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
             seal::CKKSEncoder& ckks_encoder, size_t batch_size,
             double mod_interval) {
-  // TODO(fboemer): remove
-  static double prev_mod_interval{0.0};
-  if (mod_interval != prev_mod_interval) {
-    prev_mod_interval = mod_interval;
-    NGRAPH_HE_LOG(5) << "Decoding with mod_interval " << mod_interval;
-  }
-
   if (input.complex_packing()) {
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);
@@ -518,16 +514,12 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
     ckks_encoder.decode(input.plaintext(), output);
   }
   output.resize(batch_size);
-  // NGRAPH_HE_LOG(5) << "before centering " << output;
-  // TODO: pass in batch size?
+
+#ifdef NGRAPH_HE_ABY_ENABLE
   for (size_t i = 0; i < output.size(); ++i) {
     output[i] = runtime::aby::mod_reduce_zero_centered(output[i], mod_interval);
   }
-
-  static int decode_count = 0;
-  NGRAPH_HE_LOG(5) << "\t\tdecode " << decode_count << " after centering "
-                   << output;
-  decode_count++;
+#endif
 }
 
 void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
@@ -549,7 +541,7 @@ void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
                  "Empty coeff moduli in decrypting ciphertext");
 
     // TODO(fboemer): remove
-    bool dec_all = flag_to_bool(std::getenv("ABY_DECRYPT"), false);
+    bool dec_all = string_to_bool(std::getenv("ABY_DECRYPT"), false);
     if (dec_all) {
       for (const auto& coeff_mod : coeff_moduli) {
         q_over_scale *= coeff_mod.value();
