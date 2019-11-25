@@ -45,7 +45,7 @@ namespace ngraph::runtime::he {
 HESealClient::HESealClient(const std::string& hostname, const size_t port,
                            const size_t batch_size,
                            const HETensorConfigMap<double>& inputs)
-    : m_batch_size{batch_size}, m_input_config{inputs} {
+    : m_hostname{hostname}, m_batch_size{batch_size}, m_input_config{inputs} {
   NGRAPH_HE_LOG(5) << "Creating HESealClient from config";
   NGRAPH_CHECK(m_input_config.size() == 1,
                "Client supports only one input parameter");
@@ -110,14 +110,6 @@ void HESealClient::send_public_and_relin_keys() {
   pb::PublicKey public_key;
   public_key.set_public_key(pk_stream.str());
   *message.mutable_public_key() = public_key;
-
-  // Set secret key
-  NGRAPH_ERR << "WARNING: SENDING SECRET KEY!!!!";
-  std::stringstream sk_stream;
-  m_secret_key->save(sk_stream);
-  pb::SecretKey secret_key;
-  secret_key.set_secret_key(sk_stream.str());
-  *message.mutable_secret_key() = secret_key;
 
   // Set relinearization keys
   if (m_context->using_keyswitching()) {
@@ -286,7 +278,7 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
   auto he_tensor = HETensor::load_from_pb_tensor(
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
-  NGRAPH_INFO << "Loaded from proto tensor";
+  NGRAPH_INFO << "Loaded from pb tensor";
 
   const std::string& function = message.function().function();
   const json& js = json::parse(function);
