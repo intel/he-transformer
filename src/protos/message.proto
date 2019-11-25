@@ -15,7 +15,6 @@ message TCPMessage {
   EncryptionParameters encryption_parameters = 3;
   EvaluationKey eval_key = 4;
   PublicKey public_key = 5;
-  SecretKey secret_key = 6;
   repeated HETensor he_tensors = 7;
 }
 
@@ -29,10 +28,6 @@ message EvaluationKey {
 
 message PublicKey {
   bytes public_key = 1;
-}
-
-message SecretKey {
-  bytes secret_key = 1;
 }
 
 message Function {
