@@ -72,7 +72,6 @@ def test_cryptonets_relu(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
 
     x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name='input')
-    y_ = tf.compat.v1.placeholder(tf.float32, [None, 10])
 
     # Create the model
     y_conv = cryptonets_relu_test_squashed(x)
@@ -81,16 +80,15 @@ def test_cryptonets_relu(FLAGS):
     print('config', config)
 
     with tf.compat.v1.Session(config=config) as sess:
-        x_test = x_test[:FLAGS.batch_size]
-        y_test = y_test[:FLAGS.batch_size]
+        x_test = x_test[FLAGS.start_batch : FLAGS.start_batch + FLAGS.batch_size]
         start_time = time.time()
-        y_conv_val = y_conv.eval(feed_dict={x: x_test, y_: y_test})
+        y_conv_val = y_conv.eval(feed_dict={x: x_test})
         elasped_time = (time.time() - start_time)
         print("total time(s)", np.round(elasped_time, 3))
 
     if not FLAGS.enable_client:
-        y_test_batch = y_test[:FLAGS.batch_size]
-        y_label_batch = np.argmax(y_test_batch, 1)
+        y_test = y_test[FLAGS.start_batch : FLAGS.start_batch + FLAGS.batch_size]
+        y_label_batch = np.argmax(y_test, 1)
 
         if FLAGS.batch_size < 60:
             print('y_conv_val', np.round(y_conv_val, 2))
