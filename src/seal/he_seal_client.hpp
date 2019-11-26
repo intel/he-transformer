@@ -22,6 +22,9 @@
 #include <string>
 #include <vector>
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+#include "aby/aby_client_executor.hpp"
+#endif
 #include "boost/asio.hpp"
 #include "he_tensor.hpp"
 #include "he_util.hpp"
@@ -30,8 +33,11 @@
 #include "tcp/tcp_client.hpp"
 #include "tcp/tcp_message.hpp"
 
-namespace ngraph::runtime::he {
+namespace ngraph::runtime::aby {
+class ABYClientExecutor;
+}
 
+namespace ngraph::runtime::he {
 /// (tensor_name : (configuration, data)
 template <class T>
 using HETensorConfigMap =
@@ -124,11 +130,46 @@ class HESealClient {
   /// packing
   bool complex_packing() const { return m_encryption_params.complex_packing(); }
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+  inline void init_aby_executor(size_t num_parties) {
+    if (m_aby_executor == nullptr) {
+      m_aby_executor = std::make_unique<aby::ABYClientExecutor>(
+          std::string("yao"), *this, m_hostname, 34001, 128, 64, 2,
+          num_parties);
+    }
+  }
+#endif
+
   /// \brief Returns the scale of the encryption parameters
   double scale() const { return m_encryption_params.scale(); }
 
+  const HESealEncryptionParameters& encryption_paramters() const {
+    return m_encryption_params;
+  }
+
+  /// \brief Returns the CKKS encoder
+  const std::shared_ptr<seal::CKKSEncoder> get_ckks_encoder() const {
+    return m_ckks_encoder;
+  }
+
+  /// \brief Returns pointer to encryptor
+  const std::shared_ptr<seal::Encryptor> get_encryptor() const {
+    return m_encryptor;
+  }
+
+  /// \brief Returns pointer to SEAL context
+  const std::shared_ptr<seal::SEALContext> get_context() const {
+    return m_context;
+  }
+
  private:
+  std::string m_hostname;  // Hostname of server to connect to
+
   std::unique_ptr<TCPClient> m_tcp_client;
+
+#ifdef NGRAPH_HE_ABY_ENABLE
+  std::unique_ptr<aby::ABYClientExecutor> m_aby_executor;
+#endif
   HESealEncryptionParameters m_encryption_params;
   std::shared_ptr<seal::PublicKey> m_public_key;
   std::shared_ptr<seal::SecretKey> m_secret_key;

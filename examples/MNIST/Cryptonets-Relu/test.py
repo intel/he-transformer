@@ -92,6 +92,9 @@ def test_cryptonets_relu(FLAGS):
         y_test_batch = y_test[:FLAGS.batch_size]
         y_label_batch = np.argmax(y_test_batch, 1)
 
+        if FLAGS.batch_size < 60:
+            print('y_conv_val', np.round(y_conv_val, 2))
+
         y_pred = np.argmax(y_conv_val, 1)
         correct_prediction = np.equal(y_pred, y_label_batch)
         error_count = np.size(correct_prediction) - np.sum(correct_prediction)
@@ -107,6 +110,7 @@ if __name__ == '__main__':
 
     if unparsed:
         print('Unparsed flags:', unparsed)
+        exit(1)
     if FLAGS.encrypt_server_data and FLAGS.enable_client:
         raise Exception(
             "encrypt_server_data flag only valid when client is not enabled. Note: the client can specify whether or not to encrypt the data using 'encrypt' or 'plain' in the configuration map"

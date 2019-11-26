@@ -38,6 +38,13 @@
 #include "tcp/tcp_message.hpp"
 #include "tcp/tcp_session.hpp"
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+#include "aby/aby_server_executor.hpp"
+namespace ngraph::runtime::aby {
+class ABYServerExecutor;
+}
+#endif
+
 namespace ngraph::runtime::he {
 
 /// \brief Class representing a function to execute
@@ -63,6 +70,11 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Returns whether or not the client is enabled
   bool enable_client() const { return m_he_seal_backend.enable_client(); }
+
+  /// \brief Returns whether or not the client is enabled with garbled circuits
+  bool enable_garbled_circuits() const {
+    return m_he_seal_backend.garbled_circuit_enabled();
+  }
 
   void update_he_op_annotations();
 
@@ -100,6 +112,12 @@ class HESealExecutable : public runtime::Executable {
   bool complex_packing() const {
     return m_he_seal_backend.get_encryption_parameters().complex_packing();
   }
+
+  inline const HESealBackend& he_seal_backend() const {
+    return m_he_seal_backend;
+  }
+
+  inline HESealBackend& he_seal_backend() { return m_he_seal_backend; }
 
   /// \brief Checks whether or not the client supports the function
   /// \throws ngraph_error if function is unsupported
@@ -144,20 +162,18 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] pb_message from which to load the evluation key
   void load_eval_key(const pb::TCPMessage& pb_message);
 
-  /// \brief Processes the ReLU operation if the client is enabled
-  /// \param[in] arg Tensor argumnet
+  /// \brief Processes the ReLU operation using a client
+  /// \param[in] arg Tensor argument
   /// \param[out] out Tensor result
   /// \param[in] node_wrapper Wrapper around operation to perform
-  // TODO(fboemer): rename
   void handle_server_relu_op(const std::shared_ptr<HETensor>& arg,
                              const std::shared_ptr<HETensor>& out,
                              const NodeWrapper& node_wrapper);
 
-  /// \brief Processes the MaxPool operation if the client is enabled
-  /// \param[in] arg Tensor argumnet
+  /// \brief Processes the MaxPool operation using a client
+  /// \param[in] arg Tensor argument
   /// \param[out] out Tensor result
   /// \param[in] node_wrapper Wrapper around operation to perform
-  // TODO(fboemer): rename
   void handle_server_max_pool_op(const std::shared_ptr<HETensor>& arg,
                                  const std::shared_ptr<HETensor>& out,
                                  const NodeWrapper& node_wrapper);
@@ -201,6 +217,11 @@ class HESealExecutable : public runtime::Executable {
   bool m_server_setup{false};
   size_t m_batch_size;
   size_t m_port;  // Which port the server is hosted at
+
+// ABY-related members
+#ifdef NGRAPH_HE_ABY_ENABLE
+  std::unique_ptr<aby::ABYServerExecutor> m_aby_executor;
+#endif
 
   std::unordered_map<std::shared_ptr<const Node>, stopwatch> m_timer_map;
   std::vector<NodeWrapper> m_wrapped_nodes;

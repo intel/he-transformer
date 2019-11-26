@@ -7,10 +7,19 @@ convolution_2d_2items_plain_cipher_complex_packed
 # Might need to add "packed" attribute to HEPlaintext, or modify broadcast call
 broadcast_scalar_vector_plain_real_packed
 broadcast_scalar_vector_plain_complex_packed
+broadcast_scalar_vector_cipher_real_packed
+broadcast_scalar_vector_cipher_complex_packed
+
 broadcast_scalar_matrix_plain_real_packed
 broadcast_scalar_matrix_plain_complex_packed
+broadcast_scalar_matrix_cipher_real_packed
+broadcast_scalar_matrix_cipher_complex_packed
+
 broadcast_scalar_tensor_plain_real_packed
 broadcast_scalar_tensor_plain_complex_packed
+broadcast_scalar_tensor_cipher_real_packed
+broadcast_scalar_tensor_cipher_complex_packed
+
 
 # Concat packed
 concat_matrix_rowise_plain_real_packed
@@ -67,9 +76,18 @@ max_vector_zero_plain_complex_packed
 # Divide. Need to check complex packing behavior
 divide_2_3_plain_cipher_complex_packed
 
-# Seems to hang sometimes
-# server_client_provenance_tag
-server_client_add_3_multiple_parameters_plain
 
 # Error not caught if using multi-threading
 mult_end_of_depth
+
+# Seems to hang sometimes
+server_client_add_3_multiple_parameters_plain
+# server_client_provenance_tag
+server_client_add_3_multiple_parameters_plain
+
+# Inaccurate values
+server_client_gc_300000_1_relu_real_mask_in_out
+
+# ABY
+server_client_gc_845_400_relu_real_mask_in_out
+# server_client_gc_add_3_relu

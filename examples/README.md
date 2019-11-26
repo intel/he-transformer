@@ -1,5 +1,4 @@
 # Python example
-
 This example demonstrates a simple example of a small matrix multiplication and addition. This example depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with the ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`.
 
 The examples rely on numpy, so first run
@@ -22,7 +21,7 @@ By default, the default encryption parameters will be used. To specify a non-def
 python $HE_TRANSFORMER/examples/ax.py --backend=HE_SEAL --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L1.json
  ```
 
-#  Client-server model
+# Client-server model
 In a proper deployment setting, the public key and secret key will not be stored in the same location. Instead, a client will store the secret key, and provide the backend with encrypted data.
 
 The client-server model uses python bindings. See the [README.md](https://github.com/NervanaSystems/he-transformer/tree/master/README.md) for instructions to build he-transformer with python bindings.
@@ -43,6 +42,11 @@ Once the computation is complete, the output will be returned to the client and 
 The server-client approach currently works only for functions with one result tensor.
 
 For a deep learning example using the client-server model, see the `MNIST/MLP` folder.
+
+## Multi-party computation with garbled circuits
+One downside to the above approach is the client may deduce the deep learning model weights, since it receives the pre-activation values at each layer. One work-around is to additively mask the pre-activation values with a random number before sending them to the client. Since HE computation happens in a finite field, if the random number is chosen uniformly from the field, the client will receive a uniform random number from the field, and thereby cannot deduce anything about the model weights. Then, the server and client interactively compute the activation using multi-party computation methods, such as garbled circuits (GC). The GC approach ensures the client learns only additively-masked values. After the client sends the masked encrypted post-activation values to the server, the server performs the unmasking using homomorphic addition. This approach is similar to that of (Gazelle)[https://www.usenix.org/system/files/conference/usenixsecurity18/sec18-juvekar.pdf].
+
+See the `MNIST/Cryptonets-Relu` folder for a DL example using garbled circuits.
 
 # List of command-line flags
   * `STOP_CONST_FOLD`. Set to 1 to stop constant folding optimization. Note, this speeds up the graph compilation time for large batch sizes.

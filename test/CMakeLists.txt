@@ -16,6 +16,8 @@
 
 set(SRC
     main.cpp
+    test_seal.cpp
+    test_encryption_parameters.cpp
     # src/
     test_he_op_annotations.cpp
     test_he_plaintext.cpp
@@ -42,6 +44,10 @@ set(SRC
     # test logging
     test_ngraph_he_log.cpp
     )
+
+if (NGRAPH_HE_ABY_ENABLE)
+  list(APPEND BACKEND_TEST_SRC test_aby.cpp)
+endif()
 
 set(BACKEND_TEST_SRC
     test_add.in.cpp
@@ -74,6 +80,11 @@ set(BACKEND_TEST_SRC
     test_slice.in.cpp
     test_subtract.in.cpp
     test_sum.in.cpp)
+
+if (NGRAPH_HE_ABY_ENABLE)
+  list(APPEND BACKEND_TEST_SRC test_server_client_gc.in.cpp)
+endif()
+
 
 set(MANIFEST ${PROJECT_SOURCE_DIR}/src/seal/unit_test.manifest)
 set(BACKEND_NAME "HE_SEAL")
@@ -118,6 +129,10 @@ target_link_libraries(unit-test PRIVATE ngraph_test_util)
 target_link_libraries(unit-test PRIVATE ngraph libgtest pthread)
 target_link_libraries(unit-test PRIVATE he_seal_backend libseal)
 target_link_libraries(unit-test PRIVATE protobuf::libprotobuf)
+
+if (NGRAPH_HE_ABY_ENABLE)
+  target_link_libraries(unit-test PRIVATE libaby)
+endif()
 
 add_custom_target(check
                   COMMAND ${PROJECT_BINARY_DIR}/test/unit-test \${ARGS}

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "boost/asio.hpp"
+#include "he_util.hpp"
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/log.hpp"
 #include "nlohmann/json.hpp"
@@ -44,7 +45,7 @@ namespace ngraph::runtime::he {
 HESealClient::HESealClient(const std::string& hostname, const size_t port,
                            const size_t batch_size,
                            const HETensorConfigMap<double>& inputs)
-    : m_batch_size{batch_size}, m_input_config{inputs} {
+    : m_hostname{hostname}, m_batch_size{batch_size}, m_input_config{inputs} {
   NGRAPH_HE_LOG(5) << "Creating HESealClient from config";
   NGRAPH_CHECK(m_input_config.size() == 1,
                "Client supports only one input parameter");
@@ -245,10 +246,10 @@ void HESealClient::handle_result(const pb::TCPMessage& message) {
     size_t data_size =
         m_result_tensor->data().size() * m_result_tensor->get_batch_size();
     m_results.resize(data_size);
-
     const auto& type = m_result_tensor->get_element_type();
     size_t num_bytes = data_size * type.size();
     auto bytes = ngraph_malloc(num_bytes);
+
     m_result_tensor->read(bytes, num_bytes);
 
     for (size_t i = 0; i < data_size; ++i) {
@@ -278,12 +279,29 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
 
+  const std::string& function = message.function().function();
+  const json& js = json::parse(function);
+
+  bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
+
+  if (enable_gc) {
+#ifdef NGRAPH_HE_ABY_ENABLE
+    NGRAPH_HE_LOG(3) << "Client relu with GC";
+    NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
+                 "Number of ABY parties not specified");
+    size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
+    init_aby_executor(num_aby_parties);
+    m_aby_executor->prepare_aby_circuit(function, he_tensor);
+    m_aby_executor->run_aby_circuit(function, he_tensor);
+#endif
+  } else {
+    size_t result_count = pb_tensor->data_size();
 #pragma omp parallel for
-  for (size_t result_idx = 0; result_idx < pb_tensor->data_size();
-       ++result_idx) {
-    scalar_relu_seal(he_tensor->data(result_idx), he_tensor->data(result_idx),
-                     m_context->first_parms_id(), scale(), *m_ckks_encoder,
-                     *m_encryptor, *m_decryptor);
+    for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
+      scalar_relu_seal(he_tensor->data(result_idx), he_tensor->data(result_idx),
+                       m_context->first_parms_id(), scale(), *m_ckks_encoder,
+                       *m_encryptor, *m_decryptor, m_context);
+    }
   }
 
   const auto pb_output_tensors = he_tensor->write_to_pb_tensors();
@@ -315,13 +333,27 @@ void HESealClient::handle_bounded_relu_request(pb::TCPMessage&& message) {
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
 
+  bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
+
+  if (enable_gc) {
+#ifdef NGRAPH_HE_ABY_ENABLE
+    NGRAPH_HE_LOG(3) << "Client bounded relu with GC";
+    NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
+                 "Number of ABY parties not specified");
+    size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
+    init_aby_executor(num_aby_parties);
+    m_aby_executor->prepare_aby_circuit(function, he_tensor);
+    m_aby_executor->run_aby_circuit(function, he_tensor);
+#endif
+  } else {
+    size_t result_count = pb_tensor->data_size();
 #pragma omp parallel for
-  for (size_t result_idx = 0; result_idx < pb_tensor->data_size();
-       ++result_idx) {
-    scalar_bounded_relu_seal(he_tensor->data(result_idx),
-                             he_tensor->data(result_idx), bound,
-                             m_context->first_parms_id(), scale(),
-                             *m_ckks_encoder, *m_encryptor, *m_decryptor);
+    for (size_t result_idx = 0; result_idx < result_count; ++result_idx) {
+      scalar_bounded_relu_seal(
+          he_tensor->data(result_idx), he_tensor->data(result_idx), bound,
+          m_context->first_parms_id(), scale(), *m_ckks_encoder, *m_encryptor,
+          *m_decryptor, m_context);
+    }
   }
   const auto& pb_output_tensors = he_tensor->write_to_pb_tensors();
   NGRAPH_CHECK(pb_output_tensors.size() == 1,
@@ -361,7 +393,8 @@ void HESealClient::handle_max_pool_request(pb::TCPMessage&& message) {
   max_pool_seal(he_tensor->data(), post_max_he_tensor.data(),
                 Shape{1, 1, cipher_count}, Shape{1, 1, 1}, Shape{cipher_count},
                 Strides{1}, Shape{0}, Shape{0}, m_context->first_parms_id(),
-                scale(), *m_ckks_encoder, *m_encryptor, *m_decryptor);
+                scale(), *m_ckks_encoder, *m_encryptor, *m_decryptor,
+                m_context);
 
   message.set_type(pb::TCPMessage_Type_RESPONSE);
   message.clear_he_tensors();

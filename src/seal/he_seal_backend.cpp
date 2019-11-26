@@ -73,21 +73,6 @@ void HESealBackend::generate_context() {
   auto coeff_moduli = context_data->parms().coeff_modulus();
 
   print_encryption_parameters(m_encryption_params, *m_context);
-
-  // Set barrett ratio map
-  for (const seal::SmallModulus& modulus : coeff_moduli) {
-    const std::uint64_t modulus_value = modulus.value();
-    if (modulus_value < (1UL << 31U)) {
-      std::array<std::uint64_t, 2> numerator = {0, 1};
-      std::array<std::uint64_t, 2> quotient = {0, 0};
-      seal::util::divide_uint128_uint64_inplace(numerator.data(), modulus_value,
-                                                quotient.data());
-      std::uint64_t const_ratio = quotient[0];
-
-      NGRAPH_CHECK(quotient[1] == 0, "Quotient[1] != 0 for modulus");
-      m_barrett64_ratio_map[modulus_value] = const_ratio;
-    }
-  }
 }
 
 bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
@@ -106,6 +91,29 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
       auto new_parms = HESealEncryptionParameters::parse_config_or_use_default(
           setting.c_str());
       update_encryption_parameters(new_parms);
+    } else if (option == "enable_gc") {
+      m_enable_garbled_circuit = string_to_bool(setting, false);
+      if (m_enable_garbled_circuit) {
+        NGRAPH_HE_LOG(3) << "Enabling garbled circuits from config";
+      }
+    } else if (option == "num_gc_threads") {
+      m_num_garbled_circuit_threads = flag_to_int(setting.c_str(), 1);
+      NGRAPH_HE_LOG(3) << "Setting " << m_num_garbled_circuit_threads
+                       << " garbled circuits threads from config";
+    } else if (option == "mask_gc_inputs") {
+      m_mask_gc_inputs = string_to_bool(setting, false);
+      if (m_mask_gc_inputs) {
+        NGRAPH_HE_LOG(3) << "Masking garbled circuits inputs from config";
+      } else {
+        NGRAPH_HE_LOG(3) << "Not masking garbled circuits inputs from config";
+      }
+    } else if (option == "mask_gc_outputs") {
+      m_mask_gc_outputs = string_to_bool(setting, false);
+      if (m_mask_gc_outputs) {
+        NGRAPH_HE_LOG(3) << "Masking garbled circuits outputs from config";
+      } else {
+        NGRAPH_HE_LOG(3) << "Not masking garbled circuits outputs from config";
+      }
     } else {
       std::string lower_option = to_lower(option);
       std::vector<std::string> lower_settings = split(to_lower(setting), ',');
@@ -120,7 +128,8 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
       for (const auto& lower_setting : lower_settings) {
         NGRAPH_CHECK(valid_config_settings.find(lower_setting) !=
                          valid_config_settings.end(),
-                     "Invalid config setting ", lower_setting);
+                     "Invalid config setting ", lower_setting, " for option ",
+                     option);
 
         if (lower_setting == "client_input") {
           m_config_tensors.at(tensor_name).set_from_client(true);
@@ -131,6 +140,12 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
         }
       }
     }
+  }
+
+  if (m_enable_garbled_circuit && !m_enable_client) {
+    NGRAPH_WARN << "Garbled circuit enabled without enabling client; setting "
+                   "Garbled circuit enabled to off";
+    m_enable_garbled_circuit = false;
   }
 
   bool any_config_from_client =
@@ -248,9 +263,10 @@ void HESealBackend::encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 
 void HESealBackend::decrypt(HEPlaintext& output,
                             const SealCiphertextWrapper& input,
+                            size_t batch_size,
                             const bool complex_packing) const {
   ngraph::runtime::he::decrypt(output, input, complex_packing, *m_decryptor,
-                               *m_ckks_encoder);
+                               *m_ckks_encoder, m_context, batch_size);
 }
 
 }  // namespace ngraph::runtime::he

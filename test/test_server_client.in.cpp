@@ -215,12 +215,12 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_add_3_multiple_parameters_encrypt) {
   auto backend = runtime::Backend::create("${BACKEND_NAME}");
   auto he_backend = static_cast<HESealBackend*>(backend.get());
 
-  std::string config_str = R"(
+  std::string param_str = R"(
     {
         "scheme_name" : "HE_SEAL",
         "poly_modulus_degree" : 2048,
         "security_level" : 0,
-        "coeff_modulus" : [30, 30, 30, 30, 30],
+        "coeff_modulus" : [40, 30, 30, 30, 30],
         "scale" : 1073741824
     })";
 
@@ -238,7 +238,7 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_add_3_multiple_parameters_encrypt) {
 
   std::string error_str;
   he_backend->set_config({{"enable_client", "true"},
-                          {"encryption_parameters", config_str},
+                          {"encryption_parameters", param_str},
                           {b->get_name(), "client_input,encrypt"}},
                          error_str);
 

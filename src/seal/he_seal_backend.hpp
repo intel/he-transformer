@@ -109,6 +109,9 @@ class HESealBackend : public runtime::Backend {
   ///     should use plaintext packing.
   ///     5) {"encryption_parameters" : "filename
   ///     or json string"}, which sets the encryption parameters to use.
+  ///     6) {"enable_gc": "True"/"False"}, which indicates whether or not the
+  ///     client should use garbled circuits for secure function evaluation.
+  ///     Should only be enabled if the client is enabled.
   ///
   ///     Note, entries with the same tensor key should be comma-separated,
   ///     for instance: {tensor_name : "client_input,encrypt,packed"}
@@ -177,7 +180,7 @@ class HESealBackend : public runtime::Backend {
 
   /// \brief TODO(fboemer)
   void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
-               const bool complex_packing) const;
+               size_t batch_size, const bool complex_packing) const;
 
   /// \brief Returns pointer to SEAL context
   const std::shared_ptr<seal::SEALContext> get_context() const {
@@ -240,17 +243,31 @@ class HESealBackend : public runtime::Backend {
     m_encryptor = std::make_shared<seal::Encryptor>(m_context, *m_public_key);
   }
 
-  /// \brief TODO(fboemer)
-  const std::unordered_map<std::uint64_t, std::uint64_t>& barrett64_ratio_map()
-      const {
-    return m_barrett64_ratio_map;
-  }
-
   /// \brief Returns the top-level scale used for encoding
   double get_scale() const { return m_encryption_params.scale(); }
 
   /// \brief Returns whether or not complex packing is used
   bool complex_packing() const { return m_encryption_params.complex_packing(); }
+
+  /// \brief Returns whether or not garbled circuits are supported for function
+  /// evaluation
+  bool garbled_circuit_enabled() const { return m_enable_garbled_circuit; }
+
+  /// \brief Returns whether or not garbled circuits are supported for function
+  /// evaluation
+  bool& garbled_circuit_enabled() { return m_enable_garbled_circuit; }
+
+  size_t num_garbled_circuit_threads() const {
+    return m_num_garbled_circuit_threads;
+  }
+
+  /// \brief Returns whether or not the garbled circuit inputs should be masked
+  /// for privacy
+  bool mask_gc_inputs() const { return m_mask_gc_inputs; }
+
+  /// \brief Returns whether or not the garbled circuit inputs should be masked
+  /// for privacy
+  bool mask_gc_outputs() const { return m_mask_gc_outputs; }
 
   /// \brief Returns whether or not the client is enabled
   bool enable_client() const { return m_enable_client; }
@@ -271,8 +288,37 @@ class HESealBackend : public runtime::Backend {
         ->chain_index();
   }
 
+  /// \brief Switches a ciphertext to the lowest modulus in the current context
+  /// \param[in] cipher Ciphertext to modulus switch
+  inline void mod_switch_to_lowest(SealCiphertextWrapper& cipher) {
+    auto last_parms_id = get_context()->last_parms_id();
+    try {
+      get_evaluator()->mod_switch_to_inplace(cipher.ciphertext(),
+                                             last_parms_id);
+    } catch (const std::exception& e) {
+      NGRAPH_ERR << "Error mod_switch_to_inplace: " << e.what();
+      throw(e);
+    }
+  }
+
+  /// \brief Switches a ciphertext to the lowest modulus in the current context
+  /// \param[in] cipher Ciphertext to modulus switch
+  inline void rescale_to_lowest(SealCiphertextWrapper& cipher) {
+    auto last_parms_id = get_context()->last_parms_id();
+    try {
+      get_evaluator()->rescale_to_inplace(cipher.ciphertext(), last_parms_id);
+    } catch (const std::exception& e) {
+      NGRAPH_ERR << "Error rescale_to_inplace: " << e.what();
+      throw(e);
+    }
+  }
+
  private:
   bool m_enable_client{false};
+  bool m_enable_garbled_circuit{false};
+  bool m_mask_gc_inputs{false};
+  bool m_mask_gc_outputs{false};
+  size_t m_num_garbled_circuit_threads{1};
 
   std::shared_ptr<seal::SecretKey> m_secret_key;
   std::shared_ptr<seal::PublicKey> m_public_key;
@@ -285,9 +331,6 @@ class HESealBackend : public runtime::Backend {
   std::shared_ptr<seal::GaloisKeys> m_galois_keys;
   HESealEncryptionParameters m_encryption_params;
   std::shared_ptr<seal::CKKSEncoder> m_ckks_encoder;
-
-  // Stores Barrett64 ratios for moduli under 30 bits
-  std::unordered_map<std::uint64_t, std::uint64_t> m_barrett64_ratio_map;
 
   std::unordered_set<size_t> m_supported_types{
       element::f32.hash(), element::i32.hash(), element::i64.hash(),

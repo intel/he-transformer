@@ -36,8 +36,9 @@ def test_mnist_cnn(FLAGS):
     port = 34000
 
     encrypt_str = 'encrypt' if FLAGS.encrypt_data else 'plain'
+
     client = pyhe_client.HESealClient(FLAGS.hostname, port, FLAGS.batch_size,
-                                      {'input': (encrypt_str, data)})
+                                      {FLAGS.tensor_name: (encrypt_str, data)})
 
     results = client.get_results()
     results = np.round(results, 2)
@@ -47,7 +48,9 @@ def test_mnist_cnn(FLAGS):
         print(y_pred_reshape)
 
     y_pred = y_pred_reshape.argmax(axis=1)
-    print('y_pred', y_pred)
+
+    if FLAGS.batch_size < 10:
+        print('y_pred', y_pred)
     y_true = y_test_batch.argmax(axis=1)
 
     correct = np.sum(np.equal(y_pred, y_true))
@@ -67,8 +70,17 @@ if __name__ == '__main__':
         type=str2bool,
         default=True,
         help='Whether or not to encrypt client data')
+    parser.add_argument(
+        '--tensor_name',
+        type=str,
+        default='input',
+        help='Input tensor name')
 
     FLAGS, unparsed = parser.parse_known_args()
+
+    if unparsed:
+        print("Unrecognized flags: ", unparsed)
+        exit(1)
 
     print(FLAGS)
 

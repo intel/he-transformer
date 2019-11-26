@@ -113,13 +113,11 @@ inline void add_plain(const seal::Ciphertext& encrypted, double value,
 /// \param[in] poly Polynomial to be multiplied
 /// \param[in] coeff_count Number of terms in the polynomial
 /// \param[in] scalar Value with which to multiply
-/// \param[in] modulus_value modulus with which to reduce each product
-/// \param[in] const_ratio TODO(fboemer)
+/// \param[in] modulus modulus with which to reduce each product
 /// \param[out] result Will store the result of the multiplication
 void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
-                                     const std::uint64_t modulus_value,
-                                     const std::uint64_t const_ratio,
+                                     const seal::SmallModulus& modulus,
                                      uint64_t* result);
 
 /// \brief Adds each element in a polynomial with a scalar modulo
@@ -239,9 +237,13 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 /// \brief Decode SEAL plaintext into plaintext values
 /// \param[out] output Decoded values
 /// \param[in] input Plaintext to decode
+/// \param[in] batch_size Number of output values
+/// \param[in] mod_interval If NGRAPH_HE_ABY_ENABLE, the output values will be
+/// reduced to the range (-mod_interval/2, mod_interval/2)
 /// \param[in] ckks_encoder Used for decoding
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
-            seal::CKKSEncoder& ckks_encoder);
+            seal::CKKSEncoder& ckks_encoder, size_t batch_size,
+            double mod_interval);
 
 /// \brief Decrypts and decodes a ciphertext to plaintext values
 /// \param[out] output Destination to write values to
@@ -250,8 +252,12 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
 /// packing
 /// \param[in] decryptor Used for decryption
 /// \param[in] ckks_encoder Used for decoding
+/// \param[in] context If not nullptr, used to determine modulus wrapping
+/// interval during decoding
+/// \param[in] batch_size Number of output values
 void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
-             const bool complex_packing, seal::Decryptor& decryptor,
-             seal::CKKSEncoder& ckks_encoder);
+             bool complex_packing, seal::Decryptor& decryptor,
+             seal::CKKSEncoder& ckks_encoder,
+             std::shared_ptr<seal::SEALContext> context, size_t batch_size);
 
 }  // namespace ngraph::runtime::he

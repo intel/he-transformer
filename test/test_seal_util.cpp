@@ -148,8 +148,8 @@ TEST(seal_util, match_modulus_and_scale_inplace) {
     auto check_decryption = [&](SealCiphertextWrapper& cipher) {
       HEPlaintext output;
       decrypt(output, cipher, complex_packing, *he_backend->get_decryptor(),
-              *he_backend->get_ckks_encoder());
-      output.resize(plain.size());
+              *he_backend->get_ckks_encoder(), he_backend->get_context(),
+              plain.size());
       EXPECT_TRUE(test::all_close(output, plain));
     };
 
@@ -351,8 +351,14 @@ TEST(seal_util, encode_invalid) {
   {
     std::vector<std::uint64_t> dst;
     auto parms_id = context->first_parms_id();
+
+#ifdef NGRAPH_HE_ABY_ENABLE
+    EXPECT_NO_THROW(encode(std::numeric_limits<float>::max(), element::f32,
+                           1 << 29, parms_id, dst, *he_backend));
+#else
     EXPECT_ANY_THROW(encode(std::numeric_limits<float>::max(), element::f32,
                             1 << 29, parms_id, dst, *he_backend));
+#endif
   }
 }
 

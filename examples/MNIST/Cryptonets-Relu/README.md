@@ -45,23 +45,42 @@ This runs inference on the Cryptonets network using the SEAL CKKS backend. Note,
 
 See the [examples](https://github.com/NervanaSystems/he-transformer/blob/master/examples/README.md) for more details on the encryption parameters.
 
-## HE_SEAL client
-To test the network with inputs from a client, first install the [python client](https://github.com/NervanaSystems/he-transformer/tree/master/python). Then, in one terminal, run
+
+## Debugging
+For debugging purposes, enable the `NGRAPH_HE_LOG_LEVEL` or `NGRAPH_HE_VERBOSE_OPS` flags. See [here](https://github.com/NervanaSystems/he-transformer/blob/master/examples/README.md) for more details.
+
+## Garbled Circuits (GC)
+To test the network using garbled circuits for secure computation of activations, make sure he-transformer was configured using `-DNGRAPH_HE_ABY_ENABLE=ON`. Then, install the [python client](https://github.com/NervanaSystems/he-transformer/tree/master/python). Then, in one terminal, run
 ```bash
 source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate
 cd $HE_TRANSFORMER/examples/MNIST/Cryptonets-Relu
-python test.py --enable_client=yes \
-               --backend=HE_SEAL \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L1.json
+OMP_NUM_THREADS=24 \
+NGRAPH_HE_VERBOSE_OPS=all \
+NGRAPH_HE_LOG_LEVEL=3 \
+python test.py \
+  --backend=HE_SEAL \
+  --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L5_gc.json \
+  --enable_client=yes \
+  --enable_gc=yes \
+  --mask_gc_inputs=yes \
+  --mask_gc_outputs=yes \
+  --num_gc_threads=24
 ```
+
+The 'mask_gc_inputs` flag indicates pre-activation values should be additively masked.
+The 'mask_gc_outputs` flag indicates post-activation values should be additively masked.
+Both values should be set to `yes` to ensure privacy.
+
+Note, `num_gc_threads` should be at most `OMP_NUM_THREADS` for optimal performance.
 
 In another terminal, run
 ```bash
 source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate
 cd $HE_TRANSFORMER/examples/MNIST
-python pyclient_mnist.py --batch_size=1024 \
-                         --encrypt_data=yes
+NGRAPH_HE_LOG_LEVEL=3 \
+OMP_NUM_THREADS=24 \
+python pyclient_mnist.py \
+  --batch_size=50 \
+  --encrypt_data=yes
 ```
-
-## Debugging
-For debugging purposes, enable the `NGRAPH_HE_LOG_LEVEL` or `NGRAPH_HE_VERBOSE_OPS` flags. See [here](https://github.com/NervanaSystems/he-transformer/blob/master/examples/README.md) for more details.
+Note, for optimal performance, `OMP_NUM_THREADS` should be set to at least `num_gc_threads` specified in the server configuration

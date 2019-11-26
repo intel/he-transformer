@@ -17,6 +17,7 @@
 #pragma once
 
 #include <complex>
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -25,6 +26,9 @@
 #include "ngraph/check.hpp"
 #include "ngraph/except.hpp"
 #include "ngraph/util.hpp"
+#include "nlohmann/json.hpp"
+#include "node_wrapper.hpp"
+#include "op/bounded_relu.hpp"
 #include "protos/message.pb.h"
 
 namespace ngraph::runtime::he {
@@ -73,6 +77,18 @@ inline bool string_to_bool(const std::string& string,
   return string_to_bool(string.c_str(), default_value);
 }
 
+inline std::string bool_to_string(const bool b) {
+  std::ostringstream ss;
+  ss << std::boolalpha << b;
+  return ss.str();
+}
+
+int flag_to_int(const char* flag, int default_value = 0);
+
+inline int flag_to_int(const std::string& flag, int default_value = 0) {
+  return flag_to_int(flag.c_str(), default_value);
+}
+
 /// \brief Converts a type to a double using static_cast
 /// Note, this means a reduction of range in int64 and uint64 values.
 /// \param[in] src Source from which to read
@@ -86,5 +102,28 @@ bool param_originates_from_name(const op::Parameter& param,
 pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type);
 
 element::Type pb_type_to_type(pb::HETensor_ElementType pb_type);
+
+inline pb::Function node_to_pb_function(
+    const NodeWrapper& node_wrapper,
+    std::unordered_map<std::string, std::string> extra_configs = {}) {
+  const Node& node = *node_wrapper.get_node();
+  auto type_id = node_wrapper.get_typeid();
+
+  nlohmann::json js = {{"function", node.description()}};
+  if (type_id == OP_TYPEID::BoundedRelu) {
+    const op::BoundedRelu* bounded_relu =
+        static_cast<const op::BoundedRelu*>(&node);
+    float alpha = bounded_relu->get_alpha();
+    js["bound"] = alpha;
+  }
+
+  for (const auto& [key, value] : extra_configs) {
+    js[key] = value;
+  }
+
+  pb::Function f;
+  f.set_function(js.dump());
+  return f;
+}
 
 }  // namespace ngraph::runtime::he

@@ -66,6 +66,10 @@ set(HE_SRC
     # protobuf files
     ${message_pb_srcs})
 
+if (NGRAPH_HE_ABY_ENABLE)
+        list(APPEND HE_SRC aby/aby_executor.cpp aby/aby_server_executor.cpp aby/aby_client_executor.cpp)
+endif()
+
 set_source_files_properties(${message_pb_srcs}
                             PROPERTIES
                             GENERATED
@@ -83,6 +87,10 @@ target_link_libraries(he_seal_backend
                              protobuf::libprotobuf
                              generated_pb_files
                              ngraph)
+if (NGRAPH_HE_ABY_ENABLE)
+        target_link_libraries(he_seal_backend PUBLIC libaby)
+endif()
+
 
 # TODO: better condition if we don't link with OpenMP
 if (NGRAPH_HE_CODE_COVERAGE)

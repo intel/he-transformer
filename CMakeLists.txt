@@ -20,6 +20,10 @@ cmake_minimum_required(VERSION 3.12)
 # Global project name
 project(he_transformer LANGUAGES CXX)
 
+# set directory where the custom finders live
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
+
 if(CMAKE_BUILD_TYPE)
   set(RELEASE_TYPES
       Debug
@@ -104,12 +108,14 @@ endif()
 option(NGRAPH_HE_DOC_BUILD_ENABLE "Enable building of documentation" OFF)
 option(NGRAPH_HE_CLANG_TIDY "Enable clang-tidy checks" OFF)
 option(NGRAPH_HE_CODE_COVERAGE "Enable code coverage" OFF)
+option(NGRAPH_HE_ABY_ENABLE "Enable multi-party computation using ABY" OFF)
 option(NGRAPH_HE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 
 # Print options
 message(STATUS "NGRAPH_HE_CXX_STANDARD:     ${NGRAPH_HE_CXX_STANDARD}")
 message(STATUS "NGRAPH_HE_DOC_BUILD_ENABLE: ${NGRAPH_HE_DOC_BUILD_ENABLE}")
 message(STATUS "NGRAPH_HE_CODE_COVERAGE:    ${NGRAPH_HE_CODE_COVERAGE}")
+message(STATUS "NGRAPH_HE_ABY_ENABLE:       ${NGRAPH_HE_ABY_ENABLE}")
 message(STATUS "NGRAPH_HE_CLANG_TIDY:       ${NGRAPH_HE_CLANG_TIDY}")
 message(STATUS "NGRAPH_HE_SANITIZE_ADDRESS  ${NGRAPH_HE_SANITIZE_ADDRESS}")
 message(STATUS "PYTHON_VENV_VERSION:        ${PYTHON_VENV_VERSION}")
@@ -124,6 +130,10 @@ if (NGRAPH_HE_CODE_COVERAGE)
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -g -fprofile-instr-generate -fcoverage-mapping")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+endif()
+
+if (NGRAPH_HE_ABY_ENABLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNGRAPH_HE_ABY_ENABLE")
 endif()
 
 if(NGRAPH_HE_CLANG_TIDY)
@@ -251,6 +261,9 @@ endif()
 include(cmake/seal.cmake)
 include(cmake/boost.cmake)
 include(cmake/protobuf.cmake)
+if (NGRAPH_HE_ABY_ENABLE)
+  include(cmake/aby.cmake)
+endif()
 
 # HE transformer source and test directories
 add_subdirectory(src)

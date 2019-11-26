@@ -22,6 +22,9 @@
 #include <limits>
 #include <utility>
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+#include "aby/aby_util.hpp"
+#endif
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/runtime/tensor.hpp"
 #include "seal/he_seal_backend.hpp"
@@ -174,20 +177,13 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
     throw ngraph_error("scale out of bounds");
   }
 
-  auto& barrett64_ratio_map = he_seal_backend.barrett64_ratio_map();
-
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
       // Multiply by scalar instead of doing dyadic product
       if (coeff_modulus[j].value() < (1UL << 31U)) {
-        const std::uint64_t modulus_value = coeff_modulus[j].value();
-        auto it = barrett64_ratio_map.find(modulus_value);
-        NGRAPH_CHECK(it != barrett64_ratio_map.end(), "Modulus value ",
-                     modulus_value, "not in Barrett64 ratio map");
-        const std::uint64_t barrett_ratio = it->second;
         multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
                                         coeff_count, plaintext_vals[j],
-                                        modulus_value, barrett_ratio,
+                                        coeff_modulus[j],
                                         encrypted.data(i) + (j * coeff_count));
       } else {
         seal::util::multiply_poly_scalar_coeffmod(
@@ -203,9 +199,11 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
 
 void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
-                                     const std::uint64_t modulus_value,
-                                     const std::uint64_t const_ratio,
-                                     uint64_t* result) {
+                                     const seal::SmallModulus& modulus,
+                                     std::uint64_t* result) {
+  const uint64_t modulus_value = modulus.value();
+  const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+
   // NOLINTNEXTLINE
   for (; coeff_count--; poly++, result++) {
     // Multiplication
@@ -216,7 +214,7 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
     // NOLINTNEXTLINE(google-runtime-int)
     unsigned long long carry;
     // Carry will store the result modulo 2^64
-    seal::util::multiply_uint64_hw64(z, const_ratio, &carry);
+    seal::util::multiply_uint64_hw64(z, const_ratio_1, &carry);
     // Barrett subtraction
     carry = z - carry * modulus_value;
     // Possible correction term
@@ -313,13 +311,14 @@ void encode(double value, const element::Type& element_type, double scale,
   int coeff_bit_count = static_cast<int>(log2(fabs(value))) + 2;
   if (coeff_bit_count >= context_data.total_coeff_modulus_bit_count()) {
     {
+#ifndef NGRAPH_HE_ABY_ENABLE
       NGRAPH_ERR << "Failed to encode " << value / scale << " at scale "
                  << scale;
       NGRAPH_ERR << "coeff_bit_count " << coeff_bit_count;
-      NGRAPH_ERR << "coeff_mod_count " << coeff_mod_count;
       NGRAPH_ERR << "total coeff modulus bit count "
                  << context_data.total_coeff_modulus_bit_count();
       throw ngraph_error("encoded value is too large");
+#endif
     }
   }
 
@@ -505,7 +504,8 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 }
 
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
-            seal::CKKSEncoder& ckks_encoder) {
+            seal::CKKSEncoder& ckks_encoder, size_t batch_size,
+            double mod_interval) {
   if (input.complex_packing()) {
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);
@@ -513,14 +513,38 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
   } else {
     ckks_encoder.decode(input.plaintext(), output);
   }
+  output.resize(batch_size);
+
+#ifdef NGRAPH_HE_ABY_ENABLE
+  for (size_t i = 0; i < output.size(); ++i) {
+    output[i] = runtime::aby::mod_reduce_zero_centered(output[i], mod_interval);
+  }
+#endif
 }
 
 void decrypt(HEPlaintext& output, const SealCiphertextWrapper& input,
-             const bool complex_packing, seal::Decryptor& decryptor,
-             seal::CKKSEncoder& ckks_encoder) {
+             bool complex_packing, seal::Decryptor& decryptor,
+             seal::CKKSEncoder& ckks_encoder,
+             std::shared_ptr<seal::SEALContext> context, size_t batch_size) {
   auto plaintext_wrapper = SealPlaintextWrapper(complex_packing);
   decryptor.decrypt(input.ciphertext(), plaintext_wrapper.plaintext());
-  decode(output, plaintext_wrapper, ckks_encoder);
+
+  // No modulus reduction
+  double q_over_scale{std::numeric_limits<double>::max()};
+  if (context) {
+    const auto& encryption_params =
+        context->get_context_data(input.ciphertext().parms_id())->parms();
+    const auto& coeff_moduli = encryption_params.coeff_modulus();
+
+    q_over_scale = 1.0 / input.ciphertext().scale();
+    NGRAPH_CHECK(!coeff_moduli.empty(),
+                 "Empty coeff moduli in decrypting ciphertext");
+
+    for (const auto& coeff_mod : coeff_moduli) {
+      q_over_scale *= coeff_mod.value();
+    }
+  }
+  decode(output, plaintext_wrapper, ckks_encoder, batch_size, q_over_scale);
 }
 
 }  // namespace ngraph::runtime::he
