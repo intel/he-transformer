@@ -19,10 +19,12 @@
 import tensorflow as tf
 import numpy as np
 import argparse
+import os.path
 from tensorflow.core.protobuf import rewriter_config_pb2
+from tensorflow.python.tools import freeze_graph
 
 
-def load_mnist_data():
+def load_mnist_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""
     mnist = tf.keras.datasets.mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
@@ -31,7 +33,25 @@ def load_mnist_data():
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
+    x_train = x_train[start_batch:start_batch + batch_size]
+    y_train = y_train[start_batch:start_batch + batch_size]
+    x_test = x_test[start_batch:start_batch + batch_size]
+    y_test = y_test[start_batch:start_batch + batch_size]
+
     return (x_train, y_train, x_test, y_test)
+
+
+def load_mnist_test_data(start_batch=0, batch_size=10000):
+    """Returns MNIST data in one-hot form"""
+    mnist = tf.keras.datasets.mnist
+    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    y_test = tf.compat.v1.keras.utils.to_categorical(y_test, num_classes=10)
+    x_test = np.expand_dims(x_test, axis=-1)
+
+    x_test = x_test[start_batch:start_batch + batch_size]
+    y_test = y_test[start_batch:start_batch + batch_size]
+
+    return (x_test, y_test)
 
 
 def get_train_batch(train_iter, batch_size, x_train, y_train):
@@ -74,16 +94,56 @@ def max_pool_3x3_same_size(x):
         x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding='SAME')
 
 
-def get_variable(name, shape, mode):
-    if mode not in set(['train', 'test']):
-        print('mode should be train or test')
-        raise Exception()
+def load_pb_file(filename):
+    if not os.path.isfile(filename):
+        raise Exception('File, ' + filename + ' does not exist')
 
-    if mode == 'train':
-        return tf.compat.v1.get_variable(name, shape)
-    else:
-        return tf.constant(
-            np.loadtxt(name + '.txt', dtype=np.float32).reshape(shape))
+    with tf.io.gfile.GFile(filename, 'rb') as f:
+        graph_def = tf.compat.v1.GraphDef()
+        graph_def.ParseFromString(f.read())
+
+    print('Model restored')
+    return graph_def
+
+
+def save_model(sess, directory, filename):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    saver = tf.compat.v1.train.Saver()
+    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
+    saver.save(sess, ckpt_filepath)
+
+    pbtxt_filename = filename + '.pbtxt'
+    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
+    pb_filepath = os.path.join(directory, filename + '.pb')
+
+    tf.io.write_graph(
+        graph_or_graph_def=sess.graph_def,
+        logdir=directory,
+        name=filename + '.pb',
+        as_text=False)
+
+    tf.io.write_graph(
+        graph_or_graph_def=sess.graph_def,
+        logdir=directory,
+        name=pbtxt_filename,
+        as_text=True)
+
+    # Freeze graph to turn variables into constants
+    freeze_graph.freeze_graph(
+        input_graph=pbtxt_filepath,
+        input_saver='',
+        input_binary=False,
+        input_checkpoint=ckpt_filepath,
+        output_node_names='output',
+        restore_op_name='save/restore_all',
+        filename_tensor_name='save/Const:0',
+        output_graph=pb_filepath,
+        clear_devices=True,
+        initializer_nodes='')
+
+    print("Model saved to: %s" % pb_filepath)
 
 
 def str2bool(v):
@@ -95,6 +155,29 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+def client_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
+    parser.add_argument(
+        '--hostname', type=str, default='localhost', help='Hostname of server')
+    parser.add_argument(
+        '--port', type=int, default=34000, help='Port of server')
+    parser.add_argument(
+        '--encrypt_data_str',
+        type=str,
+        default='encrypt',
+        help='"encrypt" to encrypt client data, "plain" to not encrypt')
+    parser.add_argument(
+        '--tensor_name',
+        type=str,
+        default='import/input',
+        help='Input tensor name')
+    parser.add_argument(
+        '--start_batch', type=int, default=0, help='Test data start index')
+
+    return parser
 
 
 def server_argument_parser():
@@ -148,6 +231,26 @@ def server_argument_parser():
         type=str2bool,
         default=True,
         help='Use plaintext packing on data')
+    parser.add_argument(
+        '--start_batch', type=int, default=0, help='Test data start index')
+    parser.add_argument(
+        '--model_file',
+        type=str,
+        default='',
+        help='Filename of saved protobuf model')
+
+    return parser
+
+
+def train_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--train_loop_count',
+        type=int,
+        default=20000,
+        help='Number of training iterations')
+    parser.add_argument(
+        '--batch_size', type=int, default=128, help='Batch Size')
 
     return parser
 

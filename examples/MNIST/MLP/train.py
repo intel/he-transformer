@@ -14,67 +14,17 @@
 # ==============================================================================
 """An MNIST classifier based on Cryptonets using convolutional layers. """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import argparse
 import sys
 import time
 import numpy as np
-import itertools
 import tensorflow as tf
 import model
 import os
-from tensorflow.python.tools import freeze_graph
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import load_mnist_data, \
-    get_variable, \
-    conv2d_stride_2_valid, \
-    avg_pool_3x3_same_size, \
-    get_train_batch
-
-
-def save_model(sess, directory, filename):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
-    saver.save(sess, ckpt_filepath)
-
-    pbtxt_filename = filename + '.pbtxt'
-    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + '.pb')
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=filename + '.pb',
-        as_text=False)
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=pbtxt_filename,
-        as_text=True)
-
-    # Freeze graph to turn variables into constants
-    freeze_graph.freeze_graph(
-        input_graph=pbtxt_filepath,
-        input_saver='',
-        input_binary=False,
-        input_checkpoint=ckpt_filepath,
-        output_node_names='output',
-        restore_op_name='save/restore_all',
-        filename_tensor_name='save/Const:0',
-        output_graph=pb_filepath,
-        clear_devices=True,
-        initializer_nodes='')
-
-    print("Model saved to: %s" % pb_filepath)
+    get_train_batch, save_model, train_argument_parser
 
 
 def main(FLAGS):
@@ -112,11 +62,11 @@ def main(FLAGS):
                 print('step %d, training accuracy %g, %g msec to evaluate' %
                       (i, train_accuracy, 1000 * (time.time() - t)))
             t = time.time()
-            _, loss = sess.run([train_step, cross_entropy],
-                               feed_dict={
-                                   x: x_batch,
-                                   y_: y_batch
-                               })
+            sess.run([train_step, cross_entropy],
+                     feed_dict={
+                         x: x_batch,
+                         y_: y_batch
+                     })
             if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
                 test_accuracy = accuracy.eval(feed_dict={
                     x: x_test,
@@ -125,19 +75,13 @@ def main(FLAGS):
                 print('test accuracy %g' % test_accuracy)
 
         print("Training finished. Saving model.")
-
-        save_model(sess, './model', 'model')
+        save_model(sess, './models', 'mlp')
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--train_loop_count',
-        type=int,
-        default=20000,
-        help='Number of training iterations')
-    parser.add_argument(
-        '--batch_size', type=int, default=50, help='Batch Size')
-    FLAGS, unparsed = parser.parse_known_args()
+    FLAGS, unparsed = train_argument_parser().parse_known_args()
+    if unparsed:
+        print("Unparsed flags: ", unparsed)
+        exit(1)
 
     main(FLAGS)

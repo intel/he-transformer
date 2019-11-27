@@ -16,7 +16,6 @@
 
 import ngraph_bridge
 import argparse
-
 import numpy as np
 import tensorflow as tf
 from tensorflow.core.protobuf import rewriter_config_pb2
@@ -25,9 +24,9 @@ from tensorflow.core.protobuf import rewriter_config_pb2
 def str2bool(v):
     if isinstance(v, bool):
         return v
-    if v.lower() in ('on','yes', 'true', 't', 'y', '1'):
+    if v.lower() in ('on', 'yes', 'true', 't', 'y', '1'):
         return True
-    elif v.lower() in ('off','no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ('off', 'no', 'false', 'f', 'n', '0'):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
@@ -89,21 +88,6 @@ if __name__ == '__main__':
         type=str2bool,
         default=False,
         help='Enable the client')
-    parser.add_argument(
-        '--enable_gc',
-        type=str2bool,
-        default=False,
-        help='Enable garbled circuits')
-    parser.add_argument(
-        '--mask_gc_inputs',
-        type=str2bool,
-        default=False,
-        help='Mask garbled circuits inputs')
-    parser.add_argument(
-        '--mask_gc_outputs',
-        type=str2bool,
-        default=False,
-        help='Mask garbled circuits outputs')
     parser.add_argument(
         '--backend',
         type=str,
