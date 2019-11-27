@@ -17,7 +17,6 @@
 import sys
 import time
 import numpy as np
-import itertools
 import tensorflow as tf
 import model
 import os

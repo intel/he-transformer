@@ -76,7 +76,7 @@ To test the client-server model, in one terminal call
 python test.py --backend=HE_SEAL \
                --model_file=models/cryptonets-relu.pb \
                --enable_client=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L2.json
 ```
 
 In another terminal (with the python environment active), call
