@@ -110,8 +110,6 @@ Note, `num_gc_threads` should be at most `OMP_NUM_THREADS` for optimal performan
 
 In another terminal, run
 ```bash
-source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate
-cd $HE_TRANSFORMER/examples/MNIST
 NGRAPH_HE_LOG_LEVEL=3 \
 OMP_NUM_THREADS=24 \
 python pyclient_mnist.py \
