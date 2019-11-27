@@ -3,7 +3,7 @@
   "poly_modulus_degree": 8192,
   "security_level": 128,
   "coeff_modulus": [
-    44, 24, 24, 24, 30
+    47, 24, 24, 24, 30
   ],
   "scale": 16777216,
   "complex_packing": true

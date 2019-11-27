@@ -20,38 +20,26 @@ import numpy as np
 import sys
 import os
 
-from mnist_util import load_mnist_data, str2bool
+from mnist_util import load_mnist_test_data, client_argument_parser
 import pyhe_client
 
 
-def test_mnist_cnn(FLAGS):
-    (x_train, y_train, x_test, y_test) = load_mnist_data()
+def test_network(FLAGS):
+    (x_test, y_test) = load_mnist_test_data(FLAGS.start_batch, FLAGS.batch_size)
+    data = x_test.flatten('C')
 
-    x_test_batch = x_test[:FLAGS.batch_size]
-    y_test_batch = y_test[:FLAGS.batch_size]
+    client = pyhe_client.HESealClient(FLAGS.hostname, FLAGS.port, FLAGS.batch_size,
+                                      {FLAGS.tensor_name: (FLAGS.encrypt_data_str, data)})
 
-    data = x_test_batch.flatten('C')
-    print('Client batch size from FLAG:', FLAGS.batch_size)
-
-    port = 34000
-
-    encrypt_str = 'encrypt' if FLAGS.encrypt_data else 'plain'
-
-    client = pyhe_client.HESealClient(FLAGS.hostname, port, FLAGS.batch_size,
-                                      {FLAGS.tensor_name: (encrypt_str, data)})
-
-    results = client.get_results()
-    results = np.round(results, 2)
+    results = np.round(client.get_results(), 2)
 
     y_pred_reshape = np.array(results).reshape(FLAGS.batch_size, 10)
     with np.printoptions(precision=3, suppress=True):
         print(y_pred_reshape)
 
     y_pred = y_pred_reshape.argmax(axis=1)
-
-    if FLAGS.batch_size < 10:
-        print('y_pred', y_pred)
-    y_true = y_test_batch.argmax(axis=1)
+    print('y_pred', y_pred)
+    y_true = y_test.argmax(axis=1)
 
     correct = np.sum(np.equal(y_pred, y_true))
     acc = correct / float(FLAGS.batch_size)
@@ -61,27 +49,9 @@ def test_mnist_cnn(FLAGS):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
-    parser.add_argument(
-        '--hostname', type=str, default='localhost', help='Hostname of server')
-    parser.add_argument(
-        '--encrypt_data',
-        type=str2bool,
-        default=True,
-        help='Whether or not to encrypt client data')
-    parser.add_argument(
-        '--tensor_name',
-        type=str,
-        default='input',
-        help='Input tensor name')
-
-    FLAGS, unparsed = parser.parse_known_args()
-
+    FLAGS, unparsed = client_argument_parser().parse_known_args()
     if unparsed:
-        print("Unrecognized flags: ", unparsed)
+        print('Unparsed flags:', unparsed)
         exit(1)
 
-    print(FLAGS)
-
-    test_mnist_cnn(FLAGS)
+    test_network(FLAGS)

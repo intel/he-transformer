@@ -904,8 +904,7 @@ void HESealExecutable::send_client_results() {
 
     auto result_shape = result_msg.he_tensors(0).shape();
     NGRAPH_HE_LOG(3) << "Server sending result with shape "
-                     << Shape{result_shape.begin(), result_shape.end()}
-                     << ", element type " << pb_tensor.type();
+                     << Shape{result_shape.begin(), result_shape.end()};
     m_session->write_message(TCPMessage(std::move(result_msg)));
   }
 
