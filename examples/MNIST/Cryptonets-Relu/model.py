@@ -60,21 +60,25 @@ def cryptonets_relu_squashed(x, squashed_weight):
     x = tf.pad(x, paddings)
 
     W_conv1 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_conv1:0")
-    y = conv2d_stride_2_valid(x, W_conv1)
-    W_conv1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name("W_conv1_bias:0")
+    W_conv1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name(
+        "W_conv1_bias:0")
+    y = conv2d_stride_2_valid(x, W_conv1) + W_conv1_bias
     y = tf.nn.relu(y)
 
-    W_squash = tf.constant(squashed_weight, dtype=np.float32, shape=[5 * 13 * 13, 100])
+    W_squash = tf.constant(
+        squashed_weight, dtype=np.float32, shape=[5 * 13 * 13, 100])
     y = tf.reshape(y, [-1, 5 * 13 * 13])
     y = tf.matmul(y, W_squash)
-    W_fc1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name("W_fc1_bias:0")
+    W_fc1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name(
+        "W_fc1_bias:0")
     y = y + W_fc1_bias
 
     y = tf.nn.relu(y)
     W_fc2 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_fc2:0")
     y = tf.matmul(y, W_fc2)
 
-    W_fc2_bias = tf.compat.v1.get_default_graph().get_tensor_by_name("W_fc2_bias:0")
+    W_fc2_bias = tf.compat.v1.get_default_graph().get_tensor_by_name(
+        "W_fc2_bias:0")
     y = tf.add(y, W_fc2_bias, name='output')
 
     return y

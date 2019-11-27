@@ -59,6 +59,7 @@ def squash_layers(sess):
 
     return squashed_weight
 
+
 def save_model(sess, directory, filename):
     squashed_weight = squash_layers(sess)
 
@@ -103,6 +104,7 @@ def save_model(sess, directory, filename):
 
     print("Model saved to: %s" % pb_filepath)
 
+
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
 
@@ -126,7 +128,6 @@ def main(FLAGS):
 
     with tf.compat.v1.Session() as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
-        loss_values = []
         for i in range(FLAGS.train_loop_count):
             x_batch, y_batch = get_train_batch(i, FLAGS.batch_size, x_train,
                                                y_train)
@@ -139,12 +140,11 @@ def main(FLAGS):
                 print('step %d, training accuracy %g, %g msec to evaluate' %
                       (i, train_accuracy, 1000 * (time.time() - t)))
             t = time.time()
-            _, loss = sess.run([train_step, cross_entropy],
-                               feed_dict={
-                                   x: x_batch,
-                                   y_: y_batch
-                               })
-            loss_values.append(loss)
+            sess.run([train_step, cross_entropy],
+                     feed_dict={
+                         x: x_batch,
+                         y_: y_batch
+                     })
 
             if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
                 test_accuracy = accuracy.eval(feed_dict={
@@ -153,9 +153,8 @@ def main(FLAGS):
                 })
                 print('test accuracy %g' % test_accuracy)
 
-        print("Training finished. Saving variables.")
-
-        save_model(sess,'./models', 'cryptonets')
+        print("Training finished. Saving model.")
+        save_model(sess, './models', 'cryptonets')
 
 
 if __name__ == '__main__':

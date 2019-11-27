@@ -28,14 +28,17 @@ from mnist_util import load_mnist_data, \
 
 
 def test_network(FLAGS):
-    (x_train, y_train, x_test, y_test) = load_mnist_data(FLAGS.start_batch, FLAGS.batch_size)
+    (x_train, y_train, x_test, y_test) = load_mnist_data(
+        FLAGS.start_batch, FLAGS.batch_size)
 
     # Load saved model
     tf.import_graph_def(load_pb_file(FLAGS.model_file))
 
     # Get input / output tensors
-    x_input = tf.compat.v1.get_default_graph().get_tensor_by_name("import/input:0")
-    y_output = tf.compat.v1.get_default_graph().get_tensor_by_name("import/output:0")
+    x_input = tf.compat.v1.get_default_graph().get_tensor_by_name(
+        "import/input:0")
+    y_output = tf.compat.v1.get_default_graph().get_tensor_by_name(
+        "import/output:0")
 
     # Create configuration to encrypt input
     FLAGS, unparsed = server_argument_parser().parse_known_args()

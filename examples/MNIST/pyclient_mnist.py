@@ -39,7 +39,7 @@ def test_network(FLAGS):
 
     y_pred = y_pred_reshape.argmax(axis=1)
     print('y_pred', y_pred)
-    y_true = y_test_batch.argmax(axis=1)
+    y_true = y_test.argmax(axis=1)
 
     correct = np.sum(np.equal(y_pred, y_true))
     acc = correct / float(FLAGS.batch_size)

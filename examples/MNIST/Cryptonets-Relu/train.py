@@ -31,6 +31,7 @@ from mnist_util import load_mnist_data, \
     get_train_batch, \
     train_argument_parser
 
+
 # Squash linear layers and return squashed weights
 def squash_layers(sess):
     # Input from first relu layer
@@ -57,6 +58,7 @@ def squash_layers(sess):
     print('squashed layers')
 
     return squashed_weight
+
 
 def save_model(sess, directory, filename):
     squashed_weight = squash_layers(sess)
@@ -138,11 +140,11 @@ def main(FLAGS):
                 print('step %d, training accuracy %g, %g msec to evaluate' %
                       (i, train_accuracy, 1000 * (time.time() - t)))
             t = time.time()
-            _, loss = sess.run([train_step, cross_entropy],
-                               feed_dict={
-                                   x: x_batch,
-                                   y_: y_batch
-                               })
+            sess.run([train_step, cross_entropy],
+                     feed_dict={
+                         x: x_batch,
+                         y_: y_batch
+                     })
 
             if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
                 test_accuracy = accuracy.eval(feed_dict={
@@ -151,13 +153,13 @@ def main(FLAGS):
                 })
                 print('test accuracy %g' % test_accuracy)
 
-        save_model(sess,'./models', 'cryptonets-relu')
+        print("Training finished. Saving model.")
+        save_model(sess, './models', 'cryptonets-relu')
 
 
 if __name__ == '__main__':
-    FLAGS, unparsed = train_argument_parse().parse_known_args()
+    FLAGS, unparsed = train_argument_parser().parse_known_args()
     if unparsed:
         print("Unparsed flags: ", unparsed)
         exit(1)
-
     main(FLAGS)
