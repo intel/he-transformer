@@ -1348,7 +1348,9 @@ void HESealExecutable::generate_calls(
 void HESealExecutable::handle_server_max_pool_op(
     const std::shared_ptr<HETensor>& arg, const std::shared_ptr<HETensor>& out,
     const NodeWrapper& node_wrapper) {
-  NGRAPH_HE_LOG(3) << "Server handle_server_max_pool_op";
+  NGRAPH_HE_LOG(3) << "Server handle_server_max_pool_op"
+                   << (enable_garbled_circuits() ? " with garbled circuits"
+                                                 : "");
 
   const auto& op = node_wrapper.get_op();
   bool verbose = verbose_op(*op);
@@ -1371,10 +1373,12 @@ void HESealExecutable::handle_server_max_pool_op(
     pb::TCPMessage pb_message;
     pb_message.set_type(pb::TCPMessage_Type_REQUEST);
 
-    json js = {{"function", op->description()}};
-    pb::Function f;
-    f.set_function(js.dump());
-    *pb_message.mutable_function() = f;
+    *pb_message.mutable_function() = node_to_pb_function(
+        node_wrapper,
+        {{"enable_gc", bool_to_string(enable_garbled_circuits())},
+         {"num_aby_parties",
+          std::to_string(m_he_seal_backend.num_garbled_circuit_threads())}});
+    const std::string& function_str = pb_message.function().function();
 
     std::vector<HEType> cipher_batch;
     cipher_batch.reserve(maximize_list.size());
@@ -1384,13 +1388,15 @@ void HESealExecutable::handle_server_max_pool_op(
 
     NGRAPH_CHECK(!cipher_batch.empty(), "Maxpool cipher batch is empty");
 
-    HETensor max_pool_tensor(
+    auto max_pool_tensor = std::make_shared<HETensor>(
         arg->get_element_type(),
         Shape{cipher_batch[0].batch_size(), cipher_batch.size()},
         cipher_batch[0].plaintext_packing(), cipher_batch[0].complex_packing(),
         true, m_he_seal_backend);
-    max_pool_tensor.data() = cipher_batch;
-    const auto& pb_tensors = max_pool_tensor.write_to_pb_tensors();
+
+    // TODO(fboemer): std::move?
+    max_pool_tensor->data() = cipher_batch;
+    const auto& pb_tensors = max_pool_tensor->write_to_pb_tensors();
     NGRAPH_CHECK(pb_tensors.size() == 1,
                  "Only support MaxPool with 1 proto tensor");
     *pb_message.add_he_tensors() = pb_tensors[0];
@@ -1401,7 +1407,20 @@ void HESealExecutable::handle_server_max_pool_op(
                        << " Maxpool ciphertexts to client";
     }
 
+#ifdef NGRAPH_HE_ABY_ENABLE
+    if (enable_garbled_circuits()) {
+      m_aby_executor->prepare_aby_circuit(function_str, max_pool_tensor);
+    }
+
+#endif
+
     m_session->write_message(TCPMessage(std::move(pb_message)));
+
+#ifdef NGRAPH_HE_ABY_ENABLE
+    if (enable_garbled_circuits()) {
+      m_aby_executor->run_aby_circuit(function_str, max_pool_tensor);
+    }
+#endif
 
     // Acquire lock
     std::unique_lock<std::mutex> mlock(m_max_pool_mutex);
@@ -1477,7 +1496,7 @@ void HESealExecutable::handle_server_relu_op(
         {{"enable_gc", bool_to_string(enable_garbled_circuits())},
          {"num_aby_parties",
           std::to_string(m_he_seal_backend.num_garbled_circuit_threads())}});
-    std::string function_str = proto_msg.function().function();
+    const std::string& function_str = proto_msg.function().function();
 
     // TODO(fboemer): set complex_packing to correct values?
     auto relu_tensor = std::make_shared<HETensor>(

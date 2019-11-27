@@ -46,7 +46,7 @@ set(SRC
     )
 
 if (NGRAPH_HE_ABY_ENABLE)
-  list(APPEND BACKEND_TEST_SRC test_aby.cpp)
+  list(APPEND SRC test_aby.cpp test_aby_relu.cpp test_aby_maxpool.cpp)
 endif()
 
 set(BACKEND_TEST_SRC

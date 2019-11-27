@@ -51,6 +51,8 @@ void ABYServerExecutor::prepare_aby_circuit(
 
   if (name == "Relu") {
     prepare_aby_relu_circuit(tensor->data());
+  } else if (name == "MaxPool") {
+    prepare_aby_maxpool_circuit(tensor->data());
   } else {
     NGRAPH_ERR << "Unknown function name " << name;
     throw ngraph_error("Unknown function name");
@@ -65,6 +67,8 @@ void ABYServerExecutor::run_aby_circuit(const std::string& function,
   auto name = js.at("function");
   if (name == "Relu") {
     run_aby_relu_circuit(tensor->data());
+  } else if (name == "MaxPool") {
+    run_aby_maxpool_circuit(tensor->data());
   } else {
     NGRAPH_ERR << "Unknown function name " << name;
     throw ngraph_error("Unknown function name");
@@ -80,6 +84,8 @@ void ABYServerExecutor::post_process_aby_circuit(
   auto name = js.at("function");
   if (name == "Relu") {
     post_process_aby_relu_circuit(tensor);
+  } else if (name == "MaxPool") {
+    post_process_aby_maxpool_circuit(tensor);
   } else {
     NGRAPH_ERR << "Unknown function name " << name;
     throw ngraph_error("Unknown function name");
@@ -128,9 +134,20 @@ std::shared_ptr<he::HETensor> ABYServerExecutor::generate_gc_output_mask(
       m_he_seal_executable.he_seal_backend().mask_gc_outputs(), default_value);
 }
 
+void ABYServerExecutor::prepare_aby_maxpool_circuit(
+    std::vector<he::HEType>& cipher_batch) {
+  NGRAPH_HE_LOG(4) << "prepare_aby_maxpool_circuit";
+
+  bool plaintext_packing = cipher_batch[0].plaintext_packing();
+  bool complex_packing = cipher_batch[0].complex_packing();
+  size_t batch_size = cipher_batch[0].batch_size();
+
+  // const auto op = node_wrapper.get_op();
+}
+
 void ABYServerExecutor::prepare_aby_relu_circuit(
     std::vector<he::HEType>& cipher_batch) {
-  NGRAPH_HE_LOG(4) << "prepare_aby_relu_circuit ";
+  NGRAPH_HE_LOG(4) << "prepare_aby_relu_circuit";
 
   bool plaintext_packing = cipher_batch[0].plaintext_packing();
   bool complex_packing = cipher_batch[0].complex_packing();
@@ -184,6 +201,11 @@ void ABYServerExecutor::prepare_aby_relu_circuit(
   }
 }
 
+void ABYServerExecutor::run_aby_maxpool_circuit(
+    std::vector<he::HEType>& cipher_batch) {
+  NGRAPH_HE_LOG(4) << "run_aby_maxpool_circuit ";
+}
+
 void ABYServerExecutor::run_aby_relu_circuit(
     std::vector<he::HEType>& cipher_batch) {
   NGRAPH_HE_LOG(4) << "run_aby_relu_circuit ";
@@ -235,6 +257,11 @@ void ABYServerExecutor::run_aby_relu_circuit(
     reset_party(party_idx);
     NGRAPH_HE_LOG(3) << "server done reset party " << party_idx;
   }
+}
+
+void ABYServerExecutor::post_process_aby_maxpool_circuit(
+    std::shared_ptr<he::HETensor>& tensor) {
+  post_process_aby_relu_circuit(tensor);
 }
 
 void ABYServerExecutor::post_process_aby_relu_circuit(

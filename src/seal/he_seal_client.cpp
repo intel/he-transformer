@@ -384,17 +384,33 @@ void HESealClient::handle_max_pool_request(pb::TCPMessage&& message) {
       *pb_tensor, *m_ckks_encoder, m_context, *m_encryptor, *m_decryptor,
       m_encryption_params);
 
-  // We currently just support max_pool with single output
+  const std::string& function = message.function().function();
+  const json& js = json::parse(function);
+  bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
+
+  // We currently just support max_pool_request with single output
   auto post_max_he_tensor =
       HETensor(he_tensor->get_element_type(), Shape{m_batch_size, 1},
                he_tensor->is_packed(), complex_packing(), true, *m_ckks_encoder,
                m_context, *m_encryptor, *m_decryptor, m_encryption_params);
 
-  max_pool_seal(he_tensor->data(), post_max_he_tensor.data(),
-                Shape{1, 1, cipher_count}, Shape{1, 1, 1}, Shape{cipher_count},
-                Strides{1}, Shape{0}, Shape{0}, m_context->first_parms_id(),
-                scale(), *m_ckks_encoder, *m_encryptor, *m_decryptor,
-                m_context);
+  if (enable_gc) {
+#ifdef NGRAPH_HE_ABY_ENABLE
+    NGRAPH_HE_LOG(3) << "Client maxpool with GC";
+    NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
+                 "Number of ABY parties not specified");
+    size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
+    init_aby_executor(num_aby_parties);
+    m_aby_executor->prepare_aby_circuit(function, he_tensor);
+    m_aby_executor->run_aby_circuit(function, he_tensor);
+#endif
+  } else {
+    max_pool_seal(he_tensor->data(), post_max_he_tensor.data(),
+                  Shape{1, 1, cipher_count}, Shape{1, 1, 1},
+                  Shape{cipher_count}, Strides{1}, Shape{0}, Shape{0},
+                  m_context->first_parms_id(), scale(), *m_ckks_encoder,
+                  *m_encryptor, *m_decryptor, m_context);
+  }
 
   message.set_type(pb::TCPMessage_Type_RESPONSE);
   message.clear_he_tensors();

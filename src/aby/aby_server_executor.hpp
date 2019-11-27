@@ -68,6 +68,11 @@ class ABYServerExecutor : public ABYExecutor {
   void run_aby_relu_circuit(std::vector<he::HEType>& cipher_batch);
   void post_process_aby_relu_circuit(std::shared_ptr<he::HETensor>& tensor);
 
+  // Maxpool functions
+  void prepare_aby_maxpool_circuit(std::vector<he::HEType>& cipher_batch);
+  void run_aby_maxpool_circuit(std::vector<he::HEType>& cipher_batch);
+  void post_process_aby_maxpool_circuit(std::shared_ptr<he::HETensor>& tensor);
+
  private:
   he::HESealExecutable& m_he_seal_executable;
   std::shared_ptr<he::HETensor> m_gc_input_mask;
