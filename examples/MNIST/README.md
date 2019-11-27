@@ -11,12 +11,12 @@ It is impossible to perform ReLU and Maxpool using homomorphic encryption. We su
   1) A debugging interface (active by default). This runs ReLu/Maxpool locally.
   ***Warning***: This is not privacy-preserving, and should be used for debugging only.
 
-  2) A client-server model, enabled with a command-line flag (`--enable_client=yes`) in the server `test.py` script. If activated, the client will send encrypted data to the server. To perform the ReLU/Maxpool layer, the encrypted data is sent to the client, which decrypts, performs the ReLU/Maxpool, re-encrypts and sends the post-ReLU/Maxpool ciphertexts back to the server.
+  2) A client-server model, enabled with a command-line flag (`--enable_client=true`) in the server `test.py` script. If activated, the client will send encrypted data to the server. To perform the ReLU/Maxpool layer, the encrypted data is sent to the client, which decrypts, performs the ReLU/Maxpool, re-encrypts and sends the post-ReLU/Maxpool ciphertexts back to the server.
 
   One downside of this approach is that it leaks pre- and post-activation values to the client. The client may thereby be able to deduce the weights of the DL model.
 
   3) An experimental client-server model using multi-party computation, specifically garbled circuits (GC). See `examples/README.md` for more information. To enabe this setting, pass
-  `--enable_gc=yes  --mask_gc_inputs=yes --mask_gc_outputs=yes` to the `test.py` script.
+  `--enable_gc=true  --mask_gc_inputs=true --mask_gc_outputs=true` to the `test.py` script.
 
 
 These examples depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`. Also ensure the `pyhe_client` wheel has been installed (see `python` folder for instructions).
@@ -95,10 +95,10 @@ python test.py \
   --backend=HE_SEAL \
   --model_file=models/cryptonets-relu.pb \
   --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L5_gc.json \
-  --enable_client=yes \
-  --enable_gc=yes \
-  --mask_gc_inputs=yes \
-  --mask_gc_outputs=yes \
+  --enable_client=true \
+  --enable_gc=true \
+  --mask_gc_inputs=true \
+  --mask_gc_outputs=true \
   --num_gc_threads=24
 ```
 
