@@ -15,7 +15,7 @@ source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate
 cd $HE_TRANSFORMER/examples/MNIST/MLP
 python test.py --batch_size=100 \
                --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L1.json \
-               --encrypt_server_data=true
+               --encrypt_server_data=true \
 ```
 
 See the [Cryptonets-Relu example](https://github.com/NervanaSystems/he-transformer/blob/master/examples/MNIST/Cryptonets-Relu/README.md) for more details and possible configurations to try.

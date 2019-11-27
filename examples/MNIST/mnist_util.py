@@ -168,7 +168,7 @@ def client_argument_parser():
     parser.add_argument(
         '--tensor_name',
         type=str,
-        default='input',
+        default='import/input',
         help='Input tensor name')
     parser.add_argument(
         '--start_batch', type=int, default=0, help='Test data start index')
@@ -231,6 +231,18 @@ def server_argument_parser():
     parser.add_argument(
         '--start_batch', type=int, default=0, help='Test data start index')
     parser.add_argument('--model_file', type=str, default='', help='Filename of saved protobuf model')
+
+    return parser
+
+def train_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--train_loop_count',
+        type=int,
+        default=20000,
+        help='Number of training iterations')
+    parser.add_argument(
+        '--batch_size', type=int, default=128, help='Batch Size')
 
     return parser
 

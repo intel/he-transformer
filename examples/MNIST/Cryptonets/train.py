@@ -14,11 +14,6 @@
 # ==============================================================================
 """An MNIST classifier based on Cryptonets using convolutional layers. """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import argparse
 import sys
 import time
 import numpy as np
@@ -33,7 +28,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import load_mnist_data, \
     conv2d_stride_2_valid, \
     avg_pool_3x3_same_size, \
-    get_train_batch
+    get_train_batch, \
+    train_argument_parser
+
 
 # Squash linear layers and return squashed weights
 def squash_layers(sess):
@@ -158,18 +155,12 @@ def main(FLAGS):
 
         print("Training finished. Saving variables.")
 
-        save_model(sess,'./model', 'model')
+        save_model(sess,'./models', 'cryptonets')
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--train_loop_count',
-        type=int,
-        default=20000,
-        help='Number of training iterations')
-    parser.add_argument(
-        '--batch_size', type=int, default=50, help='Batch Size')
-    FLAGS, unparsed = parser.parse_known_args()
-
+    FLAGS, unparsed = train_argument_parser().parse_known_args()
+    if unparsed:
+        print("Unparsed flags: ", unparsed)
+        exit(1)
     main(FLAGS)

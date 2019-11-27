@@ -14,15 +14,9 @@
 # ==============================================================================
 """An MNIST classifier based on Cryptonets using convolutional layers. """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
-import argparse
 import sys
 import time
 import numpy as np
-import itertools
 import tensorflow as tf
 import model
 import os
@@ -30,7 +24,7 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import load_mnist_data, \
-    get_train_batch, save_model
+    get_train_batch, save_model, train_argument_parser
 
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
@@ -85,14 +79,9 @@ def main(FLAGS):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--train_loop_count',
-        type=int,
-        default=20000,
-        help='Number of training iterations')
-    parser.add_argument(
-        '--batch_size', type=int, default=50, help='Batch Size')
-    FLAGS, unparsed = parser.parse_known_args()
+    FLAGS, unparsed = train_argument_parser().parse_known_args()
+    if unparsed:
+        print("Unparsed flags: ", unparsed)
+        exit(1)
 
     main(FLAGS)
