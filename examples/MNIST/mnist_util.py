@@ -23,6 +23,7 @@ import os.path
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.tools import freeze_graph
 
+
 def load_mnist_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""
     mnist = tf.keras.datasets.mnist
@@ -32,12 +33,13 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
-    x_train = x_train[start_batch : start_batch + batch_size]
-    y_train = y_train[start_batch : start_batch + batch_size]
-    x_test = x_test[start_batch : start_batch + batch_size]
-    y_test = y_test[start_batch : start_batch + batch_size]
+    x_train = x_train[start_batch:start_batch + batch_size]
+    y_train = y_train[start_batch:start_batch + batch_size]
+    x_test = x_test[start_batch:start_batch + batch_size]
+    y_test = y_test[start_batch:start_batch + batch_size]
 
     return (x_train, y_train, x_test, y_test)
+
 
 def load_mnist_test_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""
@@ -46,8 +48,8 @@ def load_mnist_test_data(start_batch=0, batch_size=10000):
     y_test = tf.compat.v1.keras.utils.to_categorical(y_test, num_classes=10)
     x_test = np.expand_dims(x_test, axis=-1)
 
-    x_test = x_test[start_batch : start_batch + batch_size]
-    y_test = y_test[start_batch : start_batch + batch_size]
+    x_test = x_test[start_batch:start_batch + batch_size]
+    y_test = y_test[start_batch:start_batch + batch_size]
 
     return (x_test, y_test)
 
@@ -91,6 +93,7 @@ def max_pool_3x3_same_size(x):
     return tf.nn.max_pool2d(
         x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding='SAME')
 
+
 def load_pb_file(filename):
     if not os.path.isfile(filename):
         raise Exception('File, ' + filename + ' does not exist')
@@ -101,6 +104,7 @@ def load_pb_file(filename):
 
     print('Model restored')
     return graph_def
+
 
 def save_model(sess, directory, filename):
     if not os.path.exists(directory):
@@ -176,7 +180,6 @@ def client_argument_parser():
     return parser
 
 
-
 def server_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
@@ -230,9 +233,14 @@ def server_argument_parser():
         help='Use plaintext packing on data')
     parser.add_argument(
         '--start_batch', type=int, default=0, help='Test data start index')
-    parser.add_argument('--model_file', type=str, default='', help='Filename of saved protobuf model')
+    parser.add_argument(
+        '--model_file',
+        type=str,
+        default='',
+        help='Filename of saved protobuf model')
 
     return parser
+
 
 def train_argument_parser():
     parser = argparse.ArgumentParser()
