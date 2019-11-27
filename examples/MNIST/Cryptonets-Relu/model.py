@@ -21,10 +21,7 @@ import sys
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import load_mnist_data, \
-    conv2d_stride_2_valid, \
-    avg_pool_3x3_same_size, \
-    max_pool_3x3_same_size
+from mnist_util import conv2d_stride_2_valid, avg_pool_3x3_same_size
 
 
 def cryptonets_relu_model(x):
