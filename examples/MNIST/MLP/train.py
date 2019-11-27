@@ -26,56 +26,11 @@ import itertools
 import tensorflow as tf
 import model
 import os
-from tensorflow.python.tools import freeze_graph
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import load_mnist_data, \
-    get_variable, \
-    conv2d_stride_2_valid, \
-    avg_pool_3x3_same_size, \
-    get_train_batch
-
-
-def save_model(sess, directory, filename):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
-    saver.save(sess, ckpt_filepath)
-
-    pbtxt_filename = filename + '.pbtxt'
-    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + '.pb')
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=filename + '.pb',
-        as_text=False)
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=pbtxt_filename,
-        as_text=True)
-
-    # Freeze graph to turn variables into constants
-    freeze_graph.freeze_graph(
-        input_graph=pbtxt_filepath,
-        input_saver='',
-        input_binary=False,
-        input_checkpoint=ckpt_filepath,
-        output_node_names='output',
-        restore_op_name='save/restore_all',
-        filename_tensor_name='save/Const:0',
-        output_graph=pb_filepath,
-        clear_devices=True,
-        initializer_nodes='')
-
-    print("Model saved to: %s" % pb_filepath)
-
+    get_train_batch, save_model
 
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
