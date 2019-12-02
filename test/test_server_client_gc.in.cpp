@@ -384,4 +384,83 @@ NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in) {
 NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_100_2_relu_complex_mask_in_out) {
   server_client_gc_relu_packed_test(100, 2, true, true, true);
 }
+
+auto server_client_gc_maxpool_test = [](const Shape& shape_a,
+                                        const Shape& window_shape,
+                                        const std::vector<float>& input_a,
+                                        const std::vector<float>& output,
+                                        const bool complex_packing,
+                                        const bool packed, bool mask_gc_inputs,
+                                        bool mask_gc_outputs) {
+  auto backend = runtime::Backend::create("${BACKEND_NAME}");
+  auto he_backend = static_cast<HESealBackend*>(backend.get());
+
+  auto a = std::make_shared<op::Parameter>(element::f32, shape_a);
+  auto t = std::make_shared<op::MaxPool>(a, window_shape);
+  auto f = std::make_shared<Function>(t, ParameterVector{a});
+
+  std::string tensor_config{"client_input,encrypt"};
+  if (packed) {
+    tensor_config.append(",packed");
+  }
+  std::map<std::string, std::string> config_map{
+      {"enable_client", "true"},
+      {"enable_gc", "true"},
+      {a->get_name(), tensor_config},
+      {"mask_gc_inputs", bool_to_string(mask_gc_inputs)},
+      {"mask_gc_outputs", bool_to_string(mask_gc_outputs)}};
+
+  if (complex_packing) {
+    config_map["encryption_parameters"] = gc_param_real_str;
+  } else {
+    config_map["encryption_parameters"] = gc_param_complex_str;
+  }
+
+  std::string error_str;
+  he_backend->set_config(config_map, error_str);
+
+  NGRAPH_INFO << "complex_packing " << complex_packing;
+  NGRAPH_INFO << "mask_gc_inputs " << mask_gc_inputs;
+  NGRAPH_INFO << "mask_gc_outputs " << mask_gc_outputs;
+
+  // Server inputs which are not used
+  auto t_dummy = he_backend->create_packed_plain_tensor(element::f32, shape_a);
+  auto t_result =
+      he_backend->create_packed_cipher_tensor(element::f32, t->get_shape());
+
+  // Used for dummy server inputs
+  float DUMMY_FLOAT = 99;
+  copy_data(t_dummy, std::vector<float>(shape_size(shape_a), DUMMY_FLOAT));
+
+  size_t batch_size = packed ? shape_a[0] : 1;
+
+  std::vector<float> results;
+  auto client_thread = std::thread([&]() {
+    auto he_client =
+        HESealClient("localhost", 34000, batch_size,
+                     HETensorConfigMap<float>{
+                         {a->get_name(), make_pair("encrypt", input_a)}});
+
+    auto double_results = he_client.get_results();
+    results = std::vector<float>(double_results.begin(), double_results.end());
+  });
+
+  auto handle =
+      std::static_pointer_cast<HESealExecutable>(he_backend->compile(f));
+
+  handle->call_with_validate({t_result}, {t_dummy});
+
+  client_thread.join();
+  EXPECT_TRUE(test::all_close(results, output, 1e-2f));
+};
+
+NGRAPH_TEST(${BACKEND_NAME},
+            server_client_gc_max_pool_1d_1channel_1image_plain_real_unpacked) {
+  server_client_gc_maxpool_test(
+      Shape{1, 1, 14}, Shape{3},
+      std::vector<float>{0, 1, 0, 2, 1, 0, 3, 2, 0, 0, 2, 0, 0, 0},
+      std::vector<float>{1, 2, 2, 2, 3, 3, 3, 2, 2, 2, 2, 0}, false, false,
+      false, false);
+}
+
 }  // namespace ngraph::runtime::he

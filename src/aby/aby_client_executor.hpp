@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "aby/aby_executor.hpp"
 #include "he_tensor.hpp"
 #include "he_type.hpp"
@@ -44,11 +46,16 @@ class ABYClientExecutor : public ABYExecutor {
   ~ABYClientExecutor() = default;
 
   void run_aby_circuit(const std::string& function,
-                       std::shared_ptr<he::HETensor>& tensor) override;
+                       const std::shared_ptr<he::HETensor>& arg,
+                       std::shared_ptr<he::HETensor>& out) override;
 
-  // Relu circuits
   void run_aby_relu_circuit(const std::string& function,
-                            std::shared_ptr<he::HETensor>& tensor);
+                            const std::shared_ptr<he::HETensor>& arg,
+                            std::shared_ptr<he::HETensor>& out);
+
+  void run_aby_maxpool_circuit(const std::string& function,
+                               const std::shared_ptr<he::HETensor>& arg,
+                               std::shared_ptr<he::HETensor>& out);
 
  private:
   const he::HESealClient& m_he_seal_client;

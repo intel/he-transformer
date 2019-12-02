@@ -292,7 +292,7 @@ void HESealClient::handle_relu_request(pb::TCPMessage&& message) {
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
     init_aby_executor(num_aby_parties);
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
-    m_aby_executor->run_aby_circuit(function, he_tensor);
+    m_aby_executor->run_aby_circuit(function, he_tensor, he_tensor);
 #endif
   } else {
     size_t result_count = pb_tensor->data_size();
@@ -336,15 +336,7 @@ void HESealClient::handle_bounded_relu_request(pb::TCPMessage&& message) {
   bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
 
   if (enable_gc) {
-#ifdef NGRAPH_HE_ABY_ENABLE
-    NGRAPH_HE_LOG(3) << "Client bounded relu with GC";
-    NGRAPH_CHECK(js.find("num_aby_parties") != js.end(),
-                 "Number of ABY parties not specified");
-    size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
-    init_aby_executor(num_aby_parties);
-    m_aby_executor->prepare_aby_circuit(function, he_tensor);
-    m_aby_executor->run_aby_circuit(function, he_tensor);
-#endif
+    throw ngraph_error("BounedRelu not supported with GC");
   } else {
     size_t result_count = pb_tensor->data_size();
 #pragma omp parallel for
@@ -389,10 +381,10 @@ void HESealClient::handle_max_pool_request(pb::TCPMessage&& message) {
   bool enable_gc = string_to_bool(std::string(js.at("enable_gc")));
 
   // We currently just support max_pool_request with single output
-  auto post_max_he_tensor =
-      HETensor(he_tensor->get_element_type(), Shape{m_batch_size, 1},
-               he_tensor->is_packed(), complex_packing(), true, *m_ckks_encoder,
-               m_context, *m_encryptor, *m_decryptor, m_encryption_params);
+  auto post_max_he_tensor = std::make_shared<HETensor>(
+      he_tensor->get_element_type(), Shape{m_batch_size, 1},
+      he_tensor->is_packed(), complex_packing(), true, *m_ckks_encoder,
+      m_context, *m_encryptor, *m_decryptor, m_encryption_params);
 
   if (enable_gc) {
 #ifdef NGRAPH_HE_ABY_ENABLE
@@ -402,10 +394,10 @@ void HESealClient::handle_max_pool_request(pb::TCPMessage&& message) {
     size_t num_aby_parties = flag_to_int(std::string(js["num_aby_parties"]));
     init_aby_executor(num_aby_parties);
     m_aby_executor->prepare_aby_circuit(function, he_tensor);
-    m_aby_executor->run_aby_circuit(function, he_tensor);
+    m_aby_executor->run_aby_circuit(function, he_tensor, post_max_he_tensor);
 #endif
   } else {
-    max_pool_seal(he_tensor->data(), post_max_he_tensor.data(),
+    max_pool_seal(he_tensor->data(), post_max_he_tensor->data(),
                   Shape{1, 1, cipher_count}, Shape{1, 1, 1},
                   Shape{cipher_count}, Strides{1}, Shape{0}, Shape{0},
                   m_context->first_parms_id(), scale(), *m_ckks_encoder,
@@ -415,7 +407,7 @@ void HESealClient::handle_max_pool_request(pb::TCPMessage&& message) {
   message.set_type(pb::TCPMessage_Type_RESPONSE);
   message.clear_he_tensors();
 
-  const auto& pb_output_tensors = post_max_he_tensor.write_to_pb_tensors();
+  const auto& pb_output_tensors = post_max_he_tensor->write_to_pb_tensors();
   NGRAPH_CHECK(pb_output_tensors.size() == 1,
                "Only support single-output tensors");
 

@@ -16,6 +16,7 @@
 
 #include "aby/aby_server_executor.hpp"
 
+#include "aby/kernel/maxpool_aby.hpp"
 #include "aby/kernel/relu_aby.hpp"
 #include "nlohmann/json.hpp"
 #include "seal/kernel/subtract_seal.hpp"
@@ -44,7 +45,7 @@ ABYServerExecutor::ABYServerExecutor(
 }
 
 void ABYServerExecutor::prepare_aby_circuit(
-    const std::string& function, std::shared_ptr<he::HETensor>& tensor) {
+    const std::string& function, const std::shared_ptr<he::HETensor>& tensor) {
   NGRAPH_HE_LOG(4) << "server prepare_aby_circuit with function " << function;
   json js = json::parse(function);
   auto name = js.at("function");
@@ -59,16 +60,17 @@ void ABYServerExecutor::prepare_aby_circuit(
   }
 }
 
-void ABYServerExecutor::run_aby_circuit(const std::string& function,
-                                        std::shared_ptr<he::HETensor>& tensor) {
+void ABYServerExecutor::run_aby_circuit(
+    const std::string& function, const std::shared_ptr<he::HETensor>& arg,
+    std::shared_ptr<he::HETensor>& out) {
   NGRAPH_HE_LOG(4) << "server run_aby_circuit with funciton " << function;
 
   json js = json::parse(function);
   auto name = js.at("function");
   if (name == "Relu") {
-    run_aby_relu_circuit(tensor->data());
+    run_aby_relu_circuit(arg->data());
   } else if (name == "MaxPool") {
-    run_aby_maxpool_circuit(tensor->data());
+    run_aby_maxpool_circuit(arg->data());
   } else {
     NGRAPH_ERR << "Unknown function name " << name;
     throw ngraph_error("Unknown function name");
@@ -142,7 +144,46 @@ void ABYServerExecutor::prepare_aby_maxpool_circuit(
   bool complex_packing = cipher_batch[0].complex_packing();
   size_t batch_size = cipher_batch[0].batch_size();
 
-  // const auto op = node_wrapper.get_op();
+  NGRAPH_HE_LOG(4) << "Generating gc input mask";
+  NGRAPH_HE_LOG(4) << "complex_packing? " << complex_packing;
+
+  m_gc_input_mask =
+      generate_gc_input_mask(Shape{batch_size, cipher_batch.size()},
+                             plaintext_packing, complex_packing);
+
+  NGRAPH_HE_LOG(4) << "Generating gc output mask";
+
+  m_gc_output_mask = generate_gc_output_mask(
+      Shape{1}, plaintext_packing, complex_packing, m_lowest_coeff_modulus / 2);
+
+  std::vector<double> scales(cipher_batch.size());
+
+  for (size_t i = 0; i < cipher_batch.size(); ++i) {
+    auto& he_type = cipher_batch[i];
+    auto& gc_input_mask = m_gc_input_mask->data(i);
+    NGRAPH_CHECK(he_type.is_ciphertext(), "HEType is not ciphertext");
+
+    auto cipher = he_type.get_ciphertext();
+
+    // Switch modulus to lowest values since mask values are drawn
+    // from (-q/2, q/2) for q the lowest coeff modulus
+    m_he_seal_executable.he_seal_backend().mod_switch_to_lowest(*cipher);
+
+    // Divide by scale so we can encode at the same scale as existing
+    // ciphertext
+    double scale = cipher->ciphertext().scale();
+    scales[i] = scale;
+    he::HEPlaintext scaled_gc_input_mask(gc_input_mask.get_plaintext());
+    for (size_t mask_idx = 0; mask_idx < scaled_gc_input_mask.size();
+         ++mask_idx) {
+      scaled_gc_input_mask[mask_idx] /= scale;
+    }
+    NGRAPH_HE_LOG(4) << "scaled_gc_input_mask " << scaled_gc_input_mask;
+
+    scalar_subtract_seal(*cipher, scaled_gc_input_mask, cipher,
+                         he_type.complex_packing(),
+                         m_he_seal_executable.he_seal_backend());
+  }
 }
 
 void ABYServerExecutor::prepare_aby_relu_circuit(
@@ -204,6 +245,54 @@ void ABYServerExecutor::prepare_aby_relu_circuit(
 void ABYServerExecutor::run_aby_maxpool_circuit(
     std::vector<he::HEType>& cipher_batch) {
   NGRAPH_HE_LOG(4) << "run_aby_maxpool_circuit ";
+
+  uint32_t num_aby_vals = cipher_batch.size() * cipher_batch[0].batch_size();
+
+  auto party_data_start_end_idx = split_vector(num_aby_vals, m_num_parties);
+
+  std::vector<uint64_t> gc_input_mask_vals(num_aby_vals);
+  std::vector<uint64_t> gc_output_mask_vals(1);
+
+  m_gc_input_mask->read(gc_input_mask_vals.data(),
+                        num_aby_vals * sizeof(uint64_t));
+  m_gc_output_mask->read(gc_output_mask_vals.data(), sizeof(uint64_t));
+
+#pragma omp parallel for num_threads(m_num_parties)
+  for (size_t party_idx = 0; party_idx < m_num_parties; ++party_idx) {
+    const auto& [start_idx, end_idx] = party_data_start_end_idx[party_idx];
+    size_t party_data_size = end_idx - start_idx;
+    if (party_data_size == 0) {
+      continue;
+    }
+
+    NGRAPH_HE_LOG(3) << "Server creating maxpool circuit for party "
+                     << party_idx;
+    BooleanCircuit* circ = get_circuit(party_idx);
+    NGRAPH_HE_LOG(3) << "num_aby_vals " << num_aby_vals;
+    NGRAPH_HE_LOG(3) << "gc_input_mask_vals " << gc_input_mask_vals.size();
+    NGRAPH_HE_LOG(3) << "gc_output_mask_vals " << gc_output_mask_vals.size();
+
+    std::vector<uint64_t> gc_input_party_mask_vals(party_data_size);
+    std::vector<uint64_t> gc_output_party_mask_vals(party_data_size);
+
+    for (size_t idx = start_idx; idx < end_idx; ++idx) {
+      gc_input_party_mask_vals[idx - start_idx] = gc_input_mask_vals[idx];
+      gc_output_party_mask_vals[idx - start_idx] = gc_output_mask_vals[idx];
+    }
+
+    std::vector<uint64_t> zeros(party_data_size, 0);
+
+    ngraph::runtime::aby::maxpool_aby(
+        *circ, party_data_size, gc_input_party_mask_vals, zeros,
+        gc_output_party_mask_vals[0], m_aby_bitlen, m_lowest_coeff_modulus);
+
+    NGRAPH_HE_LOG(3) << "server executing maxpool circuit";
+    m_ABYParties[party_idx]->ExecCircuit();
+    NGRAPH_HE_LOG(3) << "server done executing maxpool circuit";
+
+    reset_party(party_idx);
+    NGRAPH_HE_LOG(3) << "server done reset party " << party_idx;
+  }
 }
 
 void ABYServerExecutor::run_aby_relu_circuit(
@@ -261,6 +350,7 @@ void ABYServerExecutor::run_aby_relu_circuit(
 
 void ABYServerExecutor::post_process_aby_maxpool_circuit(
     std::shared_ptr<he::HETensor>& tensor) {
+  NGRAPH_INFO << "post_process_aby_maxpool_circuit";
   post_process_aby_relu_circuit(tensor);
 }
 
@@ -286,5 +376,4 @@ void ABYServerExecutor::post_process_aby_relu_circuit(
     }
   }
 }
-
 }  // namespace ngraph::runtime::aby

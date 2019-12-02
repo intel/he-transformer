@@ -54,11 +54,13 @@ class ABYServerExecutor : public ABYExecutor {
       const Shape& shape, bool plaintext_packing, bool complex_packing,
       uint64_t default_value = 0);
 
-  void prepare_aby_circuit(const std::string& function,
-                           std::shared_ptr<he::HETensor>& tensor) override;
+  void prepare_aby_circuit(
+      const std::string& function,
+      const std::shared_ptr<he::HETensor>& tensor) override;
 
   void run_aby_circuit(const std::string& function,
-                       std::shared_ptr<he::HETensor>& tensor) override;
+                       const std::shared_ptr<he::HETensor>& arg,
+                       std::shared_ptr<he::HETensor>& out) override;
 
   void post_process_aby_circuit(const std::string& function,
                                 std::shared_ptr<he::HETensor>& tensor);

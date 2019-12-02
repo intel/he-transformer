@@ -57,13 +57,15 @@ class ABYExecutor {
 
   /// If client, mean reduce zero centers the  data
   /// If server, makss with input mask values
-  virtual void prepare_aby_circuit(const std::string& function,
-                                   std::shared_ptr<he::HETensor>& tensor) {}
+  virtual void prepare_aby_circuit(
+      const std::string& function,
+      const std::shared_ptr<he::HETensor>& tensor) {}
 
   /// If client, runs aby circuit
   /// If server, runs aby circuit and populates tensor with outputs
   virtual void run_aby_circuit(const std::string& function,
-                               std::shared_ptr<he::HETensor>& tensor) = 0;
+                               const std::shared_ptr<he::HETensor>& arg,
+                               std::shared_ptr<he::HETensor>& out) = 0;
 
   void reset_party(size_t party_idx) {
     if (party_idx < m_ABYParties.size()) {

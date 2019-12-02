@@ -1394,6 +1394,11 @@ void HESealExecutable::handle_server_max_pool_op(
         cipher_batch[0].plaintext_packing(), cipher_batch[0].complex_packing(),
         true, m_he_seal_backend);
 
+    auto max_pool_output_tensor = std::make_shared<HETensor>(
+        arg->get_element_type(), Shape{cipher_batch[0].batch_size(), 1},
+        cipher_batch[0].plaintext_packing(), cipher_batch[0].complex_packing(),
+        true, m_he_seal_backend);
+
     // TODO(fboemer): std::move?
     max_pool_tensor->data() = cipher_batch;
     const auto& pb_tensors = max_pool_tensor->write_to_pb_tensors();
@@ -1418,7 +1423,8 @@ void HESealExecutable::handle_server_max_pool_op(
 
 #ifdef NGRAPH_HE_ABY_ENABLE
     if (enable_garbled_circuits()) {
-      m_aby_executor->run_aby_circuit(function_str, max_pool_tensor);
+      m_aby_executor->run_aby_circuit(function_str, max_pool_tensor,
+                                      max_pool_output_tensor);
     }
 #endif
 
@@ -1530,7 +1536,7 @@ void HESealExecutable::handle_server_relu_op(
 
 #ifdef NGRAPH_HE_ABY_ENABLE
       if (enable_garbled_circuits()) {
-        m_aby_executor->run_aby_circuit(function_str, relu_tensor);
+        m_aby_executor->run_aby_circuit(function_str, relu_tensor, relu_tensor);
       }
 #endif
     }

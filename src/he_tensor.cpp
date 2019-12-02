@@ -178,7 +178,8 @@ bool HETensor::any_encrypted_data() const {
 void HETensor::check_io_bounds(size_t n) const {
   size_t bytes_per_element = n;
   if (get_batch_size() == 0) {
-    NGRAPH_CHECK(n == 0, "I/O access past end of tensor");
+    NGRAPH_CHECK(n == 0,
+                 "I/O access past end of tensor on tensor with batch size 0");
   } else {
     bytes_per_element /= get_batch_size();
   }
@@ -192,7 +193,11 @@ void HETensor::check_io_bounds(size_t n) const {
   }
   // Check out-of-range
   if (bytes_per_element / type_byte_size > get_element_count()) {
-    throw std::out_of_range("I/O access past end of tensor");
+    NGRAPH_INFO << "n " << n;
+    NGRAPH_INFO << "bytes_per_element " << bytes_per_element;
+    NGRAPH_INFO << "type_byte_size " << type_byte_size;
+    throw std::out_of_range("I/O access past end of tensor with " +
+                            std::to_string(get_element_count()) + " elements");
   }
 }
 
