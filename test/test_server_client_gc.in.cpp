@@ -454,6 +454,12 @@ auto server_client_gc_maxpool_test = [](const Shape& shape_a,
   EXPECT_TRUE(test::all_close(results, output, 1e-2f));
 };
 
+NGRAPH_TEST(${BACKEND_NAME}, server_client_gc_max_pool_small) {
+  server_client_gc_maxpool_test(
+      Shape{1, 1, 3}, Shape{3}, std::vector<float>{0, 1, 3},
+      std::vector<float>{3}, false, false, false, false);
+}
+
 NGRAPH_TEST(${BACKEND_NAME},
             server_client_gc_max_pool_1d_1channel_1image_plain_real_unpacked) {
   server_client_gc_maxpool_test(

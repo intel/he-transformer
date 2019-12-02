@@ -36,11 +36,11 @@ template <typename T>
 void print_argument(const std::vector<T>& values, const std::string& name) {
   size_t print_size = std::min(values.size(), 200UL);
 
-  if (values.size() > 1) {
+  /*if (values.size() > 1) {
     if (values[0] == 0 && values[1] == 0) {
       return;
     }
-  }
+  }*/
 
   for (size_t i = 0; i < print_size; ++i) {
     NGRAPH_HE_LOG(5) << "\t" << name << "[" << i << "] = " << values[i];
