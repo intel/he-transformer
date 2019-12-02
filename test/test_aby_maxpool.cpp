@@ -39,26 +39,23 @@ auto test_maxpool_circuit = [](size_t num_vals, size_t coeff_modulus) {
   std::vector<uint64_t> x(num_vals);
   std::vector<uint64_t> xs(num_vals);
   std::vector<uint64_t> xc(num_vals);
-  std::vector<uint64_t> r(num_vals);
-  std::vector<bool> bigger_than_zero(num_vals);
-  std::vector<uint64_t> exp_output(num_vals);
 
   std::random_device rd;
   std::mt19937 gen(0);  // rd());
   std::uniform_int_distribution<uint64_t> dis(0, coeff_modulus - 1);
+  uint64_t r{dis(gen)};
   for (int i = 0; i < static_cast<int>(num_vals); ++i) {
     x[i] = i;
-    r[i] = dis(gen);
+
     xc[i] = dis(gen);
     xs[i] = (x[i] % coeff_modulus + coeff_modulus) - xc[i];
     xs[i] = xs[i] % coeff_modulus;
     // maxpool circuit expects transformation (-q/2, q/2) => (0,q) by adding q
-    // to values < 0
-    bigger_than_zero[i] = (x[i] % coeff_modulus) <= (coeff_modulus / 2);
-    exp_output[i] = bigger_than_zero[i] ? (x[i] + r[i]) % coeff_modulus : r[i];
 
     EXPECT_EQ((xs[i] + xc[i]) % coeff_modulus, x[i] % coeff_modulus);
   }
+  uint64_t exp_output =
+      (*std::max_element(xs.begin(), xs.end()) + r) % coeff_modulus;
 
   // Server function
   auto server_fun = [&]() {
@@ -89,7 +86,7 @@ auto test_maxpool_circuit = [](size_t num_vals, size_t coeff_modulus) {
         *sharings[sharing]->GetCircuitBuildRoutine());
 
     share* maxpool_out =
-        maxpool_aby(circ, num_vals, zeros, xc, zeros, bitlen, coeff_modulus);
+        maxpool_aby(circ, num_vals, zeros, xc, 0, bitlen, coeff_modulus);
 
     client->ExecCircuit();
 
@@ -99,18 +96,28 @@ auto test_maxpool_circuit = [](size_t num_vals, size_t coeff_modulus) {
     maxpool_out->get_clear_value_vec(&out_vals_maxpool, &out_bitlen_maxpool,
                                      &out_num_aby_vals);
 
+    EXPECT_EQ(out_num_aby_vals, 1);
+
     for (size_t i = 0; i < out_num_aby_vals; ++i) {
-      if (out_vals_maxpool[i] != exp_output[i]) {
+      if (out_vals_maxpool[i] != exp_output) {
         NGRAPH_INFO << "Not same at index " << i;
-        NGRAPH_INFO << "\tx[i] " << x[i];
-        NGRAPH_INFO << "\txs[i] " << xs[i];
-        NGRAPH_INFO << "\txc[i] " << xc[i];
-        NGRAPH_INFO << "\tr[i] " << r[i];
-        NGRAPH_INFO << "\tbigger_than_zero[i] " << bigger_than_zero[i];
-        NGRAPH_INFO << "\texp_output[i] " << exp_output[i];
+        NGRAPH_INFO << "x";
+        for (const auto& elem : x) {
+          NGRAPH_INFO << elem;
+        }
+        NGRAPH_INFO << "xs";
+        for (const auto& elem : xs) {
+          NGRAPH_INFO << elem;
+        }
+        NGRAPH_INFO << "xc";
+        for (const auto& elem : xc) {
+          NGRAPH_INFO << elem;
+        }
+        NGRAPH_INFO << "\tr " << r;
+        NGRAPH_INFO << "\texp_output[i] " << exp_output;
         NGRAPH_INFO << "\toutput " << out_vals_maxpool[i];
       }
-      EXPECT_EQ(out_vals_maxpool[i], exp_output[i]);
+      EXPECT_EQ(out_vals_maxpool[i], exp_output);
     }
 
     client->Reset();
@@ -127,9 +134,5 @@ TEST(aby, maxpool_circuit_100_q8) { test_maxpool_circuit(100, 8); }
 TEST(aby, maxpool_circuit_10_q9) { test_maxpool_circuit(10, 9); }
 
 TEST(aby, maxpool_circuit_100_q9) { test_maxpool_circuit(100, 9); }
-
-TEST(aby, maxpool_circuit_100_q_large) {
-  test_maxpool_circuit(100, 18014398509404161);
-}
 
 }  // namespace ngraph::runtime::aby

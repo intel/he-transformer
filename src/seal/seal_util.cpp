@@ -517,7 +517,10 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
 
 #ifdef NGRAPH_HE_ABY_ENABLE
   for (size_t i = 0; i < output.size(); ++i) {
+    NGRAPH_INFO << "Decoding " << output[i] << " with mod interval "
+                << mod_interval;
     output[i] = runtime::aby::mod_reduce_zero_centered(output[i], mod_interval);
+    NGRAPH_INFO << " to " << output[i];
   }
 #endif
 }

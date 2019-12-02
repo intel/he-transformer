@@ -74,6 +74,7 @@ inline double uint64_to_double(uint64_t i, uint64_t q, double scale) {
     NGRAPH_WARN << "i " << i << " is too large for q " << q;
     // throw ngraph_error("i is too large");
   }
+  // Avoid uint overflow
   if (i > q / 2) {
     return (i - q / 2) / scale;
   } else {

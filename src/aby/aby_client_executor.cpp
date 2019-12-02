@@ -91,6 +91,7 @@ void ABYClientExecutor::run_aby_relu_circuit(
   NGRAPH_HE_LOG(3) << "Converting client values to ABY integers";
 
   std::vector<uint64_t> client_gc_vals(tensor_size);
+#pragma omp parallel for
   for (size_t i = 0; i < tensor_size; ++i) {
     // TOOD: check
     he::HEType& he_type = tensor_data[i % tensor_data.size()];
