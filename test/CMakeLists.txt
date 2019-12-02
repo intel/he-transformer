@@ -46,7 +46,7 @@ set(SRC
     )
 
 if (NGRAPH_HE_ABY_ENABLE)
-  list(APPEND BACKEND_TEST_SRC test_aby.cpp)
+  list(APPEND SRC test_aby.cpp test_aby_relu.cpp)
 endif()
 
 set(BACKEND_TEST_SRC
@@ -84,7 +84,6 @@ set(BACKEND_TEST_SRC
 if (NGRAPH_HE_ABY_ENABLE)
   list(APPEND BACKEND_TEST_SRC test_server_client_gc.in.cpp)
 endif()
-
 
 set(MANIFEST ${PROJECT_SOURCE_DIR}/src/seal/unit_test.manifest)
 set(BACKEND_NAME "HE_SEAL")
