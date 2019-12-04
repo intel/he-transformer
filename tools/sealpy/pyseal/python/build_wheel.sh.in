@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# ******************************************************************************
+# Copyright 2019 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ******************************************************************************
+
+set -e
+
+export PYBIND_HEADERS_PATH=@CMAKE_BINARY_DIR@/pybind11
+export CXX_COMPILER=@CMAKE_CXX_COMPILER@
+export C_COMPILER=@CMAKE_C_COMPILER@
+export SEAL_INSTALL_PATH=@SEAL_PREFIX@
+export PYSEAL_SOURCE_DIR=@CMAKE_CURRENT_SOURCE_DIR@
+
+SOURCE_DIR=@CMAKE_SOURCE_DIR@/python
+BUILD_DIR=@CMAKE_BINARY_DIR@/python
+
+! PYTHON3_DETECTED=$(($(python3 -c 'import sys; print(sys.version_info.major)' 2> /dev/null) == 3))
+
+mkdir -p build
+
+if [ "${PYTHON3_DETECTED}" == 1  ]; then
+    echo "Building wheel for Python 3"
+    python3 --version
+    cd ${BUILD_DIR}
+    rm -rf build/venv3
+    virtualenv -p "$(command -v python3)" build/venv3
+    source build/venv3/bin/activate
+    pip install --upgrade setuptools pip wheel
+
+    # TODO: remove debug flags CFLAGS='-Wall -O0 -g'
+     CC=${C_COMPILER} python ${SOURCE_DIR}/setup.py bdist_wheel
+    python ${SOURCE_DIR}/setup.py sdist
+    deactivate
+else
+    echo "Error. Python3 not detected."
+fi

@@ -1,0 +1,10 @@
+build/
+dist/
+pyseal.egg-info/
+.vscode/
+.pyc
+**/__pycache__/
+
+# Generated files
+pyseal.cpp
+setup.py

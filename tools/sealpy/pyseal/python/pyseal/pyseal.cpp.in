@@ -1,0 +1,115 @@
+//*****************************************************************************
+// Copyright 2019 Intel Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//*****************************************************************************
+
+#include <pybind11/complex.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
+
+#include "pyseal/batch_encoder.hpp"
+#include "pyseal/biguint.hpp"
+#include "pyseal/ciphertext.hpp"
+#include "pyseal/ckks.hpp"
+#include "pyseal/coeff_modulus.hpp"
+#include "pyseal/context_data.hpp"
+#include "pyseal/decryptor.hpp"
+#include "pyseal/encryption_parameters.hpp"
+#include "pyseal/encryptor.hpp"
+#include "pyseal/evaluator.hpp"
+#include "pyseal/galoiskeys.hpp"
+#include "pyseal/intencoder.hpp"
+#include "pyseal/key_generator.hpp"
+#include "pyseal/kswitchkeys.hpp"
+#include "pyseal/memory_pool_handle.hpp"
+#include "pyseal/plain_modulus.hpp"
+#include "pyseal/plaintext.hpp"
+#include "pyseal/public_key.hpp"
+#include "pyseal/pyseal.hpp"
+#include "pyseal/randomgen.hpp"
+#include "pyseal/relinkeys.hpp"
+#include "pyseal/rlwe.hpp"
+#include "pyseal/seal_context.hpp"
+#include "pyseal/secret_key.hpp"
+#include "pyseal/small_modulus.hpp"
+#include "pyseal/valcheck.hpp"
+#include "seal/seal.h"
+#include "seal/util/rlwe.h"
+
+using namespace seal;
+using namespace pybind11::literals;
+namespace py = pybind11;
+
+PYBIND11_MODULE(pyseal, m) {
+  m.doc() = "Python wrapper for SEAL";
+  m.attr("__version__") = "@SEAL_VERSION@";
+
+  // STL bindings
+  py::bind_vector<std::vector<double>>(m, "DoubleVec", py::buffer_protocol());
+  py::bind_vector<std::vector<std::complex<double>>>(m, "ComplexVec",
+                                                     py::buffer_protocol());
+  py::bind_vector<std::vector<std::uint64_t>>(m, "UIntVec",
+                                              py::buffer_protocol());
+  py::bind_vector<std::vector<int64_t>>(m, "IntVec", py::buffer_protocol());
+
+  py::enum_<scheme_type>(m, "scheme_type", py::arithmetic(), "scheme_type")
+      .value("BFV", scheme_type::BFV)
+      .value("CKKS", scheme_type::CKKS);
+
+  py::enum_<sec_level_type>(m, "sec_level_type", py::arithmetic(),
+                            "sec_level_type")
+      .value("none", sec_level_type::none)
+      .value("tc128", sec_level_type::tc128)
+      .value("tc192", sec_level_type::tc192)
+      .value("tc256", sec_level_type::tc256);
+
+  m.attr("parms_id_zero") = parms_id_zero;
+
+  init_rlwe(m);
+  init_valcheck(m);
+
+  // Put first to avoid unknown default argument error
+  regclass_pyseal_MemoryPoolHandle(m);
+
+  // Put before encryption parameters
+  regclass_pyseal_RandomGen(m);
+
+  // Put before GaloisKeys and RelinKeys since it is the base class
+  regclass_pyseal_KSwitchKeys(m);
+  regclass_pyseal_GaloisKeys(m);
+  regclass_pyseal_RelinKeys(m);
+
+  regclass_pyseal_BigUInt(m);
+  regclass_pyseal_IntegerEncoder(m);
+
+  regclass_pyseal_Ciphertext(m);
+  regclass_pyseal_CKKSEncoder(m);
+  regclass_pyseal_CoeffModulus(m);
+  regclass_pyseal_ContextData(m);
+  regclass_pyseal_Decryptor(m);
+  regclass_pyseal_EncryptionParameters(m);
+  regclass_pyseal_Encryptor(m);
+  regclass_pyseal_Evaluator(m);
+  regclass_pyseal_KeyGenerator(m);
+  regclass_pyseal_PlainModulus(m);
+  regclass_pyseal_Plaintext(m);
+  regclass_pyseal_PublicKey(m);
+  regclass_pyseal_SEALContext(m);
+  regclass_pyseal_SecretKey(m);
+  regclass_pyseal_SmallModulus(m);
+
+  // BFV-specific
+  regclass_pyseal_BatchEncoder(m);
+}
