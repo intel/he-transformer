@@ -33,6 +33,11 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
+    x_train = x_train.astype('float32')
+    x_test = x_test.astype('float32')
+    x_train /= 255.0
+    x_test /= 255.0
+
     x_train = x_train[start_batch:start_batch + batch_size]
     y_train = y_train[start_batch:start_batch + batch_size]
     x_test = x_test[start_batch:start_batch + batch_size]
@@ -249,6 +254,12 @@ def train_argument_parser():
         type=int,
         default=20000,
         help='Number of training iterations')
+    parser.add_argument(
+        '--epochs',
+        type=int,
+        default=10,
+        help='Number of training epochs'
+    )
     parser.add_argument(
         '--batch_size', type=int, default=128, help='Batch Size')
 
