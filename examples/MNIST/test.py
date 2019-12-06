@@ -34,6 +34,11 @@ def test_network(FLAGS):
     # Load saved model
     tf.import_graph_def(load_pb_file(FLAGS.model_file))
 
+    with tf.compat.v1.Session() as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
+
+
+
 
 
     nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]

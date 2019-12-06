@@ -34,8 +34,12 @@ from tensorflow.keras.layers import Dense, Conv2D, Activation, AveragePooling2D,
 from tensorflow.keras.models import load_model
 
 
-def print_nodes():
-    nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+def print_nodes(graph_def=None):
+    if graph_def is None:
+        nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+    else:
+        nodes = [n.name for n in graph_def.node]
+
     print('nodes', nodes)
 
 # Squash linear layers and return squashed weights
@@ -112,7 +116,7 @@ def freeze_session(session, keep_var_names=None, output_names=None, clear_device
     @param clear_devices Remove the device directives from the graph for better portability.
     @return The frozen graph definition.
     """
-    from tensorflow.python.framework.graph_util import convert_variables_to_constants
+    from tensorflow.python.framework.graph_util import convert_variables_to_constants, remove_training_nodes
     graph = session.graph
     with graph.as_default():
         freeze_var_names = list(set(v.op.name for v in tf.global_variables()).difference(keep_var_names or []))
@@ -125,108 +129,36 @@ def freeze_session(session, keep_var_names=None, output_names=None, clear_device
                 node.device = ""
         frozen_graph = convert_variables_to_constants(session, input_graph_def,
                                                       output_names, freeze_var_names)
+        frozen_graph = remove_training_nodes(frozen_graph)
         return frozen_graph
 
 
 def save_model(cryptonets_model, sess, directory, filename):
-    tf.keras.backend.set_learning_phase(0)
-
     weights = squash_layers(cryptonets_model, sess)
-    K.clear_session()
+    (conv1_weights, squashed_weights, fc1_weights , fc2_weights) = weights[0:4]
+
+    # Remove old graph
     tf.reset_default_graph()
     sess = tf.compat.v1.Session()
 
-    conv1_weights = weights[0]
-    squashed_weights = weights[1]
-    fc1_weights = weights[2]
-    fc2_weights = weights[3]
-
     squashed_model = model.cryptonets_model_squashed(conv1_weights, squashed_weights, fc2_weights)
-    print('squashed_model', squashed_model.summary())
+    print('squashed_model summary: ', squashed_model.summary())
+
     sess.run(tf.compat.v1.global_variables_initializer())
+    print('ran initializer?')
 
-    # clear session to include just Save only the current model
-    squashed_model.save('./tmp.h5')
-    print('saved model to tmp.h5')
-
-
-    def square_activation(x):
-        return x * x
-    with CustomObjectScope({'square_activation': square_activation}):
-        squashed_model = tf.keras.models.load_model('./tmp.h5')
-
-        sess.run(tf.compat.v1.global_variables_initializer())
-
-        print('loaded squashed model')
-        print('squashed_model', squashed_model)
-        print('squashed_model', squashed_model.summary())
-        print('squashed_model', squashed_model.layers)
-        last_dense_layer = squashed_model.layers[-1]
-        print('last_dense_layer', last_dense_layer)
-        print('last_dense_layer', last_dense_layer.output)
-        print('inputs', squashed_model.inputs)
-        print('outputs', squashed_model.outputs)
-
-        frozen_graph = freeze_session(K.get_session(),
+    frozen_graph = freeze_session(sess,
                               output_names=[out.op.name for out in squashed_model.outputs])
+    print('froze graph')
+    print_nodes(frozen_graph)
 
-        tf.train.write_graph(frozen_graph, directory, filename, as_text=False)
-
-        print("Model saved to:" +  directory + " / " + filename)
-
-
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    pbtxt_filename = filename + '.pbtxt'
-    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + '.pb')
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=filename + '.pb',
-        as_text=False)
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=pbtxt_filename,
-        as_text=True)
-
-    saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
-    saver.save(sess, ckpt_filepath)
-
-    print('tf saver saved')
-    print_nodes()
-
-    sess.run(tf.initialize_all_variables())
-
-
-
-    # Freeze graph to turn variables into constants
-    freeze_graph.freeze_graph(
-        input_graph=pbtxt_filepath,
-        input_saver='',
-        input_binary=False,
-        input_checkpoint=ckpt_filepath,
-        output_node_names='output/BiasAdd',
-        restore_op_name='save/restore_all',
-        filename_tensor_name='save/Const:0',
-        output_graph=pb_filepath,
-        clear_devices=True,
-        initializer_nodes='convd1_1/kernel/Initializer/Const')
-        #,convd1_1/bias/Initializer/Const,squash_fc_1/kernel/Initializer/Const,squash_fc_1/bias/Initializer/Const,output/kernel/Initializer/Const,output/bias/Initializer/Const')
-
-    print("Model saved to: %s" % pb_filepath)
-
+    tf.io.write_graph(frozen_graph, directory, filename + '.pb', as_text=False)
+    print("Model saved to: %s" % filename + '.pb')
 
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
 
     cryptonets = model.cryptonets_model()
-
     print(cryptonets.summary())
 
     print('x_train', x_train.shape)
@@ -234,15 +166,14 @@ def main(FLAGS):
     print('x_test', x_test.shape)
     print('y_test', y_test.shape)
 
-    def my_loss(labels, logits):
+    def loss(labels, logits):
         return keras.losses.categorical_crossentropy(labels, logits, from_logits=True)
 
     cryptonets.compile(optimizer='adam',
-              loss=my_loss,
+              loss=loss,
               metrics=['accuracy'])
 
     cryptonets.fit(x_train, y_train, epochs=FLAGS.epochs, batch_size=FLAGS.batch_size, verbose=1)
-
 
     test_loss, test_acc = cryptonets.evaluate(x_test, y_test, verbose=2)
     print('\nTest accuracy:', test_acc)

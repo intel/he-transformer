@@ -38,8 +38,6 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train /= 255.0
     x_test /= 255.0
 
-    x_train = x_train[start_batch:start_batch + batch_size]
-    y_train = y_train[start_batch:start_batch + batch_size]
     x_test = x_test[start_batch:start_batch + batch_size]
     y_test = y_test[start_batch:start_batch + batch_size]
 
