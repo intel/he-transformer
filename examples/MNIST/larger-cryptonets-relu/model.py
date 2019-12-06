@@ -24,7 +24,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import conv2d_stride_2_valid, avg_pool_3x3_same_size
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, Activation, AveragePooling2D, Flatten, Convolution2D, MaxPooling2D
+from tensorflow.keras.layers import Dense, Conv2D, Activation, AveragePooling2D, Flatten, Convolution2D, MaxPooling2D, Reshape
 
 def cryptonets_model():
     def square_activation(x):
@@ -82,6 +82,8 @@ def cryptonets_model_squashed(conv1_weights, squashed_weights, fc2_weights):
                     name='convd1_1'))
 
     model.add(Activation(square_activation))
+
+    # Flatten() results in split Keras graph
     model.add(Flatten())
     model.add(Dense(100,
                     use_bias=True,

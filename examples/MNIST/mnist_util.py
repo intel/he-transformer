@@ -23,6 +23,15 @@ import os.path
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.tools import freeze_graph
 
+def print_nodes(graph_def=None):
+    if graph_def is None:
+        nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+    else:
+        nodes = [n.name for n in graph_def.node]
+
+    print('nodes', nodes)
+
+
 
 def load_mnist_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""

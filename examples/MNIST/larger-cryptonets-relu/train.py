@@ -28,19 +28,12 @@ from tensorflow.keras import backend as K
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import load_mnist_data, save_model, train_argument_parser
+from mnist_util import load_mnist_data, save_model, train_argument_parser, print_nodes
 
 from tensorflow.keras.layers import Dense, Conv2D, Activation, AveragePooling2D, Flatten, Convolution2D, MaxPooling2D, Input, Reshape
 from tensorflow.keras.models import load_model
 
 
-def print_nodes(graph_def=None):
-    if graph_def is None:
-        nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
-    else:
-        nodes = [n.name for n in graph_def.node]
-
-    print('nodes', nodes)
 
 # Squash linear layers and return squashed weights
 def squash_layers(cryptonets_model, sess):

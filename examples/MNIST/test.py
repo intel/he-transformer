@@ -24,7 +24,7 @@ import ngraph_bridge
 from mnist_util import load_mnist_data, \
                        server_argument_parser, \
                        server_config_from_flags, \
-                       load_pb_file
+                       load_pb_file, print_nodes
 
 
 def test_network(FLAGS):
@@ -34,15 +34,8 @@ def test_network(FLAGS):
     # Load saved model
     tf.import_graph_def(load_pb_file(FLAGS.model_file))
 
-    with tf.compat.v1.Session() as sess:
-        sess.run(tf.compat.v1.global_variables_initializer())
-
-
-
-
-
-    nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
-    print('dnoes', nodes)
+    print('loaded model')
+    print_nodes()
 
     # Get input / output tensors
     x_input = tf.compat.v1.get_default_graph().get_tensor_by_name(
