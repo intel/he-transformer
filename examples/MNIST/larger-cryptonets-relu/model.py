@@ -37,79 +37,82 @@ from tensorflow.keras.layers import (
 
 
 def cryptonets_model():
-    model = Sequential()
-    model.add(
-        Conv2D(
-            filters=5,
-            kernel_size=(5, 5),
-            strides=(2, 2),
-            padding="same",
-            use_bias=True,
-            input_shape=(28, 28, 1),
-            name="conv2d_1",
-        )
-    )
+  model = Sequential()
+  model.add(
+      Conv2D(
+          filters=5,
+          kernel_size=(5, 5),
+          strides=(2, 2),
+          padding="same",
+          use_bias=True,
+          input_shape=(28, 28, 1),
+          name="conv2d_1",
+      ))
 
-    model.add(Activation("relu"))
-    model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
-    model.add(
-        Conv2D(
-            filters=50,
-            kernel_size=(5, 5),
-            strides=(2, 2),
-            padding="same",
-            use_bias=True,
-            name="conv2d_2",
-        )
-    )
+  model.add(Activation("relu"))
+  model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
+  model.add(
+      Conv2D(
+          filters=50,
+          kernel_size=(5, 5),
+          strides=(2, 2),
+          padding="same",
+          use_bias=True,
+          name="conv2d_2",
+      ))
 
-    model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
-    model.add(Flatten())
-    model.add(Dense(100, use_bias=True, name="fc_1"))
-    model.add(Activation("relu"))
-    model.add(Dense(10, use_bias=True, name="fc_2"))
+  model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
+  model.add(Flatten())
+  model.add(Dense(100, use_bias=True, name="fc_1"))
+  model.add(Activation("relu"))
+  model.add(Dense(10, use_bias=True, name="fc_2"))
 
-    return model
+  return model
 
 
-def cryptonets_model_squashed(input, conv1_weights, squashed_weights, fc2_weights):
+def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
+                              fc2_weights):
 
-    print("conv1_weights", conv1_weights[0].shape, conv1_weights[1].shape)
-    print("squashed_weights", squashed_weights[0].shape, squashed_weights[1].shape)
-    print("fc2_weights", fc2_weights[0].shape, fc2_weights[1].shape)
+  print("conv1_weights", conv1_weights[0].shape, conv1_weights[1].shape)
+  print("squashed_weights", squashed_weights[0].shape,
+        squashed_weights[1].shape)
+  print("fc2_weights", fc2_weights[0].shape, fc2_weights[1].shape)
 
-    y = Conv2D(
-        filters=5,
-        kernel_size=(5, 5),
-        strides=(2, 2),
-        padding="same",
-        use_bias=True,
-        kernel_initializer=tf.compat.v1.constant_initializer(conv1_weights[0]),
-        bias_initializer=tf.compat.v1.constant_initializer(conv1_weights[1]),
-        input_shape=(28, 28, 1),
-        name="convd1_1",
-    )(input)
-    y = Activation("relu")(y)
+  y = Conv2D(
+      filters=5,
+      kernel_size=(5, 5),
+      strides=(2, 2),
+      padding="same",
+      use_bias=True,
+      kernel_initializer=tf.compat.v1.constant_initializer(conv1_weights[0]),
+      bias_initializer=tf.compat.v1.constant_initializer(conv1_weights[1]),
+      input_shape=(28, 28, 1),
+      name="convd1_1",
+  )(
+      input)
+  y = Activation("relu")(y)
 
-    # Using Keras model API with Flatten results in split ngraph at Flatten() or Reshape() op.
-    # Use tf.reshape instead
-    y = tf.reshape(y, [-1, 5 * 14 * 14])
+  # Using Keras model API with Flatten results in split ngraph at Flatten() or Reshape() op.
+  # Use tf.reshape instead
+  y = tf.reshape(y, [-1, 5 * 14 * 14])
 
-    # Flatten() results in split Keras graph
-    y = Dense(
-        100,
-        use_bias=True,
-        name="squash_fc_1",
-        kernel_initializer=tf.compat.v1.constant_initializer(squashed_weights[0]),
-        bias_initializer=tf.compat.v1.constant_initializer(squashed_weights[1]),
-    )(y)
-    y = Activation("relu")(y)
-    y = Dense(
-        10,
-        use_bias=True,
-        kernel_initializer=tf.compat.v1.constant_initializer(fc2_weights[0]),
-        bias_initializer=tf.compat.v1.constant_initializer(fc2_weights[1]),
-        name="output",
-    )(y)
+  # Flatten() results in split Keras graph
+  y = Dense(
+      100,
+      use_bias=True,
+      name="squash_fc_1",
+      kernel_initializer=tf.compat.v1.constant_initializer(squashed_weights[0]),
+      bias_initializer=tf.compat.v1.constant_initializer(squashed_weights[1]),
+  )(
+      y)
+  y = Activation("relu")(y)
+  y = Dense(
+      10,
+      use_bias=True,
+      kernel_initializer=tf.compat.v1.constant_initializer(fc2_weights[0]),
+      bias_initializer=tf.compat.v1.constant_initializer(fc2_weights[1]),
+      name="output",
+  )(
+      y)
 
-    return y
+  return y
