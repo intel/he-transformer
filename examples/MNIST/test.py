@@ -34,16 +34,22 @@ def test_network(FLAGS):
     # Load saved model
     tf.import_graph_def(load_pb_file(FLAGS.model_file))
 
+
+
+    nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+    print('dnoes', nodes)
+
     # Get input / output tensors
     x_input = tf.compat.v1.get_default_graph().get_tensor_by_name(
-        "import/input:0")
+        "import/convd1_1_input:0")
     y_output = tf.compat.v1.get_default_graph().get_tensor_by_name(
-        "import/output:0")
+        "import/output/BiasAdd:0")
 
     # Create configuration to encrypt input
     FLAGS, unparsed = server_argument_parser().parse_known_args()
     config = server_config_from_flags(FLAGS, x_input.name)
     with tf.compat.v1.Session(config=config) as sess:
+        sess.run(tf.compat.v1.global_variables_initializer())
         start_time = time.time()
         y_hat = y_output.eval(feed_dict={x_input: x_test})
         elasped_time = (time.time() - start_time)

@@ -61,9 +61,13 @@ def cryptonets_model():
     return model
 
 
-def cryptonets_model_squashed(squashed_weights, squashed_bias):
+def cryptonets_model_squashed(conv1_weights, squashed_weights, fc2_weights):
     def square_activation(x):
         return x * x
+
+    print('conv1_weights', conv1_weights[0].shape, conv1_weights[1].shape)
+    print('squashed_weights', squashed_weights[0].shape, squashed_weights[1].shape)
+    print('fc2_weights', fc2_weights[0].shape, fc2_weights[1].shape)
 
     model = Sequential()
     model.add(Conv2D(filters=5,
@@ -71,18 +75,27 @@ def cryptonets_model_squashed(squashed_weights, squashed_bias):
                     strides=(2, 2),
                     padding='same',
                     use_bias=True,
+                    kernel_initializer=tf.compat.v1.constant_initializer(conv1_weights[0]),
+                    bias_initializer=tf.compat.v1.constant_initializer(conv1_weights[1]),
                     input_shape=(28, 28, 1),
-                    name='input'))
+                    trainable=False,
+                    name='convd1_1'))
 
     model.add(Activation(square_activation))
     model.add(Flatten())
     model.add(Dense(100,
                     use_bias=True,
-                    name='fc_1',
-                    bias_initializer=tf.compat.v1.constant_initializer(squashed_bias),
-                    kernel_initializer=tf.compat.v1.constant_initializer(squashed_weights)))
+                    name='squash_fc_1',
+                    trainable=False,
+                    kernel_initializer=tf.compat.v1.constant_initializer(squashed_weights[0]),
+                    bias_initializer=tf.compat.v1.constant_initializer(squashed_weights[1]))
+                    )
 
     model.add(Activation(square_activation))
-    model.add(Dense(10, use_bias=True, name='output'))
+    model.add(Dense(10, use_bias=True,
+                    trainable=False,
+                    kernel_initializer=tf.compat.v1.constant_initializer(fc2_weights[0]),
+                    bias_initializer=tf.compat.v1.constant_initializer(fc2_weights[1]),
+                    name='output'))
 
     return model
