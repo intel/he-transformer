@@ -46,7 +46,7 @@ declare NUM_FILES_CHECKED=0
 pushd "${THIS_SCRIPT_DIR}/.."
 
 declare ROOT_SUBDIR
-for ROOT_SUBDIR in src examples test; do
+for ROOT_SUBDIR in src python examples test; do
     if ! [[ -d "${ROOT_SUBDIR}" ]]; then
         bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
     else
