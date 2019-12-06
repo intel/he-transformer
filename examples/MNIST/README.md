@@ -179,3 +179,34 @@ A few further considerations:
 * If  the computation is inaccurate, try increasing the number and bitwidth of coefficient moduli.
 
 * The runtime is roughly linear in `N` (the `poly_modulus_degree` and `log2(q)` (the total coefficient modulus bitwidth).
+
+
+
+## TODO: remove below
+
+# For larger cryptonets
+fdbg3 python test.py --batch_size=1000 \
+               --backend=HE_SEAL \
+               --model_file=models/larger-cryptonets.pb \
+               --encrypt_server_data=true \
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json \
+               --input_node=import/input:0 \
+               --output_node=import/output/BiasAdd:0
+
+# For larger cryptonets-relu
+
+## Debug accuracy
+python test.py --batch_size=10000 \
+              --model_file=models/larger-cryptonets-relu.pb \
+              --backend=CPU \
+              --input_node=import/input:0 \
+              --output_node=import/output/BiasAdd:0
+
+
+fdbg3 python test.py --batch_size=1000 \
+               --backend=HE_SEAL \
+               --model_file=models/larger-cryptonets-relu.pb \
+               --encrypt_server_data=true \
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json \
+               --input_node=import/input:0 \
+               --output_node=import/output/BiasAdd:0

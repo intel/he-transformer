@@ -24,17 +24,19 @@ from tensorflow.python.tools import freeze_graph
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import load_mnist_data, \
-    conv2d_stride_2_valid, \
-    avg_pool_3x3_same_size, \
-    get_train_batch, \
-    train_argument_parser
+from mnist_util import (
+    load_mnist_data,
+    conv2d_stride_2_valid,
+    avg_pool_3x3_same_size,
+    get_train_batch,
+    train_argument_parser,
+)
 
 
 # Squash linear layers and return squashed weights
 def squash_layers(sess):
     # Input from first relu layer
-    x = tf.compat.v1.placeholder(tf.float32, [None, 13, 13, 5])
+    x = tf.compat.v1.placeholder(tf.float64, [None, 13, 13, 5])
     y = avg_pool_3x3_same_size(x)
     W_conv2 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_conv2:0")
     y = conv2d_stride_2_valid(y, W_conv2)
@@ -52,9 +54,9 @@ def squash_layers(sess):
     x_in = np.random.rand(100, 13, 13, 5)
     network_out = (sess.run([y], feed_dict={x: x_in}))[0]
     linear_out = x_in.reshape(100, 13 * 13 * 5).dot(squashed_weight)
-    assert (np.max(np.abs(linear_out - network_out)) < 1e-5)
+    assert np.max(np.abs(linear_out - network_out)) < 1e-5
 
-    print('squashed layers')
+    print("squashed layers")
 
     return squashed_weight
 
@@ -62,44 +64,47 @@ def squash_layers(sess):
 def save_model(sess, directory, filename):
     squashed_weight = squash_layers(sess)
 
-    x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name='input')
+    x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name="input")
     y_conv = model.cryptonets_relu_squashed(x, squashed_weight)
 
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    pbtxt_filename = filename + '.pbtxt'
+    pbtxt_filename = filename + ".pbtxt"
     pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + '.pb')
+    pb_filepath = os.path.join(directory, filename + ".pb")
 
     tf.io.write_graph(
         graph_or_graph_def=sess.graph_def,
         logdir=directory,
-        name=filename + '.pb',
-        as_text=False)
+        name=filename + ".pb",
+        as_text=False,
+    )
 
     tf.io.write_graph(
         graph_or_graph_def=sess.graph_def,
         logdir=directory,
         name=pbtxt_filename,
-        as_text=True)
+        as_text=True,
+    )
 
     saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
+    ckpt_filepath = os.path.join(directory, filename + ".ckpt")
     saver.save(sess, ckpt_filepath)
 
     # Freeze graph to turn variables into constants
     freeze_graph.freeze_graph(
         input_graph=pbtxt_filepath,
-        input_saver='',
+        input_saver="",
         input_binary=False,
         input_checkpoint=ckpt_filepath,
-        output_node_names='output',
-        restore_op_name='save/restore_all',
-        filename_tensor_name='save/Const:0',
+        output_node_names="output",
+        restore_op_name="save/restore_all",
+        filename_tensor_name="save/Const:0",
         output_graph=pb_filepath,
         clear_devices=True,
-        initializer_nodes='')
+        initializer_nodes="",
+    )
 
     print("Model saved to: %s" % pb_filepath)
 
@@ -111,16 +116,16 @@ def main(FLAGS):
     y_ = tf.compat.v1.placeholder(tf.float32, [None, 10])
     y_conv = model.cryptonets_relu_model(x)
 
-    with tf.name_scope('loss'):
+    with tf.name_scope("loss"):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
-            labels=y_, logits=y_conv)
+            labels=y_, logits=y_conv
+        )
     cross_entropy = tf.reduce_mean(cross_entropy)
 
-    with tf.name_scope('adam_optimizer'):
-        train_step = tf.compat.v1.train.AdamOptimizer(1e-4).minimize(
-            cross_entropy)
+    with tf.name_scope("adam_optimizer"):
+        train_step = tf.compat.v1.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 
-    with tf.name_scope('accuracy'):
+    with tf.name_scope("accuracy"):
         correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
         correct_prediction = tf.cast(correct_prediction, tf.float32)
     accuracy = tf.reduce_mean(correct_prediction)
@@ -128,35 +133,26 @@ def main(FLAGS):
     with tf.compat.v1.Session() as sess:
         sess.run(tf.compat.v1.global_variables_initializer())
         for i in range(FLAGS.train_loop_count):
-            x_batch, y_batch = get_train_batch(i, FLAGS.batch_size, x_train,
-                                               y_train)
+            x_batch, y_batch = get_train_batch(i, FLAGS.batch_size, x_train, y_train)
             if i % 100 == 0:
                 t = time.time()
-                train_accuracy = accuracy.eval(feed_dict={
-                    x: x_batch,
-                    y_: y_batch
-                })
-                print('step %d, training accuracy %g, %g msec to evaluate' %
-                      (i, train_accuracy, 1000 * (time.time() - t)))
+                train_accuracy = accuracy.eval(feed_dict={x: x_batch, y_: y_batch})
+                print(
+                    "step %d, training accuracy %g, %g msec to evaluate"
+                    % (i, train_accuracy, 1000 * (time.time() - t))
+                )
             t = time.time()
-            sess.run([train_step, cross_entropy],
-                     feed_dict={
-                         x: x_batch,
-                         y_: y_batch
-                     })
+            sess.run([train_step, cross_entropy], feed_dict={x: x_batch, y_: y_batch})
 
             if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
-                test_accuracy = accuracy.eval(feed_dict={
-                    x: x_test,
-                    y_: y_test
-                })
-                print('test accuracy %g' % test_accuracy)
+                test_accuracy = accuracy.eval(feed_dict={x: x_test, y_: y_test})
+                print("test accuracy %g" % test_accuracy)
 
         print("Training finished. Saving model.")
-        save_model(sess, './models', 'cryptonets-relu')
+        save_model(sess, "./models", "cryptonets-relu")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     FLAGS, unparsed = train_argument_parser().parse_known_args()
     if unparsed:
         print("Unparsed flags: ", unparsed)

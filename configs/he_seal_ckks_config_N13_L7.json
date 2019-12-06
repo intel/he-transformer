@@ -11,5 +11,6 @@
         24,
         30
     ],
+    "complex_packing": true,
     "scale": 16777216
 }

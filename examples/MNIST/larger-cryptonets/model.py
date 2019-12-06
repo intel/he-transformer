@@ -19,10 +19,6 @@ import numpy as np
 import os
 import sys
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import conv2d_stride_2_valid, avg_pool_3x3_same_size
-
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import (
     Dense,
@@ -37,6 +33,9 @@ from tensorflow.keras.layers import (
 
 
 def cryptonets_model():
+    def square_activation(x):
+        return x * x
+
     model = Sequential()
     model.add(
         Conv2D(
@@ -50,7 +49,7 @@ def cryptonets_model():
         )
     )
 
-    model.add(Activation("relu"))
+    model.add(Activation(square_activation))
     model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
     model.add(
         Conv2D(
@@ -66,13 +65,15 @@ def cryptonets_model():
     model.add(AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
     model.add(Flatten())
     model.add(Dense(100, use_bias=True, name="fc_1"))
-    model.add(Activation("relu"))
+    model.add(Activation(square_activation))
     model.add(Dense(10, use_bias=True, name="fc_2"))
 
     return model
 
 
 def cryptonets_model_squashed(input, conv1_weights, squashed_weights, fc2_weights):
+    def square_activation(x):
+        return x * x
 
     print("conv1_weights", conv1_weights[0].shape, conv1_weights[1].shape)
     print("squashed_weights", squashed_weights[0].shape, squashed_weights[1].shape)
@@ -87,9 +88,10 @@ def cryptonets_model_squashed(input, conv1_weights, squashed_weights, fc2_weight
         kernel_initializer=tf.compat.v1.constant_initializer(conv1_weights[0]),
         bias_initializer=tf.compat.v1.constant_initializer(conv1_weights[1]),
         input_shape=(28, 28, 1),
+        trainable=False,
         name="convd1_1",
     )(input)
-    y = Activation("relu")(y)
+    y = Activation(square_activation)(y)
 
     # Using Keras model API with Flatten results in split ngraph at Flatten() or Reshape() op.
     # Use tf.reshape instead
@@ -100,13 +102,15 @@ def cryptonets_model_squashed(input, conv1_weights, squashed_weights, fc2_weight
         100,
         use_bias=True,
         name="squash_fc_1",
+        trainable=False,
         kernel_initializer=tf.compat.v1.constant_initializer(squashed_weights[0]),
         bias_initializer=tf.compat.v1.constant_initializer(squashed_weights[1]),
     )(y)
-    y = Activation("relu")(y)
+    y = Activation(square_activation)(y)
     y = Dense(
         10,
         use_bias=True,
+        trainable=False,
         kernel_initializer=tf.compat.v1.constant_initializer(fc2_weights[0]),
         bias_initializer=tf.compat.v1.constant_initializer(fc2_weights[1]),
         name="output",

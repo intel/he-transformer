@@ -68,13 +68,12 @@ def cryptonets_squashed(x, squashed_weight):
     y = conv2d_stride_2_valid(x, W_conv1)
     y = tf.square(y)
 
-    W_squash = tf.constant(
-        squashed_weight, dtype=np.float32, shape=[5 * 13 * 13, 100])
+    W_squash = tf.constant(squashed_weight, dtype=np.float32, shape=[5 * 13 * 13, 100])
     y = tf.reshape(y, [-1, 5 * 13 * 13])
     y = tf.matmul(y, W_squash)
     y = tf.square(y)
 
     W_fc2 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_fc2:0")
-    y = tf.matmul(y, W_fc2, name='output')
+    y = tf.matmul(y, W_fc2, name="output")
 
     return y

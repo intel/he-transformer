@@ -26,16 +26,18 @@ def main(FLAGS):
     batch_size = 1
 
     client = pyhe_client.HESealClient(
-        FLAGS.hostname, port, batch_size,
-        {'client_parameter_name': ('encrypt', data)})
+        FLAGS.hostname, port, batch_size, {"client_parameter_name": ("encrypt", data)}
+    )
 
     results = client.get_results()
-    print('results', results)
+    print("results", results)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--hostname', type=str, default='localhost', help='Hostname of server')
+        "--hostname", type=str, default="localhost", help="Hostname of server"
+    )
 
     FLAGS, unparsed = parser.parse_known_args()
 
