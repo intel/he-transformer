@@ -34,7 +34,7 @@ from mnist_util import load_mnist_data, \
 # Squash linear layers and return squashed weights
 def squash_layers(sess):
     # Input from first relu layer
-    x = tf.compat.v1.placeholder(tf.float32, [None, 13, 13, 5])
+    x = tf.compat.v1.placeholder(tf.float32, [None, 12, 12, 5])
     y = avg_pool_3x3_same_size(x)
     W_conv2 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_conv2:0")
     y = conv2d_stride_2_valid(y, W_conv2)
@@ -44,14 +44,14 @@ def squash_layers(sess):
     y = tf.reshape(y, [-1, 5 * 5 * 50])
     y = tf.matmul(y, W_fc1)
 
-    x_in = np.eye(13 * 13 * 5)
-    x_in = x_in.reshape([13 * 13 * 5, 13, 13, 5])
+    x_in = np.eye(12 * 12 * 5)
+    x_in = x_in.reshape([12 * 12 * 5, 12, 12, 5])
     squashed_weight = (sess.run([y], feed_dict={x: x_in}))[0]
 
     # Sanity check
-    x_in = np.random.rand(100, 13, 13, 5)
+    x_in = np.random.rand(100, 12, 12, 5)
     network_out = (sess.run([y], feed_dict={x: x_in}))[0]
-    linear_out = x_in.reshape(100, 13 * 13 * 5).dot(squashed_weight)
+    linear_out = x_in.reshape(100, 12 * 12 * 5).dot(squashed_weight)
     assert (np.max(np.abs(linear_out - network_out)) < 1e-5)
 
     print('squashed layers')

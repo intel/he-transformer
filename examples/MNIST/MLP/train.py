@@ -24,7 +24,7 @@ import os
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from mnist_util import load_mnist_data, \
-    get_train_batch, save_model, train_argument_parser
+    get_train_batch, save_model, train_argument_parser, print_nodes
 
 
 def main(FLAGS):

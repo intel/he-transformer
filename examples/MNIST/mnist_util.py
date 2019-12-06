@@ -23,6 +23,14 @@ import os.path
 from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.tools import freeze_graph
 
+def print_nodes(graph_def=None):
+    if graph_def is None:
+        nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+    else:
+        nodes = [n.name for n in graph_def.node]
+
+    print('nodes', nodes)
+
 
 def load_mnist_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""
@@ -33,8 +41,6 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
-    x_train = x_train[start_batch:start_batch + batch_size]
-    y_train = y_train[start_batch:start_batch + batch_size]
     x_test = x_test[start_batch:start_batch + batch_size]
     y_test = y_test[start_batch:start_batch + batch_size]
 
@@ -157,6 +163,20 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
+def train_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--train_loop_count',
+        type=int,
+        default=20000,
+        help='Number of training iterations')
+    parser.add_argument(
+        '--batch_size', type=int, default=128, help='Batch Size')
+
+    return parser
+
+
+
 def client_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
@@ -176,6 +196,8 @@ def client_argument_parser():
         help='Input tensor name')
     parser.add_argument(
         '--start_batch', type=int, default=0, help='Test data start index')
+
+
 
     return parser
 
@@ -238,21 +260,15 @@ def server_argument_parser():
         type=str,
         default='',
         help='Filename of saved protobuf model')
+    parser.add_argument(
+        '--input_node_name', type=str, default='import/input', help='Imported data input tensor'
+    )
+    parser.add_argument(
+        '--output_node_name', type=str, default='import/output', help='Imported model output tensor'
+    )
 
     return parser
 
-
-def train_argument_parser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--train_loop_count',
-        type=int,
-        default=20000,
-        help='Number of training iterations')
-    parser.add_argument(
-        '--batch_size', type=int, default=128, help='Batch Size')
-
-    return parser
 
 
 def server_config_from_flags(FLAGS, tensor_param_name):

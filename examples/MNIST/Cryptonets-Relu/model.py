@@ -25,21 +25,29 @@ from mnist_util import conv2d_stride_2_valid, avg_pool_3x3_same_size
 
 
 def cryptonets_relu_model(x):
-    paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]], name='pad_const')
-    x = tf.pad(x, paddings)
-
     W_conv1 = tf.compat.v1.get_variable('W_conv1', [5, 5, 1, 5])
-    W_conv1_bias = tf.compat.v1.get_variable('W_conv1_bias', [1, 13, 13, 5])
-    y = conv2d_stride_2_valid(x, W_conv1) + W_conv1_bias
+    W_conv1_bias = tf.compat.v1.get_variable('W_conv1_bias', [1, 12, 12, 5])
+    y = tf.layers.conv2d(x, filters=5,
+                            kernel_size=(5,5),
+                            use_bias=False,
+                            strides=(2,2),
+                            padding='same',
+                            name='conv2d_1')
     y = tf.nn.relu(y)
 
     y = avg_pool_3x3_same_size(y)
     W_conv2 = tf.compat.v1.get_variable('W_conv2', [5, 5, 5, 50])
-    y = conv2d_stride_2_valid(y, W_conv2)
+    y = tf.layers.conv2d(y, filters=50,
+                            kernel_size=(5,5),
+                            use_bias=False,
+                            strides=(2,2),
+                            padding='same',
+                            name='conv2d_2')
+
     y = avg_pool_3x3_same_size(y)
 
-    y = tf.reshape(y, [-1, 5 * 5 * 50])
-    W_fc1 = tf.compat.v1.get_variable('W_fc1', [5 * 5 * 50, 100])
+    y = tf.reshape(y, [-1, 7 * 7 * 50])
+    W_fc1 = tf.compat.v1.get_variable('W_fc1', [7 * 7 * 50, 100])
     W_fc1_bias = tf.compat.v1.get_variable('W_fc1_bias', [100])
     y = tf.matmul(y, W_fc1)
     y = y + W_fc1_bias
@@ -53,18 +61,21 @@ def cryptonets_relu_model(x):
 
 def cryptonets_relu_squashed(x, squashed_weight):
     """Constructs test network for Cryptonets Relu using squashed weights."""
-    paddings = [[0, 0], [0, 1], [0, 1], [0, 0]]
-    x = tf.pad(x, paddings)
-
     W_conv1 = tf.compat.v1.get_default_graph().get_tensor_by_name("W_conv1:0")
     W_conv1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name(
         "W_conv1_bias:0")
-    y = conv2d_stride_2_valid(x, W_conv1) + W_conv1_bias
+    y = tf.layers.conv2d(x, filters=5,
+                            kernel_size=(5,5),
+                            kernel_initializer=tf.compat.v1.constant_initializer(squashed_weight),
+                            use_bias=False,
+                            strides=(2,2),
+                            padding='same',
+                            name='conv2d_1')
     y = tf.nn.relu(y)
 
     W_squash = tf.constant(
-        squashed_weight, dtype=np.float32, shape=[5 * 13 * 13, 100])
-    y = tf.reshape(y, [-1, 5 * 13 * 13])
+        squashed_weight, dtype=np.float32, shape=[5 * 12 * 12, 100])
+    y = tf.reshape(y, [-1, 5 * 12 * 12])
     y = tf.matmul(y, W_squash)
     W_fc1_bias = tf.compat.v1.get_default_graph().get_tensor_by_name(
         "W_fc1_bias:0")
