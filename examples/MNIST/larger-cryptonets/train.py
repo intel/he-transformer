@@ -15,16 +15,14 @@
 """An MNIST classifier based on Cryptonets using convolutional layers. """
 
 import sys
+import os
 import time
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.tools import freeze_graph
 from tensorflow.python.keras.utils import CustomObjectScope
-
 import model
-import os
-from tensorflow.keras import backend as K
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,18 +39,13 @@ from tensorflow.keras.layers import (
     Input,
     Reshape,
 )
+from tensorflow.keras import backend as K
+from tensorflow.keras.optimizers import SGD, RMSprop, Adam, Nadam
 from tensorflow.keras.models import load_model
 
 
 # Squash linear layers and return squashed weights
 def squash_layers(cryptonets_model, sess):
-
-  nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
-  nodes = [n for n in nodes if n[0:4] != "Adam"]
-  nodes = [n for n in nodes if n[0:4] != "loss"]
-  nodes = [n for n in nodes if n[0:7] != "metrics"]
-
-  print_nodes()
   print("cryptonets_model.layers", cryptonets_model.layers)
 
   conv1_weights = cryptonets_model.layers[0].get_weights()
@@ -83,7 +76,7 @@ def squash_layers(cryptonets_model, sess):
       use_bias=True,
       name="fc_1",
       kernel_initializer=tf.compat.v1.constant_initializer(fc1_weights[0]),
-      bias_initializer=tf.compat.v1.constant_initializer(fc1_weights[1]),
+      bias_initializer=tf.compat.v1.constant_initializer(fc1_weights[1])
   )(
       y)
 
@@ -192,16 +185,18 @@ def main(FLAGS):
     return keras.losses.categorical_crossentropy(
         labels, logits, from_logits=True)
 
-  cryptonets.compile(optimizer="adam", loss=loss, metrics=["accuracy"])
+  optimizer = SGD(learning_rate=0.008, momentum=0.9)
+  cryptonets.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
 
   cryptonets.fit(
       x_train,
       y_train,
       epochs=FLAGS.epochs,
       batch_size=FLAGS.batch_size,
+      validation_data=(x_test, y_test),
       verbose=1)
 
-  test_loss, test_acc = cryptonets.evaluate(x_test, y_test, verbose=2)
+  test_loss, test_acc = cryptonets.evaluate(x_test, y_test, verbose=1)
   print("\nTest accuracy:", test_acc)
 
   save_model(

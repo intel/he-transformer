@@ -25,11 +25,7 @@ from tensorflow.python.keras.utils import CustomObjectScope
 import model
 import os
 from tensorflow.keras import backend as K
-
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import load_mnist_data, save_model, train_argument_parser, print_nodes
-
+from tensorflow.keras.optimizers import SGD, RMSprop, Adam, Nadam
 from tensorflow.keras.layers import (
     Dense,
     Conv2D,
@@ -42,9 +38,10 @@ from tensorflow.keras.layers import (
     Reshape,
 )
 from tensorflow.keras.models import load_model
-from tensorflow.keras import backend as K
 
-K.set_floatx("float64")
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mnist_util import load_mnist_data, save_model, train_argument_parser, print_nodes
 
 
 # Squash linear layers and return squashed weights
@@ -101,9 +98,7 @@ def squash_layers(cryptonets_model, sess):
   return (conv1_weights, (squashed_weights, squashed_bias), fc1_weights,
           fc2_weights)
 
-
-# https://www.dlology.com/blog/how-to-convert-trained-keras-model-to-tensorflow-and-make-prediction/
-# TODO: remove
+# From https://www.dlology.com/blog/how-to-convert-trained-keras-model-to-tensorflow-and-make-prediction/
 def freeze_session(session,
                    keep_var_names=None,
                    output_names=None,
@@ -153,7 +148,7 @@ def save_model(cryptonets_model, sess, directory, filename):
   tf.reset_default_graph()
   sess = tf.compat.v1.Session()
 
-  x = tf.compat.v1.placeholder(tf.float64, [None, 28, 28, 1], name="input")
+  x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name="input")
   y_conv = model.cryptonets_model_squashed(x, conv1_weights, squashed_weights,
                                            fc2_weights)
 
@@ -185,14 +180,15 @@ def main(FLAGS):
     return keras.losses.categorical_crossentropy(
         labels, logits, from_logits=True)
 
-  cryptonets.compile(optimizer="adam", loss=loss, metrics=["accuracy"])
+  optimizer = SGD(learning_rate=0.008, momentum=0.9)
+  cryptonets.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
 
   cryptonets.fit(
       x_train,
       y_train,
       epochs=FLAGS.epochs,
-      batch_size=FLAGS.batch_size,
-      verbose=1)
+      validation_data=(x_test, y_test),
+      batch_size=FLAGS.batch_size)
 
   test_loss, test_acc = cryptonets.evaluate(x_test, y_test, verbose=2)
   print("\nTest accuracy:", test_acc)

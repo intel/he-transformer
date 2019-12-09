@@ -35,7 +35,6 @@ from tensorflow.keras.layers import (
     Reshape,
 )
 
-
 def cryptonets_model():
   model = Sequential()
   model.add(

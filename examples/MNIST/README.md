@@ -21,20 +21,20 @@ It is impossible to perform ReLU and Maxpool using homomorphic encryption. We su
 
 These examples depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`. Also ensure the `pyhe_client` wheel has been installed (see `python` folder for instructions).
 
-
-# CryptoNets
-This example demonstrates the [CryptoNets](https://www.microsoft.com/en-us/research/publication/cryptonets-applying-neural-networks-to-encrypted-data-with-high-throughput-and-accuracy/) network, which achieves ~99% accuracy on MNIST.
-
-This example depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`.
-
-## Train the networks
+# Train the networks
 First, train the networks using
 ```bash
 python cryptonets/train.py
 python cryptonets-relu/train.py
 python mlp/train.py
 ```
-Each `train.py` file takes a `--batch_size` and `--train_loop_count` arguments.
+Each `train.py` file takes a `--batch_size` and `--epochs` arguments.
+
+For best performance,
+
+TODO: give links to pre-trained models.
+Use batch_size=64, epochs=50 for larger-cryptonets-relu => ~98.73% accuracy
+use batch_size=
 
 
 These commands train the network briefly and stores the network weights as protobuf files in './models/*.pb'
@@ -44,7 +44,7 @@ These commands train the network briefly and stores the network weights as proto
 ## CPU backend
 To test a netowrk using the CPU backend, call
 ```bash
-python test.py --batch_size=100 \
+python test.py --batch_size=10000 \
                --backend=CPU \
                --model_file=models/cryptonets.pb
 ```

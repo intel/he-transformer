@@ -42,8 +42,8 @@ def load_mnist_data(start_batch=0, batch_size=10000):
   x_train = np.expand_dims(x_train, axis=-1)
   x_test = np.expand_dims(x_test, axis=-1)
 
-  x_train = x_train.astype("float64")
-  x_test = x_test.astype("float64")
+  x_train = x_train.astype("float32")
+  x_test = x_test.astype("float32")
   x_train /= 255.0
   x_test /= 255.0
 
@@ -267,13 +267,13 @@ def server_argument_parser():
   parser.add_argument(
       "--input_node",
       type=str,
-      default="import/input",
+      default="import/input:0",
       help="Tensor name of data input",
   )
   parser.add_argument(
       "--output_node",
       type=str,
-      default="import/output",
+      default="import/output:0",
       help="Tensor name of model output",
   )
 
