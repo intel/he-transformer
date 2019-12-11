@@ -107,18 +107,12 @@ def freeze_session(session,
                 node.device = ""
         frozen_graph = convert_variables_to_constants(
             session, input_graph_def, output_names, freeze_var_names)
-
-        print('before removing training')
-        print_nodes(frozen_graph)
         frozen_graph = remove_training_nodes(frozen_graph)
-        print('after removing training')
-        print_nodes(frozen_graph)
-
         return frozen_graph
 
 
-def save_model(sess, directory, filename):
-    frozen_graph = freeze_session(sess, output_names=["output/BiasAdd"])
+def save_model(sess, output_names, directory, filename):
+    frozen_graph = freeze_session(sess, output_names=output_names)
     tf.io.write_graph(frozen_graph, directory, filename + ".pb", as_text=False)
     print("Model saved to: %s" % filename + ".pb")
 

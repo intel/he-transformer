@@ -28,14 +28,11 @@ from tensorflow.keras.layers import (
 )
 
 
-def cryptonets_model():
-
+def cryptonets_model(input):
     def square_activation(x):
         return x * x
 
-    model = Sequential()
-    model.add(
-        Conv2D(
+    y =  Conv2D(
             filters=5,
             kernel_size=(5, 5),
             strides=(2, 2),
@@ -43,34 +40,30 @@ def cryptonets_model():
             use_bias=True,
             input_shape=(28, 28, 1),
             name="conv2d_1",
-        ))
+        )(input)
 
-    model.add(Activation(square_activation))
-    model.add(
-        AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
-    model.add(
-        Conv2D(
+    y = Activation(square_activation)(y)
+    y = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")(y)
+    y = Conv2D(
             filters=50,
             kernel_size=(5, 5),
             strides=(2, 2),
             padding="same",
             use_bias=True,
             name="conv2d_2",
-        ))
+        )(y)
 
-    model.add(
-        AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same"))
-    model.add(Flatten())
-    model.add(Dense(100, use_bias=True, name="fc_1"))
-    model.add(Activation(square_activation))
-    model.add(Dense(10, use_bias=True, name="fc_2"))
+    y = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")(y)
+    y = Flatten()(y)
+    y = Dense(100, use_bias=True, name="fc_1")(y)
+    y = Activation(square_activation)(y)
+    y = Dense(10, use_bias=True, name="fc_2")(y)
 
-    return model
+    return y
 
 
 def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
                               fc2_weights):
-
     def square_activation(x):
         return x * x
 

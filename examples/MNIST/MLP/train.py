@@ -26,26 +26,26 @@ from tensorflow.keras.losses import categorical_crossentropy
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import (
-    load_mnist_data,
-    save_model,
-    train_argument_parser,
-)
-from model import mnist_mlp_model
+import mnist_util
+import model
 
 
 def main(FLAGS):
-    (x_train, y_train, x_test, y_test) = load_mnist_data()
+    (x_train, y_train, x_test, y_test) = mnist_util.load_mnist_data()
 
-    x = Input(shape=(28,28,1,), name="input")
-    y = mnist_mlp_model(x)
+    x = Input(
+        shape=(
+            28,
+            28,
+            1,
+        ), name="input")
+    y = model.mnist_mlp_model(x)
 
     mlp_model = Model(inputs=x, outputs=y)
     print(mlp_model.summary())
 
     def loss(labels, logits):
-        return categorical_crossentropy(
-            labels, logits, from_logits=True)
+        return categorical_crossentropy(labels, logits, from_logits=True)
 
     optimizer = SGD(learning_rate=0.008, momentum=0.9)
     mlp_model.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
@@ -61,14 +61,16 @@ def main(FLAGS):
     test_loss, test_acc = mlp_model.evaluate(x_test, y_test, verbose=1)
     print("\nTest accuracy:", test_acc)
 
-    save_model(
+    mnist_util.save_model(
         tf.compat.v1.keras.backend.get_session(),
+        ["output/BiasAdd"],
         "./models",
         "mlp",
     )
 
+
 if __name__ == "__main__":
-    FLAGS, unparsed = train_argument_parser().parse_known_args()
+    FLAGS, unparsed = mnist_util.train_argument_parser().parse_known_args()
     if unparsed:
         print("Unparsed flags: ", unparsed)
         exit(1)

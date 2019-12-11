@@ -27,25 +27,26 @@ from tensorflow.keras.layers import (
     Reshape,
 )
 
+
 def mnist_mlp_model(input):
     y = Conv2D(
-          filters=5,
-          kernel_size=(5, 5),
-          strides=(2, 2),
-          padding="same",
-          use_bias=True,
-          input_shape=(28, 28, 1),
-      )(input)
+        filters=5,
+        kernel_size=(5, 5),
+        strides=(2, 2),
+        padding="same",
+        use_bias=True,
+        input_shape=(28, 28, 1),
+    )(input)
     y = Activation("relu")(y)
 
-    y = MaxPooling2D(pool_size=(3,3))(y)
+    y = MaxPooling2D(pool_size=(3, 3))(y)
 
     y = Conv2D(
-      filters=50,
-      kernel_size=(5, 5),
-      strides=(2, 2),
-      padding="same",
-      use_bias=True,
+        filters=50,
+        kernel_size=(5, 5),
+        strides=(2, 2),
+        padding="same",
+        use_bias=True,
     )(y)
     y = Activation("relu")(y)
 
