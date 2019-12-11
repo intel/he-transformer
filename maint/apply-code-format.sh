@@ -44,8 +44,8 @@ bash_lib_status "Verified that '${CLANG_FORMAT_PROG}' has version '${REQUIRED_CL
 # yapf variables
 source "${THIS_SCRIPT_DIR}/yapf_lib.sh"
 
-declare YAPF_FORMAT_BASENAME="yapf"
-declare REQUIRED_YAPF_VERSION=0.26.0
+declare YAPF_FORMAT_BASENAME="yapf3"
+declare REQUIRED_YAPF_VERSION=0.20.1
 
 declare YAPF_PROG
 if ! YAPF_PROG="$(which "${YAPF_FORMAT_BASENAME}")"; then

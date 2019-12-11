@@ -25,7 +25,6 @@ set -u
 # For this reason, this script specifies the exact version of clang-format to be used.
 
 # clang-format variables
-
 declare CLANG_FORMAT_BASENAME="clang-format-9"
 declare REQUIRED_CLANG_FORMAT_VERSION=9.0
 
@@ -45,8 +44,8 @@ bash_lib_status "Verified that '${CLANG_FORMAT_PROG}' has version '${REQUIRED_CL
 # yapf variables
 source "${THIS_SCRIPT_DIR}/yapf_lib.sh"
 
-declare YAPF_FORMAT_BASENAME="yapf"
-declare REQUIRED_YAPF_VERSION=0.26.0
+declare YAPF_FORMAT_BASENAME="yapf3"
+declare REQUIRED_YAPF_VERSION=0.20.1
 
 declare YAPF_PROG
 if ! YAPF_PROG="$(which "${YAPF_FORMAT_BASENAME}")"; then
@@ -81,6 +80,10 @@ for ROOT_SUBDIR in src python examples test; do
             fi
             NUM_CPP_FILES_CHECKED=$((NUM_CPP_FILES_CHECKED+1))
         done
+
+        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
+        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
+        # mechanism, and this confuses clang-format.
     fi
 done
 
@@ -92,6 +95,9 @@ for ROOT_SUBDIR in src python examples test; do
         bash_lib_status "About to format python code in directory tree '$(pwd)/${ROOT_SUBDIR}' ..."
         declare SRC_FILE
 
+        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
+        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
+        # mechanism, and this confuses clang-format.
         for SRC_FILE in $(find "${ROOT_SUBDIR}" -type f -and -name '*.py')
         do
             if "${YAPF_PROG}" "${SRC_FILE}" --diff | grep -q "reformatted"; then
@@ -101,9 +107,6 @@ for ROOT_SUBDIR in src python examples test; do
             NUM_PYTHON_FILES_CHECKED=$((NUM_PYTHON_FILES_CHECKED+1))
         done
 
-        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
-        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
-        # mechanism, and this confuses clang-format.
     fi
 done
 

@@ -20,25 +20,25 @@ import argparse
 
 
 def main(FLAGS):
-  data = (2, 4, 6, 8)
+    data = (2, 4, 6, 8)
 
-  port = 34000
-  batch_size = 1
+    port = 34000
+    batch_size = 1
 
-  client = pyhe_client.HESealClient(
-      FLAGS.hostname, port, batch_size,
-      {"client_parameter_name": ("encrypt", data)})
+    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size, {
+        "client_parameter_name": ("encrypt", data)
+    })
 
-  results = client.get_results()
-  print("results", results)
+    results = client.get_results()
+    print("results", results)
 
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-      "--hostname", type=str, default="localhost", help="Hostname of server")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--hostname", type=str, default="localhost", help="Hostname of server")
 
-  FLAGS, unparsed = parser.parse_known_args()
+    FLAGS, unparsed = parser.parse_known_args()
 
-  print(FLAGS)
-  main(FLAGS)
+    print(FLAGS)
+    main(FLAGS)
