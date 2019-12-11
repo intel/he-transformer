@@ -37,7 +37,7 @@ from model import mnist_mlp_model
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
 
-    x = Input(shape=(28,28,1,))
+    x = Input(shape=(28,28,1,), name="input")
     y = mnist_mlp_model(x)
 
     mlp_model = Model(inputs=x, outputs=y)

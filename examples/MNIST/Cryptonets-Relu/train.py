@@ -15,16 +15,15 @@
 """An MNIST classifier based on Cryptonets using convolutional layers. """
 
 import sys
+import os
 import time
 import numpy as np
+import model
+
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.python.tools import freeze_graph
-from tensorflow.python.keras.utils import CustomObjectScope
-
-import model
-import os
 from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import SGD, RMSprop, Adam, Nadam
 from tensorflow.keras.layers import (
     Dense,
@@ -37,22 +36,36 @@ from tensorflow.keras.layers import (
     Input,
     Reshape,
 )
-from tensorflow.keras.models import load_model
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import load_mnist_data, save_model, train_argument_parser, print_nodes, freeze_session
+from mnist_util import load_mnist_data, train_argument_parser, print_nodes, freeze_session
 
 
-# Squash linear layers and return squashed weights
-def squash_layers(cryptonets_model, sess):
-    conv1_weights = cryptonets_model.layers[0].get_weights()
-    conv2_weights = cryptonets_model.layers[3].get_weights()
-    fc1_weights = cryptonets_model.layers[6].get_weights()
-    fc2_weights = cryptonets_model.layers[8].get_weights()
+def squash_layers(cryptonets_relu_model, sess):
+    """Squash linear layers and return squashed weights"""
+
+    layer_names = [layer.name for layer in cryptonets_relu_model.layers]
+    print('cryptonets_relu_model', cryptonets_relu_model)
+    print('cryptonets_relu_model.layers', cryptonets_relu_model.layers)
+
+    for layer in cryptonets_relu_model.layers:
+        print('layer', layer.name)
+
+    conv1_weights = cryptonets_relu_model.layers[layer_names.index('conv2d_1')].get_weights()
+    print('conv1_weights', conv1_weights)
+
+    conv2_weights = cryptonets_relu_model.layers[layer_names.index('conv2d_2')].get_weights()
+    print('conv2_weights', conv2_weights)
+
+    fc1_weights = cryptonets_relu_model.layers[layer_names.index('fc_1')].get_weights()
+    print('fc1_weights', fc1_weights)
+
+    fc2_weights = cryptonets_relu_model.layers[layer_names.index('fc_2')].get_weights()
+    print('fc2_weights', fc2_weights)
 
     # Get squashed weight
-    y = Input(shape=(14 * 14 * 5,), name="input")
+    y = Input(shape=(14 * 14 * 5,), name="squashed_input")
     y = Reshape((14, 14, 5))(y)
     y = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")(y)
     y = Conv2D(
@@ -80,11 +93,11 @@ def squash_layers(cryptonets_model, sess):
     # Pass 0 to get bias
     squashed_bias = y.eval(
         session=sess, feed_dict={
-            "input:0": np.zeros((1, 14 * 14 * 5))
+            "squashed_input:0": np.zeros((1, 14 * 14 * 5))
         })
     squashed_bias_plus_weights = y.eval(
         session=sess, feed_dict={
-            "input:0": np.eye(14 * 14 * 5)
+            "squashed_input:0": np.eye(14 * 14 * 5)
         })
     squashed_weights = squashed_bias_plus_weights - squashed_bias
 
@@ -92,7 +105,7 @@ def squash_layers(cryptonets_model, sess):
 
     # Sanity check
     x_in = np.random.rand(100, 14 * 14 * 5)
-    network_out = y.eval(session=sess, feed_dict={"input:0": x_in})
+    network_out = y.eval(session=sess, feed_dict={"squashed_input:0": x_in})
     linear_out = x_in.dot(squashed_weights) + squashed_bias
     assert np.max(np.abs(linear_out - network_out)) < 1e-3
 
@@ -100,18 +113,20 @@ def squash_layers(cryptonets_model, sess):
             fc2_weights)
 
 
-def save_model(cryptonets_model, sess, directory, filename):
-    weights = squash_layers(cryptonets_model, sess)
+def save_model(cryptonets_relu_model, sess, directory, filename):
+    weights = squash_layers(cryptonets_relu_model, sess)
     (conv1_weights, squashed_weights, fc1_weights, fc2_weights) = weights[0:4]
 
     # Remove old graph
     tf.reset_default_graph()
     sess = tf.compat.v1.Session()
 
-    x = tf.compat.v1.placeholder(tf.float32, [None, 28, 28, 1], name="input")
-    y_conv = model.cryptonets_model_squashed(x, conv1_weights, squashed_weights,
+    x = Input(shape=(28,28,1,), name="input")
+    y = model.cryptonets_relu_model_squashed(x, conv1_weights, squashed_weights,
                                              fc2_weights)
     sess.run(tf.compat.v1.global_variables_initializer())
+
+    print('cryptonets_relu_model', cryptonets_relu_model)
 
     frozen_graph = freeze_session(sess, output_names=["output/BiasAdd"])
 
@@ -122,33 +137,32 @@ def save_model(cryptonets_model, sess, directory, filename):
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = load_mnist_data()
 
-    cryptonets = model.cryptonets_model()
-    print(cryptonets.summary())
+    x = Input(shape=(28,28,1,), name="input")
+    y = model.cryptonets_relu_model(x)
 
-    print("x_train", x_train.shape)
-    print("y_train", y_train.shape)
-    print("x_test", x_test.shape)
-    print("y_test", y_test.shape)
+    cryptonets_relu_model = Model(inputs=x, outputs=y)
+    print(cryptonets_relu_model.summary())
+
 
     def loss(labels, logits):
         return keras.losses.categorical_crossentropy(
             labels, logits, from_logits=True)
 
     optimizer = SGD(learning_rate=0.008, momentum=0.9)
-    cryptonets.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
+    cryptonets_relu_model.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
 
-    cryptonets.fit(
+    cryptonets_relu_model.fit(
         x_train,
         y_train,
         epochs=FLAGS.epochs,
         validation_data=(x_test, y_test),
         batch_size=FLAGS.batch_size)
 
-    test_loss, test_acc = cryptonets.evaluate(x_test, y_test, verbose=2)
+    test_loss, test_acc = cryptonets_relu_model.evaluate(x_test, y_test, verbose=2)
     print("\nTest accuracy:", test_acc)
 
     save_model(
-        cryptonets,
+        cryptonets_relu_model,
         tf.compat.v1.keras.backend.get_session(),
         "./models",
         "cryptonets-relu",
