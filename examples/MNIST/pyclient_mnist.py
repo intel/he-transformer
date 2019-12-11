@@ -44,11 +44,9 @@ def test_network(FLAGS):
 
     y_pred = y_pred_reshape.argmax(axis=1)
     print("y_pred", y_pred)
-    y_true = y_test.argmax(axis=1)
 
-    correct = np.sum(np.equal(y_pred, y_true))
+    correct = np.sum(np.equal(y_pred, y_test.argmax(axis=1)))
     acc = correct / float(FLAGS.batch_size)
-    print("pred size", len(y_pred))
     print("correct", correct)
     print("Accuracy (batch size", FLAGS.batch_size, ") =", acc * 100.0, "%")
 

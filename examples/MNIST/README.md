@@ -42,7 +42,7 @@ These commands train the network briefly and stores the network weights as proto
 # Test the network
 
 ## CPU backend
-To test a netowrk using the CPU backend, call
+To test a network using the CPU backend, call
 ```bash
 python test.py --batch_size=10000 \
                --backend=CPU \
@@ -51,7 +51,7 @@ python test.py --batch_size=10000 \
 
 ## HE_SEAL backend
 ### Plaintext
-To test a netowrk using the HE_SEAL backend using unencrypted data (for debugging only), call
+To test a network using the HE_SEAL backend using unencrypted data (for debugging only), call
 ```bash
 python test.py --batch_size=100 \
                --backend=HE_SEAL \
@@ -60,7 +60,7 @@ python test.py --batch_size=100 \
 ```
 
 #### Encrypted
-To test a netowrk using the HE_SEAL backend using encrypted data, call
+To test a network using the HE_SEAL backend using encrypted data, call
 ```bash
 python test.py --batch_size=100 \
                --backend=HE_SEAL \
@@ -74,9 +74,9 @@ This setting stores the secret key and public key on the same object, and should
 To test the client-server model, in one terminal call
 ```bash
 python test.py --backend=HE_SEAL \
-               --model_file=models/cryptonets-relu.pb \
+               --model_file=models/cryptonets.pb \
                --enable_client=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L2.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json
 ```
 
 In another terminal (with the python environment active), call

@@ -130,7 +130,7 @@ def main(FLAGS):
         verbose=1)
 
     test_loss, test_acc = cryptonets_model.evaluate(x_test, y_test, verbose=1)
-    print("\nTest accuracy:", test_acc)
+    print("Test accuracy:", test_acc)
 
     # Squash weights and save model
     weights = squash_layers(cryptonets_model,
