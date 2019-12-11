@@ -14,18 +14,17 @@
 // limitations under the License.
 //*****************************************************************************
 
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include <boost/asio.hpp>
 #include <iterator>
 #include <sstream>
 #include <string>
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <boost/asio.hpp>
-
 #include "he_seal_client.hpp"
-#include "seal/he_seal_client.hpp"
-
 #include "pyhe_client/he_seal_client.hpp"
+#include "seal/he_seal_client.hpp"
 
 namespace py = pybind11;
 
