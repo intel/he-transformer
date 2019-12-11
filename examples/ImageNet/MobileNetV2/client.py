@@ -35,110 +35,116 @@ from util import get_imagenet_inference_labels, \
 
 
 def print_nodes(filename):
-  graph_def = read_pb_file(filename)
-  nodes = [n.name for n in graph_def.node]
-  print('nodes', len(nodes))
-  for node in sorted(nodes):
-    print(node)
+    graph_def = read_pb_file(filename)
+    nodes = [n.name for n in graph_def.node]
+    print('nodes', len(nodes))
+    for node in sorted(nodes):
+        print(node)
 
 
 def read_pb_file(filename):
-  sess = tf.compat.v1.Session()
-  print("load graph", filename)
-  with gfile.GFile(filename, 'rb') as f:
-    graph_def = tf.compat.v1.GraphDef()
-  graph_def.ParseFromString(f.read())
-  sess.graph.as_default()
-  tf.import_graph_def(graph_def, name='')
-  return graph_def
+    sess = tf.compat.v1.Session()
+    print("load graph", filename)
+    with gfile.GFile(filename, 'rb') as f:
+        graph_def = tf.compat.v1.GraphDef()
+    graph_def.ParseFromString(f.read())
+    sess.graph.as_default()
+    tf.import_graph_def(graph_def, name='')
+    return graph_def
 
 
 def get_imagenet_labels():
-  labels_path = tf.keras.utils.get_file(
-      'ImageNetLabels.txt',
-      'https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt'
-  )
-  imagenet_labels = np.array(open(labels_path).read().splitlines())
-  return imagenet_labels
+    labels_path = tf.keras.utils.get_file(
+        'ImageNetLabels.txt',
+        'https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt'
+    )
+    imagenet_labels = np.array(open(labels_path).read().splitlines())
+    return imagenet_labels
 
 
 def main(FLAGS):
-  imagenet_inference_labels = get_imagenet_inference_labels()
-  imagenet_training_labels = get_imagenet_training_labels()
-  assert (sorted(imagenet_training_labels) == sorted(imagenet_inference_labels))
-  validation_nums = get_validation_labels(FLAGS)
-  x_test = get_validation_images(FLAGS)
-  validation_labels = imagenet_inference_labels[validation_nums]
+    imagenet_inference_labels = get_imagenet_inference_labels()
+    imagenet_training_labels = get_imagenet_training_labels()
+    assert (
+        sorted(imagenet_training_labels) == sorted(imagenet_inference_labels))
+    validation_nums = get_validation_labels(FLAGS)
+    x_test = get_validation_images(FLAGS)
+    validation_labels = imagenet_inference_labels[validation_nums]
 
-  if FLAGS.batch_size < 10:
+    if FLAGS.batch_size < 10:
+        print('validation_labels', validation_labels)
+
+    (batch_size, width, height, channels) = x_test.shape
+    print('batch_size', batch_size)
+    print('width', width)
+    print('height', height)
+    print('channels', channels)
+
+    x_test_flat = x_test.flatten(order='C')
+    port = 34000
+
+    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size, {
+        'input': ('encrypt', x_test_flat)
+    })
+
+    results = client.get_results()
+
+    imagenet_labels = get_imagenet_labels()
+    results = np.array(results)
+
+    if (FLAGS.batch_size == 1):
+        top5 = results.argsort()[-5:]
+    else:
+        results = np.reshape(results, (FLAGS.batch_size, 1001))
+        top5 = np.flip(results.argsort()[:, -5:], axis=1)
+
+    preds = imagenet_labels[top5]
     print('validation_labels', validation_labels)
+    print('top5', preds)
 
-  (batch_size, width, height, channels) = x_test.shape
-  print('batch_size', batch_size)
-  print('width', width)
-  print('height', height)
-  print('channels', channels)
-
-  x_test_flat = x_test.flatten(order='C')
-  port = 34000
-
-  client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size,
-                                    {'input': ('encrypt', x_test_flat)})
-
-  results = client.get_results()
-
-  imagenet_labels = get_imagenet_labels()
-  results = np.array(results)
-
-  if (FLAGS.batch_size == 1):
-    top5 = results.argsort()[-5:]
-  else:
-    results = np.reshape(results, (FLAGS.batch_size, 1001))
-    top5 = np.flip(results.argsort()[:, -5:], axis=1)
-
-  preds = imagenet_labels[top5]
-  print('validation_labels', validation_labels)
-  print('top5', preds)
-
-  util.accuracy(preds, validation_labels)
+    util.accuracy(preds, validation_labels)
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '--data_dir',
-      type=str,
-      default=None,
-      help='Directory where cropped ImageNet data and ground truth labels are stored'
-  )
-  parser.add_argument('--image_size', type=int, default=96, help='image size')
-  parser.add_argument(
-      '--save_images', type=str2bool, default=False, help='save cropped images')
-  parser.add_argument(
-      '--load_cropped_images',
-      type=str2bool,
-      default=False,
-      help='load saved cropped images')
-  parser.add_argument(
-      '--standardize',
-      type=str2bool,
-      default=False,
-      help='subtract training set mean from each image')
-  parser.add_argument(
-      '--crop_size',
-      type=int,
-      default=256,
-      help='crop to this size before resizing to image_size')
-  parser.add_argument(
-      '--hostname', type=str, default='localhost', help='server hostname')
-  parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
-  parser.add_argument(
-      '--start_batch', type=int, default=0, help='Test data start index')
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--data_dir',
+        type=str,
+        default=None,
+        help=
+        'Directory where cropped ImageNet data and ground truth labels are stored'
+    )
+    parser.add_argument('--image_size', type=int, default=96, help='image size')
+    parser.add_argument(
+        '--save_images',
+        type=str2bool,
+        default=False,
+        help='save cropped images')
+    parser.add_argument(
+        '--load_cropped_images',
+        type=str2bool,
+        default=False,
+        help='load saved cropped images')
+    parser.add_argument(
+        '--standardize',
+        type=str2bool,
+        default=False,
+        help='subtract training set mean from each image')
+    parser.add_argument(
+        '--crop_size',
+        type=int,
+        default=256,
+        help='crop to this size before resizing to image_size')
+    parser.add_argument(
+        '--hostname', type=str, default='localhost', help='server hostname')
+    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
+    parser.add_argument(
+        '--start_batch', type=int, default=0, help='Test data start index')
 
-  FLAGS, unparsed = parser.parse_known_args()
-  if FLAGS.data_dir == None:
-    print('data_dir must be specified')
-    exit(1)
+    FLAGS, unparsed = parser.parse_known_args()
+    if FLAGS.data_dir == None:
+        print('data_dir must be specified')
+        exit(1)
 
-  print(FLAGS)
-  main(FLAGS)
+    print(FLAGS)
+    main(FLAGS)

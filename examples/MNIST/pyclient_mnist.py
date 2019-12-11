@@ -25,34 +25,35 @@ import pyhe_client
 
 
 def test_network(FLAGS):
-  (x_test, y_test) = load_mnist_test_data(FLAGS.start_batch, FLAGS.batch_size)
-  data = x_test.flatten('C')
+    (x_test, y_test) = load_mnist_test_data(FLAGS.start_batch, FLAGS.batch_size)
+    data = x_test.flatten('C')
 
-  client = pyhe_client.HESealClient(
-      FLAGS.hostname, FLAGS.port, FLAGS.batch_size,
-      {FLAGS.tensor_name: (FLAGS.encrypt_data_str, data)})
+    client = pyhe_client.HESealClient(
+        FLAGS.hostname, FLAGS.port, FLAGS.batch_size, {
+            FLAGS.tensor_name: (FLAGS.encrypt_data_str, data)
+        })
 
-  results = np.round(client.get_results(), 2)
+    results = np.round(client.get_results(), 2)
 
-  y_pred_reshape = np.array(results).reshape(FLAGS.batch_size, 10)
-  with np.printoptions(precision=3, suppress=True):
-    print(y_pred_reshape)
+    y_pred_reshape = np.array(results).reshape(FLAGS.batch_size, 10)
+    with np.printoptions(precision=3, suppress=True):
+        print(y_pred_reshape)
 
-  y_pred = y_pred_reshape.argmax(axis=1)
-  print('y_pred', y_pred)
-  y_true = y_test.argmax(axis=1)
+    y_pred = y_pred_reshape.argmax(axis=1)
+    print('y_pred', y_pred)
+    y_true = y_test.argmax(axis=1)
 
-  correct = np.sum(np.equal(y_pred, y_true))
-  acc = correct / float(FLAGS.batch_size)
-  print('pred size', len(y_pred))
-  print('correct', correct)
-  print('Accuracy (batch size', FLAGS.batch_size, ') =', acc * 100., '%')
+    correct = np.sum(np.equal(y_pred, y_true))
+    acc = correct / float(FLAGS.batch_size)
+    print('pred size', len(y_pred))
+    print('correct', correct)
+    print('Accuracy (batch size', FLAGS.batch_size, ') =', acc * 100., '%')
 
 
 if __name__ == '__main__':
-  FLAGS, unparsed = client_argument_parser().parse_known_args()
-  if unparsed:
-    print('Unparsed flags:', unparsed)
-    exit(1)
+    FLAGS, unparsed = client_argument_parser().parse_known_args()
+    if unparsed:
+        print('Unparsed flags:', unparsed)
+        exit(1)
 
-  test_network(FLAGS)
+    test_network(FLAGS)
