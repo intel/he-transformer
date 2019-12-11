@@ -6,7 +6,7 @@ This folder demonstrates several examples of simple CNNs on the MNIST dataset:
   * The MLP folder demonstrates a model with MaxPool layers
 
 
-It is impossible to perform ReLU and Maxpool using homomorphic encryption. We support these functions in three ways:
+It is impossible to perform ReLU and Maxpool using the CKKS homomorphic encryption scheme directly. Instead, we support these functions in three ways:
 
   1) A debugging interface (active by default). This runs ReLu/Maxpool locally.
   ***Warning***: This is not privacy-preserving, and should be used for debugging only.
@@ -24,9 +24,9 @@ These examples depends on the [**Intel® nGraph™ Compiler and runtime engine f
 # Train the networks
 First, train the networks using
 ```bash
-python cryptonets/train.py
-python cryptonets-relu/train.py
-python mlp/train.py
+python cryptonets/train.py --epochs=20 --batch_size=128
+python cryptonets-relu/train.py --epochs=20 --batch_size=128
+python mlp/train.py --epochs=20 --batch_size=128
 ```
 Each `train.py` file takes a `--batch_size` and `--epochs` arguments.
 

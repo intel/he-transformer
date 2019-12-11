@@ -20,12 +20,12 @@ import numpy as np
 import sys
 import os
 
-from mnist_util import load_mnist_test_data, client_argument_parser
+from mnist_util import load_mnist_data, client_argument_parser
 import pyhe_client
 
 
 def test_network(FLAGS):
-    (x_test, y_test) = load_mnist_test_data(FLAGS.start_batch, FLAGS.batch_size)
+    (x_train, y_train, x_test, y_test) = load_mnist_data(FLAGS.start_batch, FLAGS.batch_size)
     data = x_test.flatten("C")
 
     client = pyhe_client.HESealClient(

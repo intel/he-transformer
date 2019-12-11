@@ -25,6 +25,9 @@ from tensorflow.python.tools import freeze_graph
 
 
 def print_nodes(graph_def=None):
+    """Prints the node names of a graph_def.
+        If graph_def is not provided, use default graph_def"""
+
     if graph_def is None:
         nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
     else:
@@ -53,60 +56,8 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     return (x_train, y_train, x_test, y_test)
 
 
-def load_mnist_test_data(start_batch=0, batch_size=10000):
-    """Returns MNIST data in one-hot form"""
-    mnist = tf.keras.datasets.mnist
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    y_test = tf.compat.v1.keras.utils.to_categorical(y_test, num_classes=10)
-    x_test = np.expand_dims(x_test, axis=-1)
-
-    x_test = x_test[start_batch:start_batch + batch_size]
-    y_test = y_test[start_batch:start_batch + batch_size]
-
-    return (x_test, y_test)
-
-
-def get_train_batch(train_iter, batch_size, x_train, y_train):
-    """Returns training batch from dataset"""
-    start_index = train_iter * batch_size
-    end_index = start_index + batch_size
-
-    data_count = x_train.shape[0]
-
-    if start_index > data_count and end_index > data_count:
-        start_index %= data_count
-        end_index %= data_count
-        x_batch = x_train[start_index:end_index]
-        y_batch = y_train[start_index:end_index]
-    elif end_index > data_count:
-        end_index %= data_count
-        x_batch = np.concatenate((x_train[start_index:], x_train[0:end_index]))
-        y_batch = np.concatenate((y_train[start_index:], y_train[0:end_index]))
-    else:
-        x_batch = x_train[start_index:end_index]
-        y_batch = y_train[start_index:end_index]
-
-    return x_batch, y_batch
-
-
-def conv2d_stride_2_valid(x, W, name=None):
-    """returns a 2d convolution layer with stride 2, valid pooling"""
-    return tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding="VALID")
-
-
-def avg_pool_3x3_same_size(x):
-    """3x3 avg_pool using same padding, keeping original feature map size"""
-    return tf.nn.avg_pool2d(
-        x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding="SAME")
-
-
-def max_pool_3x3_same_size(x):
-    """3x3 avg_pool using same padding, keeping original feature map size"""
-    return tf.nn.max_pool2d(
-        x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding="SAME")
-
-
 def load_pb_file(filename):
+    """"Returns the graph_def from a saved protobuf file"""
     if not os.path.isfile(filename):
         raise Exception("File, " + filename + " does not exist")
 
@@ -118,47 +69,53 @@ def load_pb_file(filename):
     return graph_def
 
 
+# https://www.dlology.com/blog/how-to-convert-trained-keras-model-to-tensorflow-and-make-prediction/
+def freeze_session(session,
+                   keep_var_names=None,
+                   output_names=None,
+                   clear_devices=True):
+    """
+    Freezes the state of a session into a pruned computation graph.
+
+    Creates a new computation graph where variable nodes are replaced by
+    constants taking their current value in the session. The new graph will be
+    pruned so subgraphs that are not necessary to compute the requested
+    outputs are removed.
+    @param session The TensorFlow session to be frozen.
+    @param keep_var_names A list of variable names that should not be frozen,
+                          or None to freeze all the variables in the graph.
+    @param output_names Names of the relevant graph outputs.
+    @param clear_devices Remove the device directives from the graph for better portability.
+    @return The frozen graph definition.
+    """
+    from tensorflow.python.framework.graph_util import (
+        convert_variables_to_constants,
+        remove_training_nodes,
+    )
+
+    graph = session.graph
+    with graph.as_default():
+        freeze_var_names = list(
+            set(v.op.name for v in tf.global_variables()).difference(
+                keep_var_names or []))
+        output_names = output_names or []
+        output_names += [v.op.name for v in tf.global_variables()]
+        # Graph -> GraphDef ProtoBuf
+        input_graph_def = graph.as_graph_def()
+        if clear_devices:
+            for node in input_graph_def.node:
+                node.device = ""
+        frozen_graph = convert_variables_to_constants(
+            session, input_graph_def, output_names, freeze_var_names)
+        frozen_graph = remove_training_nodes(frozen_graph)
+        return frozen_graph
+
+
 def save_model(sess, directory, filename):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
-    saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + ".ckpt")
-    saver.save(sess, ckpt_filepath)
-
-    pbtxt_filename = filename + ".pbtxt"
-    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + ".pb")
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=filename + ".pb",
-        as_text=False,
-    )
-
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=pbtxt_filename,
-        as_text=True,
-    )
-
-    # Freeze graph to turn variables into constants
-    freeze_graph.freeze_graph(
-        input_graph=pbtxt_filepath,
-        input_saver="",
-        input_binary=False,
-        input_checkpoint=ckpt_filepath,
-        output_node_names="output",
-        restore_op_name="save/restore_all",
-        filename_tensor_name="save/Const:0",
-        output_graph=pb_filepath,
-        clear_devices=True,
-        initializer_nodes="",
-    )
-
-    print("Model saved to: %s" % pb_filepath)
+    frozen_graph = freeze_session(sess, output_names=["output/BiasAdd"])
+    tf.io.write_graph(frozen_graph, directory, filename + ".pb", as_text=False)
+    print("Model saved to: %s" % filename + ".pb")
 
 
 def str2bool(v):
@@ -174,12 +131,6 @@ def str2bool(v):
 
 def train_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--train_loop_count",
-        type=int,
-        default=20000,
-        help="Number of training iterations",
-    )
     parser.add_argument(
         "--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument(
