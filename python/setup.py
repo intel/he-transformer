@@ -41,12 +41,10 @@ def find_pybind_headers_dir():
     else:
         pybind_headers_dir = os.path.join(PYNGRAPH_ROOT_DIR, 'pybind11')
 
-    found = os.path.exists(
-        os.path.join(pybind_headers_dir, 'include/pybind11'))
+    found = os.path.exists(os.path.join(pybind_headers_dir, 'include/pybind11'))
     if not found:
-        print(
-            'Cannot find pybind11 library in {} make sure that '
-            'PYBIND_HEADERS_PATH is set correctly'.format(pybind_headers_dir))
+        print('Cannot find pybind11 library in {} make sure that '
+              'PYBIND_HEADERS_PATH is set correctly'.format(pybind_headers_dir))
         sys.exit(1)
     else:
         print('pybind11 library found in {}'.format(pybind_headers_dir))
@@ -142,7 +140,11 @@ library_dirs = [NGRAPH_HE_LIB_DIR]
 
 libraries = ['he_seal_backend']
 
-lib_files = [os.path.join(NGRAPH_HE_LIB_DIR, f) for f in os.listdir(NGRAPH_HE_LIB_DIR) if os.path.isfile(os.path.join(NGRAPH_HE_LIB_DIR, f))]
+lib_files = [
+    os.path.join(NGRAPH_HE_LIB_DIR, f)
+    for f in os.listdir(NGRAPH_HE_LIB_DIR)
+    if os.path.isfile(os.path.join(NGRAPH_HE_LIB_DIR, f))
+]
 
 data_files = [('lib', lib_files)]
 print('data_files', data_files)

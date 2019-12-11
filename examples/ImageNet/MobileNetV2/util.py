@@ -69,7 +69,7 @@ def get_validation_labels(FLAGS):
         exit(1)
 
     truth_labels = np.loadtxt(truth_file, dtype=np.int32)
-    assert (truth_labels.shape == (50000, ))
+    assert (truth_labels.shape == (50000,))
     return truth_labels[FLAGS.start_batch:FLAGS.start_batch + FLAGS.batch_size]
 
 
@@ -89,8 +89,8 @@ def center_crop2(im, new_size):
     # Resize such that shortest side has new_size
     width, height = im.size
     ratio = min(width / new_size, height / new_size)
-    im = im.resize((int(width / ratio), int(height / ratio)),
-                   resample=Image.LANCZOS)
+    im = im.resize(
+        (int(width / ratio), int(height / ratio)), resample=Image.LANCZOS)
 
     # Center crop to new_size x new_size
     im = center_crop(im, new_size)
@@ -151,8 +151,7 @@ def get_validation_image(i, FLAGS):
 def get_validation_images(FLAGS, crop=False):
     print('getting validation images')
     FLAGS = FLAGS
-    images = np.empty((FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size,
-                       3))
+    images = np.empty((FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3))
     end_idx = min(FLAGS.start_batch + FLAGS.batch_size, 50000)
 
     with mp.Pool() as pool:
@@ -201,10 +200,7 @@ def server_argument_parser():
         default=False,
         help='Enable the client')
     parser.add_argument(
-        '--backend',
-        type=str,
-        default='HE_SEAL',
-        help='Name of backend to use')
+        '--backend', type=str, default='HE_SEAL', help='Name of backend to use')
     parser.add_argument(
         '--encryption_parameters',
         type=str,

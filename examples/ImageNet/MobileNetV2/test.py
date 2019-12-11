@@ -131,8 +131,7 @@ if __name__ == '__main__':
         type=str,
         default='./model/mobilenet_v2_0.35_96_opt.pb',
         help='Model to run inference with')
-    parser.add_argument(
-        '--image_size', type=int, default=96, help='image size')
+    parser.add_argument('--image_size', type=int, default=96, help='image size')
     parser.add_argument(
         '--save_images',
         type=str2bool,

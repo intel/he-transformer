@@ -83,8 +83,9 @@ def main(FLAGS):
     x_test_flat = x_test.flatten(order='C')
     port = 34000
 
-    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size,
-                                      {'input': ('encrypt', x_test_flat)})
+    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size, {
+        'input': ('encrypt', x_test_flat)
+    })
 
     results = client.get_results()
 
@@ -113,8 +114,7 @@ if __name__ == '__main__':
         help=
         'Directory where cropped ImageNet data and ground truth labels are stored'
     )
-    parser.add_argument(
-        '--image_size', type=int, default=96, help='image size')
+    parser.add_argument('--image_size', type=int, default=96, help='image size')
     parser.add_argument(
         '--save_images',
         type=str2bool,

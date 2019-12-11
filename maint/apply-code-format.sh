@@ -24,6 +24,7 @@ set -u
 #
 # For this reason, this script specifies the exact version of clang-format to be used.
 
+# clang-format variables
 declare CLANG_FORMAT_BASENAME="clang-format-9"
 declare REQUIRED_CLANG_FORMAT_VERSION=9.0
 
@@ -40,10 +41,25 @@ fi
 clang_format_lib_verify_version "${CLANG_FORMAT_PROG}" "${REQUIRED_CLANG_FORMAT_VERSION}"
 bash_lib_status "Verified that '${CLANG_FORMAT_PROG}' has version '${REQUIRED_CLANG_FORMAT_VERSION}'"
 
+# yapf variables
+source "${THIS_SCRIPT_DIR}/yapf_lib.sh"
+
+declare YAPF_FORMAT_BASENAME="yapf3"
+declare REQUIRED_YAPF_VERSION=0.20.1
+
+declare YAPF_PROG
+if ! YAPF_PROG="$(which "${YAPF_FORMAT_BASENAME}")"; then
+    bash_lib_die "Unable to find program ${YAPF_PROG}" >&2
+fi
+
+yapf_lib_verify_version "${YAPF_PROG}" "${REQUIRED_YAPF_VERSION}"
+bash_lib_status "Verified that '${YAPF_PROG}' has version '${REQUIRED_YAPF_VERSION}'"
+
 pushd "${THIS_SCRIPT_DIR}/.."
 
+# Apply C++ formatting using clang-format
 declare ROOT_SUBDIR
-for ROOT_SUBDIR in src test; do
+for ROOT_SUBDIR in src python examples test; do
     if ! [[ -d "${ROOT_SUBDIR}" ]]; then
 	    bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
     else
@@ -53,6 +69,22 @@ for ROOT_SUBDIR in src test; do
         # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
         # mechanism, and this confuses clang-format.
         find "${ROOT_SUBDIR}" -type f -and \( -name '*.cpp' -or -name '*.hpp' \) | xargs "${CLANG_FORMAT_PROG}" -i -style=file
+
+        bash_lib_status "Done."
+    fi
+done
+
+# Apply python formatting using yapf
+for ROOT_SUBDIR in src python examples test; do
+    if ! [[ -d "${ROOT_SUBDIR}" ]]; then
+	    bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
+    else
+        bash_lib_status "About to format python code in directory tree '$(pwd)/${ROOT_SUBDIR}' ..."
+
+        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
+        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
+        # mechanism, and this confuses clang-format.
+        find "${ROOT_SUBDIR}" -type f -and -name '*.py' -print0 | xargs -0 "${YAPF_PROG}" -i
 
         bash_lib_status "Done."
     fi

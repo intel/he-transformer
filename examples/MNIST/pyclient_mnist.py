@@ -28,8 +28,10 @@ def test_network(FLAGS):
     (x_test, y_test) = load_mnist_test_data(FLAGS.start_batch, FLAGS.batch_size)
     data = x_test.flatten('C')
 
-    client = pyhe_client.HESealClient(FLAGS.hostname, FLAGS.port, FLAGS.batch_size,
-                                      {FLAGS.tensor_name: (FLAGS.encrypt_data_str, data)})
+    client = pyhe_client.HESealClient(
+        FLAGS.hostname, FLAGS.port, FLAGS.batch_size, {
+            FLAGS.tensor_name: (FLAGS.encrypt_data_str, data)
+        })
 
     results = np.round(client.get_results(), 2)
 

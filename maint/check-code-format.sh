@@ -24,6 +24,7 @@ set -u
 #
 # For this reason, this script specifies the exact version of clang-format to be used.
 
+# clang-format variables
 declare CLANG_FORMAT_BASENAME="clang-format-9"
 declare REQUIRED_CLANG_FORMAT_VERSION=9.0
 
@@ -40,13 +41,31 @@ fi
 clang_format_lib_verify_version "${CLANG_FORMAT_PROG}" "${REQUIRED_CLANG_FORMAT_VERSION}"
 bash_lib_status "Verified that '${CLANG_FORMAT_PROG}' has version '${REQUIRED_CLANG_FORMAT_VERSION}'"
 
-declare -a FAILED_FILES=()
-declare NUM_FILES_CHECKED=0
+# yapf variables
+source "${THIS_SCRIPT_DIR}/yapf_lib.sh"
+
+declare YAPF_FORMAT_BASENAME="yapf3"
+declare REQUIRED_YAPF_VERSION=0.20.1
+
+declare YAPF_PROG
+if ! YAPF_PROG="$(which "${YAPF_FORMAT_BASENAME}")"; then
+    bash_lib_die "Unable to find program ${YAPF_PROG}" >&2
+fi
+
+yapf_lib_verify_version "${YAPF_PROG}" "${REQUIRED_YAPF_VERSION}"
+bash_lib_status "Verified that '${YAPF_PROG}' has version '${REQUIRED_YAPF_VERSION}'"
+
+
+declare -a FAILED_CPP_FILES=()
+declare -a FAILED_PYTHON_FILES=()
+declare NUM_CPP_FILES_CHECKED=0
+declare NUM_PYTHON_FILES_CHECKED=0
 
 pushd "${THIS_SCRIPT_DIR}/.."
 
 declare ROOT_SUBDIR
-for ROOT_SUBDIR in src examples test; do
+# Apply C++ formatting using clang-format
+for ROOT_SUBDIR in src python examples test; do
     if ! [[ -d "${ROOT_SUBDIR}" ]]; then
         bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
     else
@@ -57,21 +76,56 @@ for ROOT_SUBDIR in src examples test; do
         # mechanism, and this confuses clang-format.
         for SRC_FILE in $(find "${ROOT_SUBDIR}" -type f -and \( -name '*.cpp' -or -name '*.hpp' \) ); do
             if "${CLANG_FORMAT_PROG}" -style=file -output-replacements-xml "${SRC_FILE}" | grep -c "<replacement " >/dev/null; then
-                FAILED_FILES+=( "${SRC_FILE}" )
+                FAILED_CPP_FILES+=( "${SRC_FILE}" )
             fi
-            NUM_FILES_CHECKED=$((NUM_FILES_CHECKED+1))
+            NUM_CPP_FILES_CHECKED=$((NUM_CPP_FILES_CHECKED+1))
         done
+    fi
+done
+
+# Apply python formatting using yapf
+for ROOT_SUBDIR in src python examples test; do
+    if ! [[ -d "${ROOT_SUBDIR}" ]]; then
+	    bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
+    else
+        bash_lib_status "About to format python code in directory tree '$(pwd)/${ROOT_SUBDIR}' ..."
+        declare SRC_FILE
+
+        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
+        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
+        # mechanism, and this confuses clang-format.
+        for SRC_FILE in $(find "${ROOT_SUBDIR}" -type f -and -name '*.py')
+        do
+            if "${YAPF_PROG}" "${SRC_FILE}" --diff | grep -q "reformatted"; then
+                FAILED_PYTHON_FILES+=( "${SRC_FILE}" )
+                echo "${SRC_FILE} failed formatting"
+            fi
+            NUM_PYTHON_FILES_CHECKED=$((NUM_PYTHON_FILES_CHECKED+1))
+        done
+
     fi
 done
 
 popd
 
-if [[ ${#FAILED_FILES[@]} -eq 0 ]]; then
-    bash_lib_status "All ${NUM_FILES_CHECKED}  C/C++ files pass the code-format check."
+if [[ ${#FAILED_CPP_FILES[@]} -eq 0 ]]; then
+    bash_lib_status "All ${NUM_CPP_FILES_CHECKED}  C/C++ files pass the code-format check."
 else
-    echo "${#FAILED_FILES[@]} of ${NUM_FILES_CHECKED} source files failed the code-format check:"
+    echo "${#FAILED_CPP_FILES[@]} of ${NUM_CPP_FILES_CHECKED} C/C++ source files failed the code-format check:"
     declare FAILED_SRC_FILE
-    for FAILED_SRC_FILE in ${FAILED_FILES[@]}; do
+    for FAILED_SRC_FILE in ${FAILED_CPP_FILES[@]}; do
+        echo "    ${FAILED_SRC_FILE}"
+    done
+    exit 1
+fi
+
+
+if [[ ${#FAILED_PYTHON_FILES[@]} -eq 0 ]]; then
+    bash_lib_status "All ${NUM_PYTHON_FILES_CHECKED}  python files pass the code-format check."
+else
+    echo "${#FAILED_PYTHON_FILES[@]} of ${NUM_PYTHON_FILES_CHECKED} python source files failed the code-format check:"
+    declare FAILED_SRC_FILE
+    for FAILED_SRC_FILE in ${FAILED_PYTHON_FILES[@]}; do
         echo "    ${FAILED_SRC_FILE}"
     done
     exit 1

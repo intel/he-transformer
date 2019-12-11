@@ -62,16 +62,14 @@ def main(FLAGS):
                 print('step %d, training accuracy %g, %g msec to evaluate' %
                       (i, train_accuracy, 1000 * (time.time() - t)))
             t = time.time()
-            sess.run([train_step, cross_entropy],
-                     feed_dict={
-                         x: x_batch,
-                         y_: y_batch
-                     })
-            if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
-                test_accuracy = accuracy.eval(feed_dict={
-                    x: x_test,
-                    y_: y_test
+            sess.run(
+                [train_step, cross_entropy],
+                feed_dict={
+                    x: x_batch,
+                    y_: y_batch
                 })
+            if i % 1000 == 999 or i == FLAGS.train_loop_count - 1:
+                test_accuracy = accuracy.eval(feed_dict={x: x_test, y_: y_test})
                 print('test accuracy %g' % test_accuracy)
 
         print("Training finished. Saving model.")
