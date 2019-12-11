@@ -24,8 +24,10 @@
 
 #include "ngraph/check.hpp"
 #include "ngraph/except.hpp"
+#include "ngraph/type.hpp"
 #include "ngraph/util.hpp"
 #include "protos/message.pb.h"
+#include "seal/he_seal_executable.hpp"
 
 namespace ngraph::runtime::he {
 
@@ -101,6 +103,7 @@ double type_to_double(const void* src, const element::Type& element_type) {
     }
     case element::Type_t::i8:
     case element::Type_t::i16:
+    case element::Type_t::u1:
     case element::Type_t::u8:
     case element::Type_t::u16:
     case element::Type_t::u32:
@@ -150,6 +153,9 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type) {
     }
     case element::Type_t::f64: {
       return pb::HETensor::F64;
+    }
+    case element::Type_t::u1: {
+      return pb::HETensor::U1;
     }
     case element::Type_t::i8: {
       return pb::HETensor::I8;
@@ -221,6 +227,9 @@ element::Type pb_type_to_type(pb::HETensor_ElementType pb_type) {
     case pb::HETensor::I64: {
       return element::Type_t::i64;
     }
+    case pb::HETensor::U1: {
+      return element::Type_t::u1;
+    }
     case pb::HETensor::U8: {
       return element::Type_t::u8;
     }
@@ -235,6 +244,25 @@ element::Type pb_type_to_type(pb::HETensor_ElementType pb_type) {
     }
 #pragma clang diagnostic pop
   }
+}
+
+pb::Function node_to_pb_function(
+    const Node& node,
+    std::unordered_map<std::string, std::string> extra_configs) {
+  nlohmann::json js = {{"function", node.description()}};
+
+  if (auto bounded_relu = as_type<const op::BoundedRelu>(&node)) {
+    float alpha = bounded_relu->get_alpha();
+    js["bound"] = alpha;
+  }
+
+  for (const auto& [key, value] : extra_configs) {
+    js[key] = value;
+  }
+
+  pb::Function f;
+  f.set_function(js.dump());
+  return f;
 }
 
 }  // namespace ngraph::runtime::he

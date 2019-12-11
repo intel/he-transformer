@@ -31,7 +31,6 @@
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/runtime/backend.hpp"
 #include "ngraph/util.hpp"
-#include "node_wrapper.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal.h"
 #include "seal/seal_ciphertext_wrapper.hpp"
@@ -46,6 +45,18 @@ class ABYServerExecutor;
 #endif
 
 namespace ngraph::runtime::he {
+
+namespace {
+// This exapnds teh op list in op_tbl.hpp into a list of enumerations that look
+// like this: Abs, Acos,
+// ...
+enum class OP_TYPEID {
+#define NGRAPH_OP(NAME, NAMESPACE) ID_SUFFIX(NAME),
+#include "opset_he_seal_tbl.hpp"
+#undef NGRAPH_OP
+  UnknownOp
+};
+}  // namespace
 
 /// \brief Class representing a function to execute
 class HESealExecutable : public runtime::Executable {
@@ -168,7 +179,7 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] node_wrapper Wrapper around operation to perform
   void handle_server_relu_op(const std::shared_ptr<HETensor>& arg,
                              const std::shared_ptr<HETensor>& out,
-                             const NodeWrapper& node_wrapper);
+                             const Node& node);
 
   /// \brief Processes the MaxPool operation using a client
   /// \param[in] arg Tensor argument
@@ -176,21 +187,22 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] node_wrapper Wrapper around operation to perform
   void handle_server_max_pool_op(const std::shared_ptr<HETensor>& arg,
                                  const std::shared_ptr<HETensor>& out,
-                                 const NodeWrapper& node_wrapper);
+                                 const Node& node);
 
-  /// \brief Returns whether or not an Op's verbosity is on or off
-  /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const op::Op& op) {
-    return m_verbose_all_ops ||
-           m_verbose_ops.find(to_lower(op.description())) !=
-               m_verbose_ops.end();
-  }
-
-  /// \brief Returns whether or not a node dessccription verbosity is on or off
-  /// \param[in] description Node description determine verbosity of
+  /// \brief Returns whether or not a node description verbosity is on or off
+  /// \param[in] description Node description to determine the verbosity of
   bool verbose_op(const std::string& description) {
     return m_verbose_all_ops ||
            m_verbose_ops.find(to_lower(description)) != m_verbose_ops.end();
+  }
+
+  /// \brief Returns whether or not an Op's verbosity is on or off
+  /// \param[in] op Operation to determine verbosity of
+  bool verbose_op(const Node& node) {
+    if (!node.is_op()) {
+      return false;
+    }
+    return verbose_op(std::string(node.description()));
   }
 
   /// \brief Returns the batch size
@@ -201,6 +213,8 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Sets verbosity of all operations
   void set_verbose_all_ops(bool value);
+
+  static OP_TYPEID get_typeid(const NodeTypeInfo& type_info);
 
  private:
   friend class TestHESealExecutable;
@@ -224,7 +238,7 @@ class HESealExecutable : public runtime::Executable {
 #endif
 
   std::unordered_map<std::shared_ptr<const Node>, stopwatch> m_timer_map;
-  std::vector<NodeWrapper> m_wrapped_nodes;
+  std::vector<std::shared_ptr<Node>> m_nodes;
 
   std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
 
@@ -270,8 +284,7 @@ class HESealExecutable : public runtime::Executable {
   std::condition_variable m_client_inputs_cond;
   bool m_client_inputs_received{false};
 
-  void generate_calls(const element::Type& type,
-                      const NodeWrapper& node_wrapper,
+  void generate_calls(const element::Type& type, const Node& op,
                       const std::vector<std::shared_ptr<HETensor>>& out,
                       const std::vector<std::shared_ptr<HETensor>>& args);
 

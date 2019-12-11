@@ -50,22 +50,22 @@ class HEOpAnnotations : public op::util::OpAnnotations {
 
   /// \brief Returns whether or not Op has HEOPAnnotations
   /// \param[in] op Operation to check for annotation
-  static bool has_he_annotation(const op::Op& op);
+  static bool has_he_annotation(const Node& op);
 
   /// \brief Returns HEOpAnnotations from Op
   /// \param[in] op Operation to retrieve annotations from
   /// \throws ngraph_error if op doesn't have HEOpAnnotation
-  static std::shared_ptr<HEOpAnnotations> he_op_annotation(const op::Op& op);
+  static std::shared_ptr<HEOpAnnotations> he_op_annotation(const Node& op);
 
   /// \brief Returns whether or not operation node should be received from
   /// client. Defaults to false if op has no HEOpAnnotation.
   /// \param[in] op Graph operation, should be Constant or Parameter node
-  static bool from_client(const op::Op& op);
+  static bool from_client(const Node& op);
 
   /// \brief Returns whether or not operation node should be packed using
   /// plaintext packing. Defaults to false if op has no HEOpAnnotation.
   /// \param[in] op Graph operation
-  static bool plaintext_packed(const op::Op& op);
+  static bool plaintext_packed(const Node& op);
 
   static std::shared_ptr<HEOpAnnotations>
   server_plaintext_unpacked_annotation();

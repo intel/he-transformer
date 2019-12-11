@@ -23,25 +23,24 @@
 #include "ngraph/op/op.hpp"
 #include "ngraph/op/util/unary_elementwise_arithmetic.hpp"
 
-namespace ngraph::op {
+namespace ngraph {
+namespace op {
 /// \brief Elementwise Minimum(Relu(arg, 0), alpha) operation.
-class BoundedRelu : public util::UnaryElementwiseArithmetic {
+///
+class BoundedRelu : public ngraph::op::util::UnaryElementwiseArithmetic {
  public:
-  static const std::string type_name;
-
-  const std::string& description() const override { return type_name; }
-
+  static constexpr NodeTypeInfo type_info{"BoundedRelu", 0};
+  const NodeTypeInfo& get_type_info() const override { return type_info; }
   /// \brief Constructs a BoundedRelu operation.
-  /// \param[in] arg Node input to the Relu.
-  /// \param[in] alpha Bound on bounded relu
-  BoundedRelu(const Output<Node>& arg, float alpha);
-
+  ///
+  /// \param arg Node input to the Relu.
+  BoundedRelu(const Output<ngraph::Node>& arg, float alpha);
   float get_alpha() const { return m_alpha; }
-
   virtual std::shared_ptr<Node> copy_with_new_args(
       const NodeVector& new_args) const override;
 
  private:
   float m_alpha;
 };
-}  // namespace ngraph::op
+}  // namespace op
+}  // namespace ngraph

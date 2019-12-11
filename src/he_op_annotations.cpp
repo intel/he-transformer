@@ -42,19 +42,19 @@ void HEOpAnnotations::set_encrypted(bool val) { m_encrypted = val; }
 bool HEOpAnnotations::packed() const { return m_packed; }
 void HEOpAnnotations::set_packed(bool val) { m_packed = val; }
 
-bool HEOpAnnotations::has_he_annotation(const op::Op& op) {
+bool HEOpAnnotations::has_he_annotation(const Node& op) {
   auto annotation = op.get_op_annotations();
   return std::dynamic_pointer_cast<HEOpAnnotations>(annotation) != nullptr;
 }
 
 std::shared_ptr<HEOpAnnotations> HEOpAnnotations::he_op_annotation(
-    const op::Op& op) {
+    const Node& op) {
   NGRAPH_CHECK(HEOpAnnotations::has_he_annotation(op), "op ", op.get_name(),
                " has no HEOpAnnotation");
   return std::static_pointer_cast<HEOpAnnotations>(op.get_op_annotations());
 }
 
-bool HEOpAnnotations::from_client(const op::Op& op) {
+bool HEOpAnnotations::from_client(const Node& op) {
   auto annotation = op.get_op_annotations();
   if (auto he_annotation =
           std::dynamic_pointer_cast<HEOpAnnotations>(annotation)) {
@@ -63,7 +63,7 @@ bool HEOpAnnotations::from_client(const op::Op& op) {
   return false;
 }
 
-bool HEOpAnnotations::plaintext_packed(const op::Op& op) {
+bool HEOpAnnotations::plaintext_packed(const Node& op) {
   auto annotation = op.get_op_annotations();
   if (auto he_annotation =
           std::dynamic_pointer_cast<HEOpAnnotations>(annotation)) {

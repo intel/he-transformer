@@ -21,7 +21,6 @@ set(HE_SRC
     # main
     he_tensor.cpp
     he_type.cpp
-    node_wrapper.cpp
     he_util.cpp
     he_op_annotations.cpp
     he_plaintext.cpp

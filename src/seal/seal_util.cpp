@@ -477,6 +477,7 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
     }
     case element::Type_t::i8:
     case element::Type_t::i16:
+    case element::Type_t::u1:
     case element::Type_t::u8:
     case element::Type_t::u16:
     case element::Type_t::u32:

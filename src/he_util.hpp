@@ -27,7 +27,6 @@
 #include "ngraph/except.hpp"
 #include "ngraph/util.hpp"
 #include "nlohmann/json.hpp"
-#include "node_wrapper.hpp"
 #include "op/bounded_relu.hpp"
 #include "protos/message.pb.h"
 
@@ -103,27 +102,8 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type);
 
 element::Type pb_type_to_type(pb::HETensor_ElementType pb_type);
 
-inline pb::Function node_to_pb_function(
-    const NodeWrapper& node_wrapper,
-    std::unordered_map<std::string, std::string> extra_configs = {}) {
-  const Node& node = *node_wrapper.get_node();
-  auto type_id = node_wrapper.get_typeid();
-
-  nlohmann::json js = {{"function", node.description()}};
-  if (type_id == OP_TYPEID::BoundedRelu) {
-    const op::BoundedRelu* bounded_relu =
-        static_cast<const op::BoundedRelu*>(&node);
-    float alpha = bounded_relu->get_alpha();
-    js["bound"] = alpha;
-  }
-
-  for (const auto& [key, value] : extra_configs) {
-    js[key] = value;
-  }
-
-  pb::Function f;
-  f.set_function(js.dump());
-  return f;
-}
+pb::Function node_to_pb_function(
+    const Node& node,
+    std::unordered_map<std::string, std::string> extra_configs = {});
 
 }  // namespace ngraph::runtime::he
