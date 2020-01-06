@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <tuple>
 #include <unordered_set>
@@ -814,7 +815,7 @@ bool HESealExecutable::call(
         NGRAPH_HE_LOG(3) << "Get output packing / encrypted";
 
         std::shared_ptr<HEOpAnnotations> he_op_annotation =
-            HEOpAnnotations::he_op_annotation(*as_type_ptr<op::Op>(op));
+            HEOpAnnotations::he_op_annotation(*static_cast<op::Op*>(op.get()));
         bool encrypted_out = he_op_annotation->encrypted();
         bool packed_out = he_op_annotation->packed();
 

@@ -58,17 +58,16 @@ TEST(he_seal_executable, generate_calls) {
 
   // Unsupported op
   {
-    const Node& node(*std::make_shared<op::Abs>(a));
+    auto abs = std::make_shared<op::Abs>(a);
     auto test_he_seal_executable = TestHESealExecutable{he_handle};
     EXPECT_ANY_THROW(
-        test_he_seal_executable.generate_calls(element::f32, node, out, args));
+        test_he_seal_executable.generate_calls(element::f32, *abs, out, args));
   }
   // Skipped op -- parameter
   {
-    const Node& node(*a);
     auto test_he_seal_executable = TestHESealExecutable{he_handle};
     EXPECT_NO_THROW(
-        test_he_seal_executable.generate_calls(element::f32, node, out, args));
+        test_he_seal_executable.generate_calls(element::f32, *a, out, args));
   }
 }
 
