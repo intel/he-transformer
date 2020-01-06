@@ -28,7 +28,8 @@
 #include "tcp/tcp_message.hpp"
 
 namespace ngraph::runtime::he {
-/// \brief Class representing a Client over a TCP connection
+
+const std::string TCPClient::s_expected_teardown_message = "End of file";
 
 TCPClient::TCPClient(
     boost::asio::io_context& io_context,

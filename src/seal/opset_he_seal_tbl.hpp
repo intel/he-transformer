@@ -20,9 +20,9 @@ NGRAPH_OP(BoundedRelu, op)
 #undef ID_SUFFIX
 
 #define ID_SUFFIX(NAME) NAME##_v1
-NGRAPH_OP(LessEqual, op::v1)
+/* NGRAPH_OP(LessEqual, op::v1)
 NGRAPH_OP(LogicalAnd, op::v1)
 NGRAPH_OP(LogicalOr, op::v1)
 NGRAPH_OP(LogicalXor, op::v1)
-NGRAPH_OP(LogicalNot, op::v1)
+NGRAPH_OP(LogicalNot, op::v1) */
 #undef ID_SUFFIX

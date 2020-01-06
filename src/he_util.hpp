@@ -35,14 +35,12 @@ namespace ngraph::runtime::he {
 // This expands the op list in opset_he_seal_tbl.hpp into a list of enumerations
 // that look like this: Abs, Acos,
 // ...
-namespace {
 enum class OP_TYPEID {
 #define NGRAPH_OP(NAME, NAMESPACE) ID_SUFFIX(NAME),
 #include "seal/opset_he_seal_tbl.hpp"
 #undef NGRAPH_OP
   UnknownOp
 };
-}  // namespace
 
 /// \brief Unpacks complex values to real values
 /// (a+bi, c+di) => (a,b,c,d)

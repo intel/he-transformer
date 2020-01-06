@@ -112,11 +112,9 @@ class HESealExecutable : public runtime::Executable {
     return m_he_seal_backend.get_encryption_parameters().complex_packing();
   }
 
-  inline const HESealBackend& he_seal_backend() const {
-    return m_he_seal_backend;
-  }
+  const HESealBackend& he_seal_backend() const { return m_he_seal_backend; }
 
-  inline HESealBackend& he_seal_backend() { return m_he_seal_backend; }
+  HESealBackend& he_seal_backend() { return m_he_seal_backend; }
 
   /// \brief Checks whether or not the client supports the function
   /// \throws ngraph_error if function is unsupported
@@ -149,9 +147,13 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Returns whether or not an Op's verbosity is on or off
   /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const op::Op& op) {
+  bool verbose_op(const ngraph::Node* node) {
+    if (!node->is_op()) {
+      return false;
+    }
+
     return m_verbose_all_ops ||
-           m_verbose_ops.find(to_lower(op.description())) !=
+           m_verbose_ops.find(to_lower(node->description())) !=
                m_verbose_ops.end();
   }
 
@@ -223,7 +225,7 @@ class HESealExecutable : public runtime::Executable {
 #endif
 
   std::unordered_map<std::shared_ptr<const Node>, stopwatch> m_timer_map;
-  std::vector<NodeWrapper> m_wrapped_nodes;
+  std::vector<std::shared_ptr<Node>> m_nodes;
 
   std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
 
