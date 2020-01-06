@@ -42,8 +42,8 @@ def cryptonets_model(input):
         input_shape=(28, 28, 1),
         name="conv2d_1",
     )(input)
-
     y = Activation(square_activation)(y)
+
     y = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")(y)
     y = Conv2D(
         filters=50,
@@ -53,7 +53,6 @@ def cryptonets_model(input):
         use_bias=True,
         name="conv2d_2",
     )(y)
-
     y = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), padding="same")(y)
     y = Flatten()(y)
     y = Dense(100, use_bias=True, name="fc_1")(y)
@@ -65,14 +64,8 @@ def cryptonets_model(input):
 
 def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
                               fc2_weights):
-
     def square_activation(x):
         return x * x
-
-    print("conv1_weights", conv1_weights[0].shape, conv1_weights[1].shape)
-    print("squashed_weights", squashed_weights[0].shape,
-          squashed_weights[1].shape)
-    print("fc2_weights", fc2_weights[0].shape, fc2_weights[1].shape)
 
     y = Conv2D(
         filters=5,
@@ -91,8 +84,6 @@ def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
     # Using Keras model API with Flatten results in split ngraph at Flatten() or Reshape() op.
     # Use tf.reshape instead
     y = tf.reshape(y, [-1, 5 * 14 * 14])
-
-    # Flatten() results in split Keras graph
     y = Dense(
         100,
         use_bias=True,
@@ -103,6 +94,7 @@ def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
         bias_initializer=tf.compat.v1.constant_initializer(squashed_weights[1]),
     )(y)
     y = Activation(square_activation)(y)
+
     y = Dense(
         10,
         use_bias=True,
