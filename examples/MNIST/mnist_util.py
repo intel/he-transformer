@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 # ******************************************************************************
-# Copyright 2018-2019 Intel Corporation
+# Copyright 2018-2020 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,8 +33,6 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
-    x_train = x_train[start_batch:start_batch + batch_size]
-    y_train = y_train[start_batch:start_batch + batch_size]
     x_test = x_test[start_batch:start_batch + batch_size]
     y_test = y_test[start_batch:start_batch + batch_size]
 

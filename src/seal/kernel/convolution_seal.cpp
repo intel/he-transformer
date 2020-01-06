@@ -1,5 +1,5 @@
 //*****************************************************************************
-// Copyright 2018-2019 Intel Corporation
+// Copyright 2018-2020 Intel Corporation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,9 +61,6 @@ void convolution_seal(
 #pragma omp parallel for
   for (size_t out_coord_idx = 0; out_coord_idx < out_transform_size;
        ++out_coord_idx) {
-    // Init thread-local memory pool for each thread
-    seal::MemoryPoolHandle pool = seal::MemoryPoolHandle::ThreadLocal();
-
     const Coordinate& out_coord = out_coords[out_coord_idx];
 
     // for (Coordinate out_coord : output_transform)
