@@ -41,7 +41,6 @@
 #include "ngraph/runtime/tensor.hpp"
 #include "ngraph/type/element_type.hpp"
 #include "ngraph/util.hpp"
-#include "node_wrapper.hpp"
 #include "seal/he_seal_encryption_parameters.hpp"
 #include "seal/seal.h"
 #include "seal/seal_ciphertext_wrapper.hpp"
@@ -290,7 +289,7 @@ class HESealBackend : public runtime::Backend {
 
   /// \brief Switches a ciphertext to the lowest modulus in the current context
   /// \param[in] cipher Ciphertext to modulus switch
-  inline void mod_switch_to_lowest(SealCiphertextWrapper& cipher) {
+  void mod_switch_to_lowest(SealCiphertextWrapper& cipher) {
     auto last_parms_id = get_context()->last_parms_id();
     try {
       get_evaluator()->mod_switch_to_inplace(cipher.ciphertext(),
@@ -303,7 +302,7 @@ class HESealBackend : public runtime::Backend {
 
   /// \brief Switches a ciphertext to the lowest modulus in the current context
   /// \param[in] cipher Ciphertext to modulus switch
-  inline void rescale_to_lowest(SealCiphertextWrapper& cipher) {
+  void rescale_to_lowest(SealCiphertextWrapper& cipher) {
     auto last_parms_id = get_context()->last_parms_id();
     try {
       get_evaluator()->rescale_to_inplace(cipher.ciphertext(), last_parms_id);

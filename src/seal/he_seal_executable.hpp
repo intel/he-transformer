@@ -31,7 +31,6 @@
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/runtime/backend.hpp"
 #include "ngraph/util.hpp"
-#include "node_wrapper.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal.h"
 #include "seal/seal_ciphertext_wrapper.hpp"
@@ -113,11 +112,9 @@ class HESealExecutable : public runtime::Executable {
     return m_he_seal_backend.get_encryption_parameters().complex_packing();
   }
 
-  inline const HESealBackend& he_seal_backend() const {
-    return m_he_seal_backend;
-  }
+  const HESealBackend& he_seal_backend() const { return m_he_seal_backend; }
 
-  inline HESealBackend& he_seal_backend() { return m_he_seal_backend; }
+  HESealBackend& he_seal_backend() { return m_he_seal_backend; }
 
   /// \brief Checks whether or not the client supports the function
   /// \throws ngraph_error if function is unsupported
@@ -134,20 +131,6 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] pb_message Message to process
   void handle_client_ciphers(const pb::TCPMessage& pb_message);
 
-  /// \brief Processes a client message with ciphertexts after a ReLU function
-  /// \param[in] pb_message Message to process
-  void handle_relu_result(const pb::TCPMessage& pb_message);
-
-  /// \brief Processes a client message with ciphertextss after a BoundedReLU
-  /// function
-  /// \param[in] pb_message Message to process
-  void handle_bounded_relu_result(const pb::TCPMessage& pb_message);
-
-  /// \brief Processes a client message with ciphertextss after a MaxPool
-  /// function
-  /// \param[in] pb_message Message to process
-  void handle_max_pool_result(const pb::TCPMessage& pb_message);
-
   /// \brief Sends results to the client
   void send_client_results();
 
@@ -162,27 +145,15 @@ class HESealExecutable : public runtime::Executable {
   /// \param[in] pb_message from which to load the evluation key
   void load_eval_key(const pb::TCPMessage& pb_message);
 
-  /// \brief Processes the ReLU operation using a client
-  /// \param[in] arg Tensor argument
-  /// \param[out] out Tensor result
-  /// \param[in] node_wrapper Wrapper around operation to perform
-  void handle_server_relu_op(const std::shared_ptr<HETensor>& arg,
-                             const std::shared_ptr<HETensor>& out,
-                             const NodeWrapper& node_wrapper);
-
-  /// \brief Processes the MaxPool operation using a client
-  /// \param[in] arg Tensor argument
-  /// \param[out] out Tensor result
-  /// \param[in] node_wrapper Wrapper around operation to perform
-  void handle_server_max_pool_op(const std::shared_ptr<HETensor>& arg,
-                                 const std::shared_ptr<HETensor>& out,
-                                 const NodeWrapper& node_wrapper);
-
   /// \brief Returns whether or not an Op's verbosity is on or off
   /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const op::Op& op) {
+  bool verbose_op(const ngraph::Node* node) {
+    if (!node->is_op()) {
+      return false;
+    }
+
     return m_verbose_all_ops ||
-           m_verbose_ops.find(to_lower(op.description())) !=
+           m_verbose_ops.find(to_lower(node->description())) !=
                m_verbose_ops.end();
   }
 
@@ -205,6 +176,36 @@ class HESealExecutable : public runtime::Executable {
  private:
   friend class TestHESealExecutable;
 
+  /// \brief Processes the ReLU operation using a client
+  /// \param[in] arg Tensor argument
+  /// \param[out] out Tensor result
+  /// \param[in] op Operation to perform
+  void handle_server_relu_op(const std::shared_ptr<HETensor>& arg,
+                             const std::shared_ptr<HETensor>& out,
+                             const Node& op);
+
+  /// \brief Processes the MaxPool operation using a client
+  /// \param[in] arg Tensor argument
+  /// \param[out] out Tensor result
+  /// \param[in] op Operation to perform
+  void handle_server_max_pool_op(const std::shared_ptr<HETensor>& arg,
+                                 const std::shared_ptr<HETensor>& out,
+                                 const Node& op);
+
+  /// \brief Processes a client message with ciphertexts after a ReLU function
+  /// \param[in] pb_message Message to process
+  void handle_relu_result(const pb::TCPMessage& pb_message);
+
+  /// \brief Processes a client message with ciphertextss after a BoundedReLU
+  /// function
+  /// \param[in] pb_message Message to process
+  void handle_bounded_relu_result(const pb::TCPMessage& pb_message);
+
+  /// \brief Processes a client message with ciphertextss after a MaxPool
+  /// function
+  /// \param[in] pb_message Message to process
+  void handle_max_pool_result(const pb::TCPMessage& pb_message);
+
   HESealBackend& m_he_seal_backend;
   bool m_is_compiled{false};
   bool m_verbose_all_ops{false};
@@ -224,7 +225,7 @@ class HESealExecutable : public runtime::Executable {
 #endif
 
   std::unordered_map<std::shared_ptr<const Node>, stopwatch> m_timer_map;
-  std::vector<NodeWrapper> m_wrapped_nodes;
+  std::vector<std::shared_ptr<Node>> m_nodes;
 
   std::unique_ptr<boost::asio::ip::tcp::acceptor> m_acceptor;
 
@@ -270,8 +271,7 @@ class HESealExecutable : public runtime::Executable {
   std::condition_variable m_client_inputs_cond;
   bool m_client_inputs_received{false};
 
-  void generate_calls(const element::Type& type,
-                      const NodeWrapper& node_wrapper,
+  void generate_calls(const element::Type& type, const Node& op,
                       const std::vector<std::shared_ptr<HETensor>>& out,
                       const std::vector<std::shared_ptr<HETensor>>& args);
 

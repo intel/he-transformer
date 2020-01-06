@@ -30,11 +30,10 @@ class TestHESealExecutable {
  public:
   std::shared_ptr<HESealExecutable> he_seal_executable;
 
-  void generate_calls(const element::Type& type,
-                      const NodeWrapper& node_wrapper,
+  void generate_calls(const element::Type& type, const Node& node,
                       const std::vector<std::shared_ptr<HETensor>>& out,
                       const std::vector<std::shared_ptr<HETensor>>& args) {
-    he_seal_executable->generate_calls(type, node_wrapper, out, args);
+    he_seal_executable->generate_calls(type, node, out, args);
   }
 };
 
@@ -59,17 +58,16 @@ TEST(he_seal_executable, generate_calls) {
 
   // Unsupported op
   {
-    NodeWrapper node_wrapper(std::make_shared<op::Abs>(a));
+    auto abs = std::make_shared<op::Abs>(a);
     auto test_he_seal_executable = TestHESealExecutable{he_handle};
-    EXPECT_ANY_THROW(test_he_seal_executable.generate_calls(
-        element::f32, node_wrapper, out, args));
+    EXPECT_ANY_THROW(
+        test_he_seal_executable.generate_calls(element::f32, *abs, out, args));
   }
   // Skipped op -- parameter
   {
-    NodeWrapper node_wrapper(a);
     auto test_he_seal_executable = TestHESealExecutable{he_handle};
-    EXPECT_NO_THROW(test_he_seal_executable.generate_calls(
-        element::f32, node_wrapper, out, args));
+    EXPECT_NO_THROW(
+        test_he_seal_executable.generate_calls(element::f32, *a, out, args));
   }
 }
 

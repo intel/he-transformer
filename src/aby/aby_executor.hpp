@@ -39,7 +39,7 @@ class ABYExecutor {
 
   virtual ~ABYExecutor();
 
-  inline BooleanCircuit* get_circuit(size_t party_idx) {
+  BooleanCircuit* get_circuit(size_t party_idx) {
     NGRAPH_CHECK(party_idx < m_ABYParties.size(), "Party idx ", party_idx,
                  "too large");
 

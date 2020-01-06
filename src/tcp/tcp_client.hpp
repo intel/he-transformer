@@ -64,7 +64,7 @@ class TCPClient {
   TCPMessage m_read_message;
   std::deque<TCPMessage> m_message_queue;
 
-  inline static std::string s_expected_teardown_message{"End of file"};
+  static const std::string s_expected_teardown_message;
 
   std::function<void(const TCPMessage&)> m_message_callback;
 };
