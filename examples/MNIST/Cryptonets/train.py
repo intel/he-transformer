@@ -78,7 +78,8 @@ def squash_layers(cryptonets_model, sess):
 
     # Pass 0 to get bias
     squashed_bias = y.eval(
-        session=sess, feed_dict={
+        session=sess,
+        feed_dict={
             "squashed_input:0": np.zeros((1, 14 * 14 * 5))
         })
     squashed_bias_plus_weights = y.eval(
@@ -147,7 +148,7 @@ def main(FLAGS):
             1,
         ), name="input")
     y = model.cryptonets_model_squashed(x, conv1_weights, squashed_weights,
-                                             fc2_weights)
+                                        fc2_weights)
     sess.run(tf.compat.v1.global_variables_initializer())
     mnist_util.save_model(
         sess,
