@@ -30,13 +30,6 @@ python mlp/train.py --epochs=20 --batch_size=128
 ```
 Each `train.py` file takes a `--batch_size` and `--epochs` arguments.
 
-For best performance,
-
-TODO: give links to pre-trained models.
-Use batch_size=64, epochs=50 for larger-cryptonets-relu => ~98.73% accuracy
-use batch_size=
-
-
 These commands train the network briefly and stores the network weights as protobuf files in './models/*.pb'
 
 # Test the network
@@ -66,7 +59,7 @@ python test.py --batch_size=100 \
                --backend=HE_SEAL \
                --model_file=models/cryptonets.pb \
                --encrypt_server_data=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json
 ```
 This setting stores the secret key and public key on the same object, and should only be used for debugging, and estimating the runtime and memory overhead.
 
@@ -76,7 +69,7 @@ To test the client-server model, in one terminal call
 python test.py --backend=HE_SEAL \
                --model_file=models/cryptonets.pb \
                --enable_client=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json
 ```
 
 In another terminal (with the python environment active), call

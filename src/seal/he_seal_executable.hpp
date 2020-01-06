@@ -46,18 +46,6 @@ class ABYServerExecutor;
 
 namespace ngraph::runtime::he {
 
-namespace {
-// This exapnds teh op list in op_tbl.hpp into a list of enumerations that look
-// like this: Abs, Acos,
-// ...
-enum class OP_TYPEID {
-#define NGRAPH_OP(NAME, NAMESPACE) ID_SUFFIX(NAME),
-#include "opset_he_seal_tbl.hpp"
-#undef NGRAPH_OP
-  UnknownOp
-};
-}  // namespace
-
 /// \brief Class representing a function to execute
 class HESealExecutable : public runtime::Executable {
  public:

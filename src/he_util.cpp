@@ -154,9 +154,6 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type) {
     case element::Type_t::f64: {
       return pb::HETensor::F64;
     }
-    case element::Type_t::u1: {
-      return pb::HETensor::U1;
-    }
     case element::Type_t::i8: {
       return pb::HETensor::I8;
     }

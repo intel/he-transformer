@@ -1272,8 +1272,6 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::Ceiling:
     case OP_TYPEID::Clamp:
     case OP_TYPEID::Convert:
-    case OP_TYPEID::ConvolutionBias:
-    case OP_TYPEID::ConvolutionBiasAdd:
     case OP_TYPEID::ConvolutionBackpropData:
     case OP_TYPEID::ConvolutionBackpropFilters:
     case OP_TYPEID::ConvolutionBias:
@@ -1377,7 +1375,6 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::Squeeze:
     case OP_TYPEID::Sqrt:
     case OP_TYPEID::StopGradient:
-    case OP_TYPEID::TensorIterator:
     case OP_TYPEID::Tan:
     case OP_TYPEID::Tanh:
     case OP_TYPEID::TensorIterator:
