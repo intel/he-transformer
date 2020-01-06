@@ -25,18 +25,16 @@
 
 namespace ngraph::op {
 /// \brief Elementwise Minimum(Relu(arg, 0), alpha) operation.
+///
 class BoundedRelu : public util::UnaryElementwiseArithmetic {
  public:
   static constexpr NodeTypeInfo type_info{"BoundedRelu", 0};
   const NodeTypeInfo& get_type_info() const override { return type_info; }
-
   /// \brief Constructs a BoundedRelu operation.
-  /// \param[in] arg Node input to the Relu.
-  /// \param[in] alpha Bound on bounded relu
-  BoundedRelu(const Output<Node>& arg, float alpha);
-
+  ///
+  /// \param arg Node input to the Relu.
+  BoundedRelu(const Output<ngraph::Node>& arg, float alpha);
   float get_alpha() const { return m_alpha; }
-
   virtual std::shared_ptr<Node> copy_with_new_args(
       const NodeVector& new_args) const override;
 

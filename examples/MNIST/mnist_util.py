@@ -24,6 +24,18 @@ from tensorflow.core.protobuf import rewriter_config_pb2
 from tensorflow.python.tools import freeze_graph
 
 
+def print_nodes(graph_def=None):
+    """Prints the node names of a graph_def.
+        If graph_def is not provided, use default graph_def"""
+
+    if graph_def is None:
+        nodes = [n.name for n in tf.get_default_graph().as_graph_def().node]
+    else:
+        nodes = [n.name for n in graph_def.node]
+
+    print("nodes", nodes)
+
+
 def load_mnist_data(start_batch=0, batch_size=10000):
     """Returns MNIST data in one-hot form"""
     mnist = tf.keras.datasets.mnist
@@ -33,251 +45,225 @@ def load_mnist_data(start_batch=0, batch_size=10000):
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
 
+    x_train = x_train.astype("float32")
+    x_test = x_test.astype("float32")
+    x_train /= 255.0
+    x_test /= 255.0
+
     x_test = x_test[start_batch:start_batch + batch_size]
     y_test = y_test[start_batch:start_batch + batch_size]
 
     return (x_train, y_train, x_test, y_test)
 
 
-def load_mnist_test_data(start_batch=0, batch_size=10000):
-    """Returns MNIST data in one-hot form"""
-    mnist = tf.keras.datasets.mnist
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-    y_test = tf.compat.v1.keras.utils.to_categorical(y_test, num_classes=10)
-    x_test = np.expand_dims(x_test, axis=-1)
-
-    x_test = x_test[start_batch:start_batch + batch_size]
-    y_test = y_test[start_batch:start_batch + batch_size]
-
-    return (x_test, y_test)
-
-
-def get_train_batch(train_iter, batch_size, x_train, y_train):
-    """Returns training batch from dataset"""
-    start_index = train_iter * batch_size
-    end_index = start_index + batch_size
-
-    data_count = x_train.shape[0]
-
-    if start_index > data_count and end_index > data_count:
-        start_index %= data_count
-        end_index %= data_count
-        x_batch = x_train[start_index:end_index]
-        y_batch = y_train[start_index:end_index]
-    elif end_index > data_count:
-        end_index %= data_count
-        x_batch = np.concatenate((x_train[start_index:], x_train[0:end_index]))
-        y_batch = np.concatenate((y_train[start_index:], y_train[0:end_index]))
-    else:
-        x_batch = x_train[start_index:end_index]
-        y_batch = y_train[start_index:end_index]
-
-    return x_batch, y_batch
-
-
-def conv2d_stride_2_valid(x, W, name=None):
-    """returns a 2d convolution layer with stride 2, valid pooling"""
-    return tf.nn.conv2d(x, W, strides=[1, 2, 2, 1], padding='VALID')
-
-
-def avg_pool_3x3_same_size(x):
-    """3x3 avg_pool using same padding, keeping original feature map size"""
-    return tf.nn.avg_pool2d(
-        x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding='SAME')
-
-
-def max_pool_3x3_same_size(x):
-    """3x3 avg_pool using same padding, keeping original feature map size"""
-    return tf.nn.max_pool2d(
-        x, ksize=[1, 3, 3, 1], strides=[1, 1, 1, 1], padding='SAME')
-
-
 def load_pb_file(filename):
+    """"Returns the graph_def from a saved protobuf file"""
     if not os.path.isfile(filename):
-        raise Exception('File, ' + filename + ' does not exist')
+        raise Exception("File, " + filename + " does not exist")
 
-    with tf.io.gfile.GFile(filename, 'rb') as f:
+    with tf.io.gfile.GFile(filename, "rb") as f:
         graph_def = tf.compat.v1.GraphDef()
         graph_def.ParseFromString(f.read())
 
-    print('Model restored')
+    print("Model restored")
     return graph_def
 
 
-def save_model(sess, directory, filename):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+# https://www.dlology.com/blog/how-to-convert-trained-keras-model-to-tensorflow-and-make-prediction/
+def freeze_session(session,
+                   keep_var_names=None,
+                   output_names=None,
+                   clear_devices=True):
+    """
+    Freezes the state of a session into a pruned computation graph.
 
-    saver = tf.compat.v1.train.Saver()
-    ckpt_filepath = os.path.join(directory, filename + '.ckpt')
-    saver.save(sess, ckpt_filepath)
+    Creates a new computation graph where variable nodes are replaced by
+    constants taking their current value in the session. The new graph will be
+    pruned so subgraphs that are not necessary to compute the requested
+    outputs are removed.
+    @param session The TensorFlow session to be frozen.
+    @param keep_var_names A list of variable names that should not be frozen,
+                          or None to freeze all the variables in the graph.
+    @param output_names Names of the relevant graph outputs.
+    @param clear_devices Remove the device directives from the graph for better portability.
+    @return The frozen graph definition.
+    """
+    from tensorflow.python.framework.graph_util import (
+        convert_variables_to_constants,
+        remove_training_nodes,
+    )
 
-    pbtxt_filename = filename + '.pbtxt'
-    pbtxt_filepath = os.path.join(directory, pbtxt_filename)
-    pb_filepath = os.path.join(directory, filename + '.pb')
+    graph = session.graph
+    with graph.as_default():
+        freeze_var_names = list(
+            set(v.op.name for v in tf.global_variables()).difference(
+                keep_var_names or []))
+        output_names = output_names or []
+        output_names += [v.op.name for v in tf.global_variables()]
+        # Graph -> GraphDef ProtoBuf
+        input_graph_def = graph.as_graph_def()
+        if clear_devices:
+            for node in input_graph_def.node:
+                node.device = ""
+        frozen_graph = convert_variables_to_constants(
+            session, input_graph_def, output_names, freeze_var_names)
+        frozen_graph = remove_training_nodes(frozen_graph)
+        return frozen_graph
 
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=filename + '.pb',
-        as_text=False)
 
-    tf.io.write_graph(
-        graph_or_graph_def=sess.graph_def,
-        logdir=directory,
-        name=pbtxt_filename,
-        as_text=True)
-
-    # Freeze graph to turn variables into constants
-    freeze_graph.freeze_graph(
-        input_graph=pbtxt_filepath,
-        input_saver='',
-        input_binary=False,
-        input_checkpoint=ckpt_filepath,
-        output_node_names='output',
-        restore_op_name='save/restore_all',
-        filename_tensor_name='save/Const:0',
-        output_graph=pb_filepath,
-        clear_devices=True,
-        initializer_nodes='')
-
-    print("Model saved to: %s" % pb_filepath)
+def save_model(sess, output_names, directory, filename):
+    frozen_graph = freeze_session(sess, output_names=output_names)
+    tf.io.write_graph(frozen_graph, directory, filename + ".pb", as_text=False)
+    print("Model saved to: %s" % filename + ".pb")
 
 
 def str2bool(v):
     if isinstance(v, bool):
         return v
-    if v.lower() in ('on', 'yes', 'true', 't', 'y', '1'):
+    if v.lower() in ("on", "yes", "true", "t", "y", "1"):
         return True
-    elif v.lower() in ('off', 'no', 'false', 'f', 'n', '0'):
+    elif v.lower() in ("off", "no", "false", "f", "n", "0"):
         return False
     else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def train_argument_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument(
+        "--batch_size", type=int, default=128, help="Batch Size")
+
+    return parser
 
 
 def client_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument(
-        '--hostname', type=str, default='localhost', help='Hostname of server')
+        "--hostname", type=str, default="localhost", help="Hostname of server")
     parser.add_argument(
-        '--port', type=int, default=34000, help='Port of server')
+        "--port", type=int, default=34000, help="Port of server")
     parser.add_argument(
-        '--encrypt_data_str',
+        "--encrypt_data_str",
         type=str,
-        default='encrypt',
-        help='"encrypt" to encrypt client data, "plain" to not encrypt')
+        default="encrypt",
+        help='"encrypt" to encrypt client data, "plain" to not encrypt',
+    )
     parser.add_argument(
-        '--tensor_name',
+        "--tensor_name",
         type=str,
-        default='import/input',
-        help='Input tensor name')
+        default="import/input",
+        help="Input tensor name")
     parser.add_argument(
-        '--start_batch', type=int, default=0, help='Test data start index')
+        "--start_batch", type=int, default=0, help="Test data start index")
 
     return parser
 
 
 def server_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=1, help='Batch size')
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument(
-        '--enable_client',
+        "--enable_client",
         type=str2bool,
         default=False,
-        help='Enable the client')
+        help="Enable the client")
     parser.add_argument(
-        '--enable_gc',
+        "--enable_gc",
         type=str2bool,
         default=False,
-        help='Enable garbled circuits')
+        help="Enable garbled circuits")
     parser.add_argument(
-        '--mask_gc_inputs',
+        "--mask_gc_inputs",
         type=str2bool,
         default=False,
-        help='Mask garbled circuits inputs')
-    parser.add_argument(
-        '--mask_gc_outputs',
-        type=str2bool,
-        default=False,
-        help='Mask garbled circuits outputs')
-    parser.add_argument(
-        '--num_gc_threads',
-        type=int,
-        default=1,
-        help='Number of threads to run garbled circuits with')
-    parser.add_argument(
-        '--backend', type=str, default='HE_SEAL', help='Name of backend to use')
-    parser.add_argument(
-        '--encryption_parameters',
-        type=str,
-        default='',
-        help=
-        'Filename containing json description of encryption parameters, or json description itself'
+        help="Mask garbled circuits inputs",
     )
     parser.add_argument(
-        '--encrypt_server_data',
+        "--mask_gc_outputs",
+        type=str2bool,
+        default=False,
+        help="Mask garbled circuits outputs",
+    )
+    parser.add_argument(
+        "--num_gc_threads",
+        type=int,
+        default=1,
+        help="Number of threads to run garbled circuits with",
+    )
+    parser.add_argument(
+        "--backend", type=str, default="HE_SEAL", help="Name of backend to use")
+    parser.add_argument(
+        "--encryption_parameters",
+        type=str,
+        default="",
+        help=
+        "Filename containing json description of encryption parameters, or json description itself",
+    )
+    parser.add_argument(
+        "--encrypt_server_data",
         type=str2bool,
         default=False,
         help=
-        'Encrypt server data (should not be used when enable_client is used)')
+        "Encrypt server data (should not be used when enable_client is used)",
+    )
     parser.add_argument(
-        '--pack_data',
+        "--pack_data",
         type=str2bool,
         default=True,
-        help='Use plaintext packing on data')
+        help="Use plaintext packing on data")
     parser.add_argument(
-        '--start_batch', type=int, default=0, help='Test data start index')
+        "--start_batch", type=int, default=0, help="Test data start index")
     parser.add_argument(
-        '--model_file',
+        "--model_file",
         type=str,
-        default='',
-        help='Filename of saved protobuf model')
-
-    return parser
-
-
-def train_argument_parser():
-    parser = argparse.ArgumentParser()
+        default="",
+        help="Filename of saved protobuf model")
     parser.add_argument(
-        '--train_loop_count',
-        type=int,
-        default=20000,
-        help='Number of training iterations')
+        "--input_node",
+        type=str,
+        default="import/input:0",
+        help="Tensor name of data input",
+    )
     parser.add_argument(
-        '--batch_size', type=int, default=128, help='Batch Size')
+        "--output_node",
+        type=str,
+        default="import/output/BiasAdd:0",
+        help="Tensor name of model output",
+    )
 
     return parser
 
 
 def server_config_from_flags(FLAGS, tensor_param_name):
     rewriter_options = rewriter_config_pb2.RewriterConfig()
-    rewriter_options.meta_optimizer_iterations = (
-        rewriter_config_pb2.RewriterConfig.ONE)
+    rewriter_options.meta_optimizer_iterations = rewriter_config_pb2.RewriterConfig.ONE
     rewriter_options.min_graph_nodes = -1
     server_config = rewriter_options.custom_optimizers.add()
     server_config.name = "ngraph-optimizer"
     server_config.parameter_map["ngraph_backend"].s = FLAGS.backend.encode()
-    server_config.parameter_map["device_id"].s = b''
+    server_config.parameter_map["device_id"].s = b""
     server_config.parameter_map[
         "encryption_parameters"].s = FLAGS.encryption_parameters.encode()
-    server_config.parameter_map['enable_client'].s = str(
+    server_config.parameter_map["enable_client"].s = str(
         FLAGS.enable_client).encode()
-    server_config.parameter_map['enable_gc'].s = (str(FLAGS.enable_gc)).encode()
-    server_config.parameter_map['mask_gc_inputs'].s = (str(
+    server_config.parameter_map["enable_gc"].s = (str(FLAGS.enable_gc)).encode()
+    server_config.parameter_map["mask_gc_inputs"].s = (str(
         FLAGS.mask_gc_inputs)).encode()
-    server_config.parameter_map['mask_gc_outputs'].s = (str(
+    server_config.parameter_map["mask_gc_outputs"].s = (str(
         FLAGS.mask_gc_outputs)).encode()
-    server_config.parameter_map['num_gc_threads'].s = (str(
+    server_config.parameter_map["num_gc_threads"].s = (str(
         FLAGS.num_gc_threads)).encode()
 
     if FLAGS.enable_client:
-        server_config.parameter_map[tensor_param_name].s = b'client_input'
+        server_config.parameter_map[tensor_param_name].s = b"client_input"
     elif FLAGS.encrypt_server_data:
-        server_config.parameter_map[tensor_param_name].s = b'encrypt'
+        server_config.parameter_map[tensor_param_name].s = b"encrypt"
 
     if FLAGS.pack_data:
-        server_config.parameter_map[tensor_param_name].s += b',packed'
+        server_config.parameter_map[tensor_param_name].s += b",packed"
 
     config = tf.compat.v1.ConfigProto()
     config.MergeFrom(

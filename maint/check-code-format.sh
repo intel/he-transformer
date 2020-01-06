@@ -106,6 +106,29 @@ for ROOT_SUBDIR in src python examples test; do
     fi
 done
 
+# Apply python formatting using yapf
+for ROOT_SUBDIR in src python examples test; do
+    if ! [[ -d "${ROOT_SUBDIR}" ]]; then
+	    bash_lib_status "In directory '$(pwd)', no subdirectory named '${ROOT_SUBDIR}' was found."
+    else
+        bash_lib_status "About to format python code in directory tree '$(pwd)/${ROOT_SUBDIR}' ..."
+        declare SRC_FILE
+
+        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
+        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
+        # mechanism, and this confuses clang-format.
+        for SRC_FILE in $(find "${ROOT_SUBDIR}" -type f -and -name '*.py')
+        do
+            if "${YAPF_PROG}" "${SRC_FILE}" --diff | grep -q "reformatted"; then
+                FAILED_PYTHON_FILES+=( "${SRC_FILE}" )
+                echo "${SRC_FILE} failed formatting"
+            fi
+            NUM_PYTHON_FILES_CHECKED=$((NUM_PYTHON_FILES_CHECKED+1))
+        done
+
+    fi
+done
+
 popd
 
 if [[ ${#FAILED_CPP_FILES[@]} -eq 0 ]]; then

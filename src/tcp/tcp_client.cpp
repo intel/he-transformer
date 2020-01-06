@@ -61,6 +61,7 @@ void TCPClient::write_message(TCPMessage&& message) {
 void TCPClient::do_connect(
     const boost::asio::ip::tcp::resolver::results_type& endpoints,
     size_t delay_ms) {
+  NGRAPH_HE_LOG(1) << "Trying to connect TCP client";
   boost::asio::async_connect(
       m_socket, endpoints,
       [this, delay_ms, &endpoints](

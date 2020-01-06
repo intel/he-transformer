@@ -6,7 +6,7 @@ This folder demonstrates several examples of simple CNNs on the MNIST dataset:
   * The MLP folder demonstrates a model with MaxPool layers
 
 
-It is impossible to perform ReLU and Maxpool using homomorphic encryption. We support these functions in three ways:
+It is impossible to perform ReLU and Maxpool using the CKKS homomorphic encryption scheme directly. Instead, we support these functions in three ways:
 
   1) A debugging interface (active by default). This runs ReLu/Maxpool locally.
   ***Warning***: This is not privacy-preserving, and should be used for debugging only.
@@ -21,37 +21,30 @@ It is impossible to perform ReLU and Maxpool using homomorphic encryption. We su
 
 These examples depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`. Also ensure the `pyhe_client` wheel has been installed (see `python` folder for instructions).
 
-
-# CryptoNets
-This example demonstrates the [CryptoNets](https://www.microsoft.com/en-us/research/publication/cryptonets-applying-neural-networks-to-encrypted-data-with-high-throughput-and-accuracy/) network, which achieves ~99% accuracy on MNIST.
-
-This example depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge). Make sure the python environment with ngraph-tf bridge is active, i.e. run `source $HE_TRANSFORMER/build/external/venv-tf-py3/bin/activate`.
-
-## Train the networks
+# Train the networks
 First, train the networks using
 ```bash
-python cryptonets/train.py
-python cryptonets-relu/train.py
-python mlp/train.py
+python cryptonets/train.py --epochs=20 --batch_size=128
+python cryptonets-relu/train.py --epochs=20 --batch_size=128
+python mlp/train.py --epochs=20 --batch_size=128
 ```
-Each `train.py` file takes a `--batch_size` and `--train_loop_count` arguments.
-
+Each `train.py` file takes a `--batch_size` and `--epochs` arguments.
 
 These commands train the network briefly and stores the network weights as protobuf files in './models/*.pb'
 
 # Test the network
 
 ## CPU backend
-To test a netowrk using the CPU backend, call
+To test a network using the CPU backend, call
 ```bash
-python test.py --batch_size=100 \
+python test.py --batch_size=10000 \
                --backend=CPU \
                --model_file=models/cryptonets.pb
 ```
 
 ## HE_SEAL backend
 ### Plaintext
-To test a netowrk using the HE_SEAL backend using unencrypted data (for debugging only), call
+To test a network using the HE_SEAL backend using unencrypted data (for debugging only), call
 ```bash
 python test.py --batch_size=100 \
                --backend=HE_SEAL \
@@ -60,13 +53,13 @@ python test.py --batch_size=100 \
 ```
 
 #### Encrypted
-To test a netowrk using the HE_SEAL backend using encrypted data, call
+To test a network using the HE_SEAL backend using encrypted data, call
 ```bash
 python test.py --batch_size=100 \
                --backend=HE_SEAL \
                --model_file=models/cryptonets.pb \
                --encrypt_server_data=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L7.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json
 ```
 This setting stores the secret key and public key on the same object, and should only be used for debugging, and estimating the runtime and memory overhead.
 
@@ -74,9 +67,9 @@ This setting stores the secret key and public key on the same object, and should
 To test the client-server model, in one terminal call
 ```bash
 python test.py --backend=HE_SEAL \
-               --model_file=models/cryptonets-relu.pb \
+               --model_file=models/cryptonets.pb \
                --enable_client=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N11_L2.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json
 ```
 
 In another terminal (with the python environment active), call

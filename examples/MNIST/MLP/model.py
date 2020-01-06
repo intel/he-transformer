@@ -14,41 +14,52 @@
 # limitations under the License.
 # *****************************************************************************
 
-import tensorflow as tf
 import numpy as np
-import os
-import sys
+import tensorflow as tf
+from tensorflow.keras.layers import (
+    Dense,
+    Conv2D,
+    Activation,
+    AveragePooling2D,
+    Flatten,
+    Convolution2D,
+    MaxPooling2D,
+    Reshape,
+)
 
-# Add parent directory to path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from mnist_util import conv2d_stride_2_valid, max_pool_3x3_same_size
 
+def mnist_mlp_model(input):
+    y = Conv2D(
+        filters=5,
+        kernel_size=(5, 5),
+        strides=(2, 2),
+        padding="same",
+        use_bias=True,
+        input_shape=(28, 28, 1),
+    )(input)
+    y = Activation("relu")(y)
 
-def mnist_mlp_model(x):
-    paddings = tf.constant([[0, 0], [0, 1], [0, 1], [0, 0]], name='pad_const')
-    x = tf.pad(x, paddings)
+    y = MaxPooling2D(pool_size=(3, 3))(y)
 
-    W_conv1 = tf.compat.v1.get_variable('W_conv1', [5, 5, 1, 5])
-    y = conv2d_stride_2_valid(x, W_conv1)
-    W_bc1 = tf.compat.v1.get_variable('W_conv1_bias', [1, 13, 13, 5])
-    y = y + W_bc1
-    y = tf.nn.relu(y)
+    y = Conv2D(
+        filters=50,
+        kernel_size=(5, 5),
+        strides=(2, 2),
+        padding="same",
+        use_bias=True,
+    )(y)
+    y = Activation("relu")(y)
 
-    y = max_pool_3x3_same_size(y)
-    W_conv2 = tf.compat.v1.get_variable('W_conv2', [5, 5, 5, 50])
-    y = conv2d_stride_2_valid(y, W_conv2)
-    y = max_pool_3x3_same_size(y)
+    known_shape = y.get_shape()[1:]
+    size = np.prod(known_shape)
+    print('size', size)
 
-    y = tf.reshape(y, [-1, 5 * 5 * 50])
-    W_fc1 = tf.compat.v1.get_variable('W_fc1', [5 * 5 * 50, 100])
-    W_b1 = tf.compat.v1.get_variable('W_fc1_bias', [100])
-    y = tf.matmul(y, W_fc1)
-    y = y + W_b1
-    y = tf.nn.relu(y)
+    # Using Keras model API with Flatten results in split ngraph at Flatten() or Reshape() op.
+    # Use tf.reshape instead
+    y = tf.reshape(y, [-1, size])
 
-    W_fc2 = tf.compat.v1.get_variable('W_fc2', [100, 10])
-    W_b2 = tf.compat.v1.get_variable('W_fc2_bias', [10])
-    y = tf.matmul(y, W_fc2)
-    y = tf.add(y, W_b2, name='output')
+    y = Dense(100, use_bias=True)(y)
+    y = Activation("relu")(y)
+    y = Dense(10, use_bias=True, name="output")(y)
 
     return y

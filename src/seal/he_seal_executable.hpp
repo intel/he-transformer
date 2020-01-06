@@ -147,18 +147,19 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Returns whether or not an Op's verbosity is on or off
   /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const ngraph::Node* node) {
+  bool verbose_op(const Node* node) {
     if (!node->is_op()) {
       return false;
     }
+    return verbose_op(std::string(node->description()));
 
     return m_verbose_all_ops ||
            m_verbose_ops.find(to_lower(node->description())) !=
                m_verbose_ops.end();
   }
 
-  /// \brief Returns whether or not a node dessccription verbosity is on or off
-  /// \param[in] description Node description determine verbosity of
+  /// \brief Returns whether or not a node description verbosity is on or off
+  /// \param[in] description Node description to determine the verbosity of
   bool verbose_op(const std::string& description) {
     return m_verbose_all_ops ||
            m_verbose_ops.find(to_lower(description)) != m_verbose_ops.end();
@@ -172,6 +173,8 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Sets verbosity of all operations
   void set_verbose_all_ops(bool value);
+
+  static OP_TYPEID get_typeid(const NodeTypeInfo& type_info);
 
  private:
   friend class TestHESealExecutable;

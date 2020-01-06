@@ -26,26 +26,7 @@
 #include "he_op_annotations.hpp"
 #include "he_tensor.hpp"
 #include "ngraph/descriptor/layout/dense_tensor_layout.hpp"
-#include "ngraph/op/avg_pool.hpp"
-#include "ngraph/op/batch_norm.hpp"
-#include "ngraph/op/broadcast.hpp"
-#include "ngraph/op/concat.hpp"
-#include "ngraph/op/constant.hpp"
-#include "ngraph/op/convolution.hpp"
-#include "ngraph/op/divide.hpp"
-#include "ngraph/op/dot.hpp"
-#include "ngraph/op/exp.hpp"
-#include "ngraph/op/max.hpp"
-#include "ngraph/op/max_pool.hpp"
-#include "ngraph/op/pad.hpp"
-#include "ngraph/op/passthrough.hpp"
-#include "ngraph/op/power.hpp"
-#include "ngraph/op/reshape.hpp"
-#include "ngraph/op/result.hpp"
-#include "ngraph/op/reverse.hpp"
-#include "ngraph/op/slice.hpp"
-#include "ngraph/op/softmax.hpp"
-#include "ngraph/op/sum.hpp"
+#include "ngraph/ops.hpp"
 #include "ngraph/pass/assign_layout.hpp"
 #include "ngraph/pass/constant_folding.hpp"
 #include "ngraph/pass/core_fusion.hpp"
@@ -207,8 +188,8 @@ void HESealExecutable::update_he_op_annotations() {
   m_is_compiled = true;
 
   m_nodes.clear();
-  for (const std::shared_ptr<Node>& node : m_function->get_ordered_ops()) {
-    m_nodes.emplace_back(node);
+  for (auto node : m_function->get_ordered_ops()) {
+    m_nodes.push_back(node);
   }
   set_parameters_and_results(*m_function);
 }
@@ -229,6 +210,28 @@ void HESealExecutable::set_batch_size(size_t batch_size) {
 
 void HESealExecutable::set_verbose_all_ops(bool value) {
   m_verbose_all_ops = value;
+}
+
+OP_TYPEID HESealExecutable::get_typeid(const NodeTypeInfo& type_info) {
+  {
+    // This expands the op list in op_tbl.hpp into a list of enumerations that
+    // look like this: {Abs::type_info, OP_TYPEID::Abs}, {Acos::type_info,
+    // OP_TYPEID::Acos},
+    // ...
+    static const std::map<NodeTypeInfo, OP_TYPEID> type_info_map{
+#define NGRAPH_OP(NAME, NAMESPACE) \
+  {NAMESPACE::NAME::type_info, OP_TYPEID::ID_SUFFIX(NAME)},
+#include "opset_he_seal_tbl.hpp"
+#undef NGRAPH_OP
+    };
+    OP_TYPEID rc = OP_TYPEID::UnknownOp;
+
+    auto it = type_info_map.find(type_info);
+    if (it != type_info_map.end()) {
+      rc = it->second;
+    }
+    return rc;
+  }
 }
 
 void HESealExecutable::check_client_supports_function() {
@@ -1384,7 +1387,7 @@ void HESealExecutable::generate_calls(
       throw unsupported_op("Unsupported op '" + node.description() + "'");
 #pragma clang diagnostic pop
   }
-}
+}  // namespace ngraph::runtime::he
 
 void HESealExecutable::handle_server_max_pool_op(
     const std::shared_ptr<HETensor>& arg, const std::shared_ptr<HETensor>& out,
