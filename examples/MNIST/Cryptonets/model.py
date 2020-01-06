@@ -64,6 +64,7 @@ def cryptonets_model(input):
 
 def cryptonets_model_squashed(input, conv1_weights, squashed_weights,
                               fc2_weights):
+
     def square_activation(x):
         return x * x
 
