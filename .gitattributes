@@ -6,3 +6,5 @@
 *.cpp text
 *.hpp text
 *.py text
+
+*png binary

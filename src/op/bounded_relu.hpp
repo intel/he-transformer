@@ -23,11 +23,10 @@
 #include "ngraph/op/op.hpp"
 #include "ngraph/op/util/unary_elementwise_arithmetic.hpp"
 
-namespace ngraph {
-namespace op {
+namespace ngraph::op {
 /// \brief Elementwise Minimum(Relu(arg, 0), alpha) operation.
 ///
-class BoundedRelu : public ngraph::op::util::UnaryElementwiseArithmetic {
+class BoundedRelu : public util::UnaryElementwiseArithmetic {
  public:
   static constexpr NodeTypeInfo type_info{"BoundedRelu", 0};
   const NodeTypeInfo& get_type_info() const override { return type_info; }
@@ -42,5 +41,4 @@ class BoundedRelu : public ngraph::op::util::UnaryElementwiseArithmetic {
  private:
   float m_alpha;
 };
-}  // namespace op
-}  // namespace ngraph
+}  // namespace ngraph::op

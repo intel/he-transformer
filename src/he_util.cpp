@@ -27,7 +27,6 @@
 #include "ngraph/ops.hpp"
 #include "ngraph/util.hpp"
 #include "protos/message.pb.h"
-#include "seal/he_seal_executable.hpp"
 
 namespace ngraph::runtime::he {
 

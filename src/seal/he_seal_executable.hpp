@@ -147,10 +147,11 @@ class HESealExecutable : public runtime::Executable {
 
   /// \brief Returns whether or not an Op's verbosity is on or off
   /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const ngraph::Node* node) {
+  bool verbose_op(const Node* node) {
     if (!node->is_op()) {
       return false;
     }
+    return verbose_op(std::string(node->description()));
 
     return m_verbose_all_ops ||
            m_verbose_ops.find(to_lower(node->description())) !=
@@ -162,15 +163,6 @@ class HESealExecutable : public runtime::Executable {
   bool verbose_op(const std::string& description) {
     return m_verbose_all_ops ||
            m_verbose_ops.find(to_lower(description)) != m_verbose_ops.end();
-  }
-
-  /// \brief Returns whether or not an Op's verbosity is on or off
-  /// \param[in] op Operation to determine verbosity of
-  bool verbose_op(const Node& node) {
-    if (!node.is_op()) {
-      return false;
-    }
-    return verbose_op(std::string(node.description()));
   }
 
   /// \brief Returns the batch size

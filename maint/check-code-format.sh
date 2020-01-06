@@ -80,10 +80,6 @@ for ROOT_SUBDIR in src python examples test; do
             fi
             NUM_CPP_FILES_CHECKED=$((NUM_CPP_FILES_CHECKED+1))
         done
-
-        # Note that we restrict to "-type f" to exclude symlinks. Emacs sometimes
-        # creates dangling symlinks with .cpp/.hpp suffixes as a sort of locking
-        # mechanism, and this confuses clang-format.
     fi
 done
 
