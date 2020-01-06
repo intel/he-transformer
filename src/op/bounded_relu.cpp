@@ -18,20 +18,22 @@
 
 #include "ngraph/util.hpp"
 
-namespace ngraph::op {
+namespace ngraph {
 
 constexpr NodeTypeInfo op::BoundedRelu::type_info;
 
-BoundedRelu::BoundedRelu(const Output<Node>& arg, float alpha)
+op::BoundedRelu::BoundedRelu(const Output<Node>& arg, float alpha)
     : UnaryElementwiseArithmetic(arg), m_alpha(alpha) {
   constructor_validate_and_infer_types();
   set_output_type(0, arg.get_element_type(), arg.get_shape());
 }
 
-std::shared_ptr<Node> BoundedRelu::copy_with_new_args(
+std::shared_ptr<Node> op::BoundedRelu::copy_with_new_args(
     const NodeVector& new_args) const {
-  NGRAPH_CHECK(new_args.size() == 1, "Incorrect number of new arguments");
+  if (new_args.size() != 1) {
+    throw ngraph_error("Incorrect number of new arguments");
+  }
   return std::make_shared<BoundedRelu>(new_args.at(0), m_alpha);
 }
 
-}  // namespace ngraph::op
+}  // namespace ngraph

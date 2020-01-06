@@ -44,11 +44,6 @@ def server_config_from_flags(FLAGS, tensor_param_name):
         "encryption_parameters"].s = FLAGS.encryption_parameters.encode()
     server_config.parameter_map["enable_client"].s = (str(
         FLAGS.enable_client)).encode()
-    server_config.parameter_map["enable_gc"].s = (str(FLAGS.enable_gc)).encode()
-    server_config.parameter_map["mask_gc_inputs"].s = (str(
-        FLAGS.mask_gc_inputs)).encode()
-    server_config.parameter_map["mask_gc_outputs"].s = (str(
-        FLAGS.mask_gc_inputs)).encode()
     if FLAGS.enable_client:
         server_config.parameter_map[tensor_param_name].s = b"client_input"
 

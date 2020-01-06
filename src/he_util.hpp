@@ -32,6 +32,16 @@
 
 namespace ngraph::runtime::he {
 
+// This expands the op list in opset_he_seal_tbl.hpp into a list of enumerations
+// that look like this: Abs, Acos,
+// ...
+enum class OP_TYPEID {
+#define NGRAPH_OP(NAME, NAMESPACE) ID_SUFFIX(NAME),
+#include "seal/opset_he_seal_tbl.hpp"
+#undef NGRAPH_OP
+  UnknownOp
+};
+
 /// \brief Unpacks complex values to real values
 /// (a+bi, c+di) => (a,b,c,d)
 /// \param[in] input Vector of complex values to unpack
@@ -105,5 +115,7 @@ element::Type pb_type_to_type(pb::HETensor_ElementType pb_type);
 pb::Function node_to_pb_function(
     const Node& node,
     std::unordered_map<std::string, std::string> extra_configs = {});
+
+OP_TYPEID get_typeid(const NodeTypeInfo& type_info);
 
 }  // namespace ngraph::runtime::he

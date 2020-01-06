@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <tuple>
 #include <unordered_set>
@@ -764,7 +765,8 @@ bool HESealExecutable::call(
 
   // for each ordered op in the graph
   for (auto op : m_nodes) {
-    bool verbose = verbose_op(*op);
+    NGRAPH_CHECK(op->is_op(), "Not is not an op");
+    bool verbose = verbose_op(op.get());
 
     if (verbose) {
       NGRAPH_HE_LOG(3) << "\033[1;32m"
@@ -816,7 +818,7 @@ bool HESealExecutable::call(
         NGRAPH_HE_LOG(3) << "Get output packing / encrypted";
 
         std::shared_ptr<HEOpAnnotations> he_op_annotation =
-            HEOpAnnotations::he_op_annotation(*op);
+            HEOpAnnotations::he_op_annotation(*static_cast<op::Op*>(op.get()));
         bool encrypted_out = he_op_annotation->encrypted();
         bool packed_out = he_op_annotation->packed();
 
@@ -920,7 +922,7 @@ void HESealExecutable::generate_calls(
     const element::Type& type, const Node& node,
     const std::vector<std::shared_ptr<HETensor>>& out,
     const std::vector<std::shared_ptr<HETensor>>& args) {
-  bool verbose = verbose_op(node);
+  bool verbose = verbose_op(&node);
 
 // We want to check that every OP_TYPEID enumeration is included in the
 // list. These clang flags enable compile-time checking so that if an
@@ -1274,12 +1276,14 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::ConvolutionBiasAdd:
     case OP_TYPEID::ConvolutionBackpropData:
     case OP_TYPEID::ConvolutionBackpropFilters:
+    case OP_TYPEID::ConvolutionBias:
+    case OP_TYPEID::ConvolutionBiasAdd:
     case OP_TYPEID::ConvolutionBiasBackpropFiltersBias:
+    case OP_TYPEID::Cos:
+    case OP_TYPEID::Cosh:
     case OP_TYPEID::CrossEntropy:
     case OP_TYPEID::CrossEntropyBackprop:
     case OP_TYPEID::CropAndResize:
-    case OP_TYPEID::Cos:
-    case OP_TYPEID::Cosh:
     case OP_TYPEID::CumSum:
     case OP_TYPEID::DepthToSpace:
     case OP_TYPEID::Dequantize:
@@ -1298,47 +1302,42 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::GatherND:
     case OP_TYPEID::GenerateMask:
     case OP_TYPEID::GetOutputElement:
-    case OP_TYPEID::Greater:
-    case OP_TYPEID::GreaterEq:
+    case OP_TYPEID::Gelu:
+    case OP_TYPEID::Gemm:
     case OP_TYPEID::GroupConvolution:
     case OP_TYPEID::GroupConvolutionBackpropData:
     case OP_TYPEID::GroupConvolutionBackpropFilters:
+    case OP_TYPEID::GroupConvolutionTranspose:
+    case OP_TYPEID::GeluBackpropFactor:
+    case OP_TYPEID::Greater:
+    case OP_TYPEID::GreaterEq:
     case OP_TYPEID::GRN:
     case OP_TYPEID::GRUCell:
-    case OP_TYPEID::Gelu:
-    case OP_TYPEID::GeluBackpropFactor:
-    case OP_TYPEID::Gemm:
-    case OP_TYPEID::GroupConvolutionTranspose:
     case OP_TYPEID::HardSigmoid:
     case OP_TYPEID::Interpolate:
     case OP_TYPEID::LayerNorm:
     case OP_TYPEID::LayerNormBackprop:
     case OP_TYPEID::Less:
     case OP_TYPEID::LessEq:
-    case OP_TYPEID::LessEqual_v1:
-    case OP_TYPEID::LogicalAnd_v1:
-    case OP_TYPEID::LogicalNot_v1:
-    case OP_TYPEID::LogicalOr_v1:
-    case OP_TYPEID::LogicalXor_v1:
     case OP_TYPEID::Log:
     case OP_TYPEID::LogSoftmax:
     case OP_TYPEID::LRN:
     case OP_TYPEID::LSTMCell:
     case OP_TYPEID::LSTMSequence:
-    case OP_TYPEID::MatMul:
     case OP_TYPEID::Maximum:
+    case OP_TYPEID::MatMul:
     case OP_TYPEID::MaxPoolBackprop:
-    case OP_TYPEID::Min:
     case OP_TYPEID::MVN:
+    case OP_TYPEID::Min:
     case OP_TYPEID::NormalizeL2:
     case OP_TYPEID::Not:
     case OP_TYPEID::NotEqual:
     case OP_TYPEID::OneHot:
     case OP_TYPEID::Or:
     case OP_TYPEID::Passthrough:
+    case OP_TYPEID::PRelu:
     case OP_TYPEID::PartialSlice:
     case OP_TYPEID::PartialSliceBackprop:
-    case OP_TYPEID::PRelu:
     case OP_TYPEID::Product:
     case OP_TYPEID::Quantize:
     case OP_TYPEID::QuantizedConvolutionBias:
@@ -1348,44 +1347,45 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::QuantizedConvolution:
     case OP_TYPEID::QuantizedDot:
     case OP_TYPEID::QuantizedDotBias:
-    case OP_TYPEID::Reciprocal:
-    case OP_TYPEID::RNNCell:
-    case OP_TYPEID::ScalarConstantLike:
-    case OP_TYPEID::ScaleShift:
-    case OP_TYPEID::Send:
-    case OP_TYPEID::Selu:
-    case OP_TYPEID::SoftmaxCrossEntropy:
-    case OP_TYPEID::SoftmaxCrossEntropyBackprop:
-    case OP_TYPEID::SpaceToDepth:
-    case OP_TYPEID::SquaredDifference:
-    case OP_TYPEID::Squeeze:
     case OP_TYPEID::Recv:
     case OP_TYPEID::Range:
     case OP_TYPEID::RandomUniform:
+    case OP_TYPEID::Reciprocal:
     case OP_TYPEID::ReluBackprop:
     case OP_TYPEID::ReplaceSlice:
     case OP_TYPEID::ReverseSequence:
+    case OP_TYPEID::RNNCell:
+    case OP_TYPEID::ScalarConstantLike:
+    case OP_TYPEID::ScaleShift:
     case OP_TYPEID::ScatterAdd:
     case OP_TYPEID::ScatterNDAdd:
-    case OP_TYPEID::Select:
     case OP_TYPEID::ShapeOf:
+    case OP_TYPEID::Send:
+    case OP_TYPEID::Select:
+    case OP_TYPEID::Selu:
+    case OP_TYPEID::ShuffleChannels:
     case OP_TYPEID::Sigmoid:
     case OP_TYPEID::SigmoidBackprop:
     case OP_TYPEID::Sign:
     case OP_TYPEID::Sin:
     case OP_TYPEID::Sinh:
-    case OP_TYPEID::ShuffleChannels:
+    case OP_TYPEID::SoftmaxCrossEntropy:
+    case OP_TYPEID::SoftmaxCrossEntropyBackprop:
+    case OP_TYPEID::SpaceToDepth:
     case OP_TYPEID::Split:
+    case OP_TYPEID::SquaredDifference:
+    case OP_TYPEID::Squeeze:
     case OP_TYPEID::Sqrt:
     case OP_TYPEID::StopGradient:
     case OP_TYPEID::TensorIterator:
     case OP_TYPEID::Tan:
     case OP_TYPEID::Tanh:
+    case OP_TYPEID::TensorIterator:
     case OP_TYPEID::Tile:
     case OP_TYPEID::TopK:
     case OP_TYPEID::Transpose:
-    case OP_TYPEID::Xor:
     case OP_TYPEID::Unsqueeze:
+    case OP_TYPEID::Xor:
     case OP_TYPEID::UnknownOp:
       throw unsupported_op("Unsupported op '" + node.description() + "'");
 #pragma clang diagnostic pop
@@ -1394,16 +1394,16 @@ void HESealExecutable::generate_calls(
 
 void HESealExecutable::handle_server_max_pool_op(
     const std::shared_ptr<HETensor>& arg, const std::shared_ptr<HETensor>& out,
-    const Node& op) {
+    const Node& node) {
   NGRAPH_HE_LOG(3) << "Server handle_server_max_pool_op";
 
-  bool verbose = verbose_op(op);
-  const auto* max_pool = static_cast<const op::MaxPool*>(&op);
+  bool verbose = verbose_op(&node);
+  const auto* max_pool = static_cast<const op::MaxPool*>(&node);
 
   m_max_pool_done = false;
 
-  Shape unpacked_arg_shape = op.get_input_shape(0);
-  Shape out_shape = HETensor::pack_shape(op.get_output_shape(0));
+  Shape unpacked_arg_shape = node.get_input_shape(0);
+  Shape out_shape = HETensor::pack_shape(node.get_output_shape(0));
 
   // TODO(fboemer): call max_pool_seal directly?
   std::vector<std::vector<size_t>> maximize_lists = max_pool_seal_max_list(
@@ -1417,7 +1417,7 @@ void HESealExecutable::handle_server_max_pool_op(
     pb::TCPMessage pb_message;
     pb_message.set_type(pb::TCPMessage_Type_REQUEST);
 
-    json js = {{"function", op.description()}};
+    json js = {{"function", node.description()}};
     pb::Function f;
     f.set_function(js.dump());
     *pb_message.mutable_function() = f;
@@ -1464,16 +1464,16 @@ void HESealExecutable::handle_server_max_pool_op(
 
 void HESealExecutable::handle_server_relu_op(
     const std::shared_ptr<HETensor>& arg, const std::shared_ptr<HETensor>& out,
-    const Node& op) {
+    const Node& node) {
   NGRAPH_HE_LOG(3) << "Server handle_server_relu_op"
                    << (enable_garbled_circuits() ? " with garbled circuits"
                                                  : "");
 
-  auto type_id = get_typeid(op.get_type_info());
+  auto type_id = get_typeid(node.get_type_info());
   NGRAPH_CHECK(type_id == OP_TYPEID::Relu || type_id == OP_TYPEID::BoundedRelu,
                "only support relu / bounded relu");
 
-  bool verbose = verbose_op(op);
+  bool verbose = verbose_op(&node);
   size_t element_count = arg->data().size();
 
   size_t smallest_ind =
@@ -1499,7 +1499,7 @@ void HESealExecutable::handle_server_relu_op(
         scalar_relu_seal(he_type.get_plaintext(),
                          m_relu_data[relu_idx].get_plaintext());
       } else {
-        const auto* bounded_relu = as_type<const op::BoundedRelu>(&op);
+        const auto* bounded_relu = static_cast<const op::BoundedRelu*>(&node);
         float alpha = bounded_relu->get_alpha();
         scalar_bounded_relu_seal(he_type.get_plaintext(),
                                  m_relu_data[relu_idx].get_plaintext(), alpha);
@@ -1517,7 +1517,7 @@ void HESealExecutable::handle_server_relu_op(
     pb::TCPMessage proto_msg;
     proto_msg.set_type(pb::TCPMessage_Type_REQUEST);
     *proto_msg.mutable_function() = node_to_pb_function(
-        op,
+        node,
         {{"enable_gc", bool_to_string(enable_garbled_circuits())},
          {"num_aby_parties",
           std::to_string(m_he_seal_backend.num_garbled_circuit_threads())}});
@@ -1542,7 +1542,7 @@ void HESealExecutable::handle_server_relu_op(
       pb::TCPMessage write_msg;
       write_msg.set_type(pb::TCPMessage_Type_REQUEST);
       *write_msg.mutable_function() = node_to_pb_function(
-          op,
+          node,
           {{"enable_gc", bool_to_string(enable_garbled_circuits())},
            {"num_aby_parties",
             std::to_string(m_he_seal_backend.num_garbled_circuit_threads())}});

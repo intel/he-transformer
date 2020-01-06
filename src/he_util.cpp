@@ -24,7 +24,7 @@
 
 #include "ngraph/check.hpp"
 #include "ngraph/except.hpp"
-#include "ngraph/type.hpp"
+#include "ngraph/ops.hpp"
 #include "ngraph/util.hpp"
 #include "protos/message.pb.h"
 #include "seal/he_seal_executable.hpp"
@@ -169,6 +169,9 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type) {
     case element::Type_t::i64: {
       return pb::HETensor::I64;
     }
+    case element::Type_t::u1: {
+      return pb::HETensor::U1;
+    }
     case element::Type_t::u8: {
       return pb::HETensor::U8;
     }
@@ -249,9 +252,12 @@ element::Type pb_type_to_type(pb::HETensor_ElementType pb_type) {
 pb::Function node_to_pb_function(
     const Node& node,
     std::unordered_map<std::string, std::string> extra_configs) {
-  nlohmann::json js = {{"function", node.description()}};
+  auto type_id = get_typeid(node.get_type_info());
 
-  if (auto bounded_relu = as_type<const op::BoundedRelu>(&node)) {
+  nlohmann::json js = {{"function", node.description()}};
+  if (type_id == OP_TYPEID::BoundedRelu) {
+    const op::BoundedRelu* bounded_relu =
+        static_cast<const op::BoundedRelu*>(&node);
     float alpha = bounded_relu->get_alpha();
     js["bound"] = alpha;
   }
@@ -263,6 +269,26 @@ pb::Function node_to_pb_function(
   pb::Function f;
   f.set_function(js.dump());
   return f;
+}
+
+OP_TYPEID get_typeid(const NodeTypeInfo& type_info) {
+  // This expands the op list in op_tbl.hpp into a list of enumerations that
+  // look like this: {Abs::type_info, OP_TYPEID::Abs}, {Acos::type_info,
+  // OP_TYPEID::Acos},
+  // ...
+  static const std::map<NodeTypeInfo, OP_TYPEID> type_info_map{
+#define NGRAPH_OP(NAME, NAMESPACE) \
+  {NAMESPACE::NAME::type_info, OP_TYPEID::ID_SUFFIX(NAME)},
+#include "seal/opset_he_seal_tbl.hpp"
+#undef NGRAPH_OP
+  };
+  OP_TYPEID rc = OP_TYPEID::UnknownOp;
+
+  auto it = type_info_map.find(type_info);
+  if (it != type_info_map.end()) {
+    rc = it->second;
+  }
+  return rc;
 }
 
 }  // namespace ngraph::runtime::he
