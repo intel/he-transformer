@@ -76,6 +76,7 @@ ExternalProject_Add(
                     -DCMAKE_CXX_FLAGS=${SEAL_CXX_FLAGS}
                     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                     -DSEAL_USE_CXX17=ON
                     -DZLIB_ROOT=${ZLIB_PREFIX}
   PATCH_COMMAND ${SEAL_PATCH_COMMAND}

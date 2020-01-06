@@ -51,7 +51,6 @@ if(${USE_PREBUILT_TF})
   message(STATUS "Using prebuilt TF")
   set(
     ng_tf_build_flags
-
     "${ng_tf_build_flags} --use_tensorflow_from_location=${NGRAPH_TF_BUILD_DIR}"
     )
 endif()
