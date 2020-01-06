@@ -27,11 +27,22 @@
 #include "ngraph/except.hpp"
 #include "ngraph/util.hpp"
 #include "nlohmann/json.hpp"
-#include "node_wrapper.hpp"
 #include "op/bounded_relu.hpp"
 #include "protos/message.pb.h"
 
 namespace ngraph::runtime::he {
+
+// This expands the op list in opset_he_seal_tbl.hpp into a list of enumerations
+// that look like this: Abs, Acos,
+// ...
+namespace {
+enum class OP_TYPEID {
+#define NGRAPH_OP(NAME, NAMESPACE) ID_SUFFIX(NAME),
+#include "seal/opset_he_seal_tbl.hpp"
+#undef NGRAPH_OP
+  UnknownOp
+};
+}  // namespace
 
 /// \brief Unpacks complex values to real values
 /// (a+bi, c+di) => (a,b,c,d)
@@ -103,27 +114,10 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type);
 
 element::Type pb_type_to_type(pb::HETensor_ElementType pb_type);
 
-inline pb::Function node_to_pb_function(
-    const NodeWrapper& node_wrapper,
-    std::unordered_map<std::string, std::string> extra_configs = {}) {
-  const Node& node = *node_wrapper.get_node();
-  auto type_id = node_wrapper.get_typeid();
+pb::Function node_to_pb_function(
+    const Node& node,
+    std::unordered_map<std::string, std::string> extra_configs = {});
 
-  nlohmann::json js = {{"function", node.description()}};
-  if (type_id == OP_TYPEID::BoundedRelu) {
-    const op::BoundedRelu* bounded_relu =
-        static_cast<const op::BoundedRelu*>(&node);
-    float alpha = bounded_relu->get_alpha();
-    js["bound"] = alpha;
-  }
-
-  for (const auto& [key, value] : extra_configs) {
-    js[key] = value;
-  }
-
-  pb::Function f;
-  f.set_function(js.dump());
-  return f;
-}
+OP_TYPEID get_typeid(const NodeTypeInfo& type_info);
 
 }  // namespace ngraph::runtime::he

@@ -98,6 +98,7 @@ using json = nlohmann::json;
 using ngraph::descriptor::layout::DenseTensorLayout;
 
 namespace ngraph::runtime::he {
+
 HESealExecutable::HESealExecutable(const std::shared_ptr<Function>& function,
                                    bool enable_performance_collection,
                                    HESealBackend& he_seal_backend)
@@ -915,10 +916,9 @@ void HESealExecutable::send_client_results() {
 }
 
 void HESealExecutable::generate_calls(
-    const element::Type& type, const NodeWrapper& node_wrapper,
+    const element::Type& type, const Node& op,
     const std::vector<std::shared_ptr<HETensor>>& out,
     const std::vector<std::shared_ptr<HETensor>>& args) {
-  const auto op = node_wrapper.get_op();
   bool verbose = verbose_op(*op);
 
 // We want to check that every OP_TYPEID enumeration is included in the
@@ -928,7 +928,7 @@ void HESealExecutable::generate_calls(
 #pragma clang diagnostic push
 #pragma clang diagnostic error "-Wswitch"
 #pragma clang diagnostic error "-Wswitch-enum"
-  switch (node_wrapper.get_typeid()) {
+  switch (get_type_id(node.get_type_info())) {
     case OP_TYPEID::Add: {
       add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
                out[0]->get_batched_element_count(), type, m_he_seal_backend);

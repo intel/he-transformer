@@ -27,9 +27,8 @@ namespace ngraph::op {
 /// \brief Elementwise Minimum(Relu(arg, 0), alpha) operation.
 class BoundedRelu : public util::UnaryElementwiseArithmetic {
  public:
-  static const std::string type_name;
-
-  const std::string& description() const override { return type_name; }
+  static constexpr NodeTypeInfo type_info{"BoundedRelu", 0};
+  const NodeTypeInfo& get_type_info() const override { return type_info; }
 
   /// \brief Constructs a BoundedRelu operation.
   /// \param[in] arg Node input to the Relu.

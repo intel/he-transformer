@@ -14,26 +14,15 @@
 // limitations under the License.
 //*****************************************************************************
 
-#include "op/bounded_relu.hpp"
+#define ID_SUFFIX(NAME) NAME
+#include "ngraph/opsets/opset0_tbl.hpp"
+NGRAPH_OP(BoundedRelu, op)
+#undef ID_SUFFIX
 
-#include "ngraph/util.hpp"
-
-namespace ngraph {
-
-constexpr NodeTypeInfo op::BoundedRelu::type_info;
-
-op::BoundedRelu::BoundedRelu(const Output<Node>& arg, float alpha)
-    : UnaryElementwiseArithmetic(arg), m_alpha(alpha) {
-  constructor_validate_and_infer_types();
-  set_output_type(0, arg.get_element_type(), arg.get_shape());
-}
-
-std::shared_ptr<Node> op::BoundedRelu::copy_with_new_args(
-    const NodeVector& new_args) const {
-  if (new_args.size() != 1) {
-    throw ngraph_error("Incorrect number of new arguments");
-  }
-  return std::make_shared<BoundedRelu>(new_args.at(0), m_alpha);
-}
-
-}  // namespace ngraph
+#define ID_SUFFIX(NAME) NAME##_v1
+NGRAPH_OP(LessEqual, op::v1)
+NGRAPH_OP(LogicalAnd, op::v1)
+NGRAPH_OP(LogicalOr, op::v1)
+NGRAPH_OP(LogicalXor, op::v1)
+NGRAPH_OP(LogicalNot, op::v1)
+#undef ID_SUFFIX

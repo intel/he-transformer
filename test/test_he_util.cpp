@@ -127,8 +127,8 @@ TEST(he_util, type_to_pb_type) {
            element::Type_t::boolean, element::Type_t::bf16,
            element::Type_t::f16, element::Type_t::f32, element::Type_t::f64,
            element::Type_t::i8, element::Type_t::i16, element::Type_t::i32,
-           element::Type_t::i64, element::Type_t::u8, element::Type_t::u16,
-           element::Type_t::u32, element::Type_t::u64}) {
+           element::Type_t::i64, element::Type_t::u1, element::Type_t::u8,
+           element::Type_t::u16, element::Type_t::u32, element::Type_t::u64}) {
     EXPECT_EQ(pb_type_to_type(type_to_pb_type(type)), type);
   }
 }
