@@ -53,7 +53,6 @@ One downside to the above approach is the client may deduce the deep learning mo
 See the `MNIST` folder for a DL example using garbled circuits.
 
 # List of command-line flags
-  * `STOP_CONST_FOLD`. Set to 1 to stop constant folding optimization. Note, this speeds up the graph compilation time for large batch sizes.
   * `OMP_NUM_THREADS`. Set to 1 to enable single-threaded execution (useful for debugging). For best multi-threaded performance, this number should be tuned.
   * `NGRAPH_HE_VERBOSE_OPS`. Set to `all` to print information about every operation performed. Set to a comma-separated list to print information about those ops; for example `NGRAPH_HE_VERBOSE_OPS=add,multiply,convolution`. *Note*, `NGRAPH_HE_LOG_LEVEL` should be set to at least 3 when using `NGRAPH_HE_VERBOSE_OPS`
   * `NGRAPH_HE_LOG_LEVEL`. Defines the verbosity of the logging. Set to 0 for minimal logging, 5 for maximum logging. Roughly:
