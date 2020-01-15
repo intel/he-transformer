@@ -72,18 +72,13 @@ python test.py \
 
 5. To call inference using HE_SEAL's plaintext operations (for debugging), call
 ```bash
-STOP_CONST_FOLD=1 \
 python test.py \
 --data_dir=$DATA_DIR \
 --batch_size=300 \
 --backend=HE_SEAL
 ```
-Note, the `STOP_CONST_FOLD` flag will prevent the constant folding graph optimization.
-For large batch sizes, constant folding incurs significant overhead during graph compilation. For best inference performance, `STOP_CONST_FOLD` should not be enabled (i.e. set to `0`)
-
   5.a To try on a larger model, call:
   ```bash
-  STOP_CONST_FOLD=1 \
   python test.py \
   --image_size=128 \
   --data_dir=$DATA_DIR \
@@ -95,7 +90,6 @@ For large batch sizes, constant folding incurs significant overhead during graph
 
 6. To call inference using encrypted data, run the below command. ***Warning***: this requires ~50GB memory.
 ```bash
-STOP_CONST_FOLD=1 \
 OMP_NUM_THREADS=56 \
 python test.py \
 --data_dir=$DATA_DIR \
@@ -108,7 +102,6 @@ python test.py \
 
 6a. To try on a larger model, call:
   ```bash
-  STOP_CONST_FOLD=1 \
   OMP_NUM_THREADS=56 \
   python test.py \
   --image_size=128 \
@@ -123,7 +116,6 @@ python test.py \
 
 7. To double the throughput using complex packing, run the below command.  ***Warning***: this requires ~120GB memory.
 ```bash
-STOP_CONST_FOLD=1 \
 OMP_NUM_THREADS=56 \
 python test.py \
 --data_dir=$DATA_DIR \
@@ -138,7 +130,6 @@ python test.py \
 8. To enable the client, in one terminal, run:
 ```bash
 OMP_NUM_THREADS=56 \
-STOP_CONST_FOLD=1 \
 NGRAPH_HE_VERBOSE_OPS=BoundedRelu \
 NGRAPH_HE_LOG_LEVEL=3 \
 python test.py \

@@ -134,10 +134,7 @@ HESealExecutable::HESealExecutable(const std::shared_ptr<Function>& function,
   pass_manager.register_pass<ngraph::pass::LikeReplacement>();
   pass_manager.register_pass<ngraph::pass::AssignLayout<DenseTensorLayout>>();
   pass_manager.register_pass<ngraph::pass::CoreFusion>();
-  if (!m_stop_const_fold) {
-    NGRAPH_HE_LOG(4) << "Registering constant folding pass";
-    pass_manager.register_pass<ngraph::pass::ConstantFolding>();
-  }
+  pass_manager.register_pass<ngraph::pass::ConstantFolding>();
 
   NGRAPH_HE_LOG(4) << "Running passes";
   pass_manager.run_passes(m_function);
