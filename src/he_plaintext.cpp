@@ -85,6 +85,7 @@ void HEPlaintext::write(void* target, const element::Type& element_type) {
     }
     case element::Type_t::i8:
     case element::Type_t::i16:
+    case element::Type_t::u1:
     case element::Type_t::u8:
     case element::Type_t::u16:
     case element::Type_t::u32:

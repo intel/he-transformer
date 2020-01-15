@@ -1318,7 +1318,6 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::Less:
     case OP_TYPEID::LessEq:
     case OP_TYPEID::Log:
-    case OP_TYPEID::LogSoftmax:
     case OP_TYPEID::LRN:
     case OP_TYPEID::LSTMCell:
     case OP_TYPEID::LSTMSequence:
@@ -1348,14 +1347,15 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::Recv:
     case OP_TYPEID::Range:
     case OP_TYPEID::RandomUniform:
-    case OP_TYPEID::Reciprocal:
     case OP_TYPEID::ReluBackprop:
     case OP_TYPEID::ReplaceSlice:
     case OP_TYPEID::ReverseSequence:
+    case OP_TYPEID::Round:
     case OP_TYPEID::RNNCell:
     case OP_TYPEID::ScalarConstantLike:
     case OP_TYPEID::ScaleShift:
     case OP_TYPEID::ScatterAdd:
+    case OP_TYPEID::ScatterND:
     case OP_TYPEID::ScatterNDAdd:
     case OP_TYPEID::ShapeOf:
     case OP_TYPEID::Send:
@@ -1374,13 +1374,13 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::SquaredDifference:
     case OP_TYPEID::Squeeze:
     case OP_TYPEID::Sqrt:
+    case OP_TYPEID::Stack:
     case OP_TYPEID::StopGradient:
     case OP_TYPEID::Tan:
     case OP_TYPEID::Tanh:
     case OP_TYPEID::TensorIterator:
     case OP_TYPEID::Tile:
     case OP_TYPEID::TopK:
-    case OP_TYPEID::Transpose:
     case OP_TYPEID::Unsqueeze:
     case OP_TYPEID::Xor:
     case OP_TYPEID::UnknownOp:
