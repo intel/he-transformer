@@ -88,4 +88,3 @@ if bash_lib_am_sudo_or_root; then
 else
     bash_lib_MAYBE_SUDO='sudo --set-home'
 fi
-
