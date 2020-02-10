@@ -1,6 +1,6 @@
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v1.4.0
+      rev: v2.0.0
       hooks:
         - id: check-added-large-files
         - id: check-case-conflict
@@ -25,7 +25,6 @@ repos:
           files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
           args:
             - --filter=-runtime/references,-readability/nolint,-build/c++11
-            - --exclude=./src/seal/opset_he_seal_tbl.hpp ./test/*
         - id: yapf
           name: yapf
           entry: yapf
