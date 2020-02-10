@@ -7,9 +7,9 @@ repos:
         - id: check-json
         - id: check-merge-conflict
         - id: check-symlinks
-        - id: check-xml
         - id: check-yaml
         - id: trailing-whitespace
+        - id: end-of-file-fixer
     - repo: local
       hooks:
         - id: clang-format
@@ -23,7 +23,6 @@ repos:
           entry: cpplint
           language: system
           files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
-          exclude: ^./test/
           args:
             - --filter=-runtime/references,-readability/nolint,-build/c++11
             - --exclude=./src/seal/opset_he_seal_tbl.hpp ./test/*
