@@ -16,6 +16,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "aby/kernel/relu_aby.hpp"
 #include "abycore/aby/abyparty.h"
 #include "abycore/circuit/booleancircuits.h"

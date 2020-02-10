@@ -18,9 +18,12 @@
 
 #include <ENCRYPTO_utils/crypto/crypto.h>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "abycore/aby/abyparty.h"
@@ -45,16 +48,6 @@ void print_argument(const std::vector<T>& values, const std::string& name) {
   for (size_t i = 0; i < print_size; ++i) {
     NGRAPH_HE_LOG(5) << "\t" << name << "[" << i << "] = " << values[i];
   }
-
-  // print in compact mode.
-  /* std::cout << name << "{";
-  for (size_t i = 0; i < print_size; ++i) {
-    std::cout << values[i];
-    if (i < print_size - 1) {
-      std::cout << ", ";
-    }
-  }
-  std::cout << "};" << std::endl; */
 }
 
 template <typename T>
@@ -108,7 +101,7 @@ inline share* reduce_mod(BooleanCircuit& circ, share* x, share* mod) {
   share* sel_share = circ.PutGTGate(mod, x);
   x = circ.PutMUXGate(x, circ.PutSUBGate(x, mod), sel_share);
   return x;
-};
+}
 
 // Splits a vector into num_splits nearly-equal-sized subvectors
 // Returns vector of [start_idx, end_idx) for each split

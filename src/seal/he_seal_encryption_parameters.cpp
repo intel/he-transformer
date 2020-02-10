@@ -18,6 +18,7 @@
 
 #include <exception>
 #include <unordered_set>
+#include <utility>
 
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/check.hpp"
@@ -215,7 +216,6 @@ HESealEncryptionParameters::parse_config_or_use_default(const char* config) {
                                              scale, complex_packing);
 
     return params;
-
   } catch (const std::exception& e) {
     std::stringstream ss;
     ss << "Error creating encryption parameter from string " << json_config_str

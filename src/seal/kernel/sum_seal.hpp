@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include "he_type.hpp"
 #include "ngraph/coordinate_transform.hpp"
 #include "ngraph/type/element_type.hpp"

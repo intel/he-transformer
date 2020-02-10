@@ -17,6 +17,8 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "he_plaintext.hpp"
 #include "he_type.hpp"

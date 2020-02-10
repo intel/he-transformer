@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include "boost/asio.hpp"
 #include "logging/ngraph_he_log.hpp"
@@ -29,7 +30,7 @@
 
 namespace ngraph::runtime::he {
 
-const std::string TCPClient::s_expected_teardown_message = "End of file";
+const char* TCPClient::s_expected_teardown_message = "End of file";
 
 TCPClient::TCPClient(
     boost::asio::io_context& io_context,

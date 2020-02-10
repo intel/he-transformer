@@ -36,5 +36,5 @@ inline void broadcast_seal(const std::vector<HEType>& arg,
     out[output_transform.index(output_coord)] =
         arg[input_transform.index(input_coord)];
   }
-};
+}
 }  // namespace ngraph::runtime::he

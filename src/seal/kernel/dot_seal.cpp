@@ -16,6 +16,9 @@
 
 #include "seal/kernel/dot_seal.hpp"
 
+#include <algorithm>
+#include <utility>
+
 #include "seal/kernel/add_seal.hpp"
 #include "seal/kernel/multiply_seal.hpp"
 

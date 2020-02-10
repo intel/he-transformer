@@ -17,6 +17,7 @@
 #include "he_util.hpp"
 
 #include <complex>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -185,14 +186,13 @@ pb::HETensor_ElementType type_to_pb_type(const element::Type& element_type) {
 }
 
 element::Type pb_type_to_type(pb::HETensor_ElementType pb_type) {
-#pragma clang diagnostic push
-#pragma clang diagnostic error "-Wswitch"
-#pragma clang diagnostic error "-Wswitch-enum"
   switch (pb_type) {
     case pb::HETensor::UNDEFINED:
     case pb::
+        // NOLINTNEXTLINE(whitespace/line_length)
         HETensor_ElementType_HETensor_ElementType_INT_MIN_SENTINEL_DO_NOT_USE_:
     case pb::
+        // NOLINTNEXTLINE(whitespace/line_length)
         HETensor_ElementType_HETensor_ElementType_INT_MAX_SENTINEL_DO_NOT_USE_: {
       return element::Type_t::undefined;
     }
@@ -241,7 +241,6 @@ element::Type pb_type_to_type(pb::HETensor_ElementType pb_type) {
     case pb::HETensor::U64: {
       return element::Type_t::u64;
     }
-#pragma clang diagnostic pop
   }
 }
 

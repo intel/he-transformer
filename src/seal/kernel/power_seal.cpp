@@ -16,7 +16,9 @@
 
 #include "seal/kernel/power_seal.hpp"
 
+#include <algorithm>
 #include <memory>
+#include <utility>
 #include <vector>
 
 #include "ngraph/type/element_type.hpp"

@@ -18,7 +18,9 @@
 
 #include <cmath>
 #include <complex>
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ngraph/check.hpp"

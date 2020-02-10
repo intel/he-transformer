@@ -35,7 +35,7 @@ class BoundedRelu : public util::UnaryElementwiseArithmetic {
   /// \param arg Node input to the Relu.
   BoundedRelu(const Output<ngraph::Node>& arg, float alpha);
   float get_alpha() const { return m_alpha; }
-  virtual std::shared_ptr<Node> copy_with_new_args(
+  std::shared_ptr<Node> copy_with_new_args(
       const NodeVector& new_args) const override;
 
  private:

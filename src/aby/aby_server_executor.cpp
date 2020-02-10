@@ -16,6 +16,8 @@
 
 #include "aby/aby_server_executor.hpp"
 
+#include <algorithm>
+
 #include "aby/kernel/relu_aby.hpp"
 #include "nlohmann/json.hpp"
 #include "seal/kernel/subtract_seal.hpp"

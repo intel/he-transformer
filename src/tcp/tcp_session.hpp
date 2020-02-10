@@ -20,6 +20,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <string>
 
 #include "boost/asio.hpp"
 #include "logging/ngraph_he_log.hpp"

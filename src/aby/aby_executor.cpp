@@ -16,6 +16,8 @@
 
 #include "aby/aby_executor.hpp"
 
+#include <map>
+
 #include "seal/kernel/subtract_seal.hpp"
 #include "seal/seal_util.hpp"
 

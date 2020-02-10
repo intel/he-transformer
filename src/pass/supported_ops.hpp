@@ -27,7 +27,7 @@ class SupportedOps : public ngraph::pass::FunctionPass {
  public:
   /// \param[in] is_supported Function which returns whether or not a given
   /// Node is supported
-  SupportedOps(std::function<bool(const Node&)> is_supported)
+  explicit SupportedOps(std::function<bool(const Node&)> is_supported)
       : m_is_supported(is_supported) {}
 
   /// \brief Returns false, indicating the function has not been modified

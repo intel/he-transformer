@@ -93,5 +93,5 @@ inline void batch_norm_inference_seal(
     scalar_add_seal(normed_input[input_index], he_bias,
                     normed_input[input_index], he_seal_backend);
   }
-};
+}
 }  // namespace ngraph::runtime::he

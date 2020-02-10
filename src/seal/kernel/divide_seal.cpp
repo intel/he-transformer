@@ -16,6 +16,8 @@
 
 #include "seal/kernel/divide_seal.hpp"
 
+#include <algorithm>
+#include <functional>
 #include <memory>
 #include <vector>
 

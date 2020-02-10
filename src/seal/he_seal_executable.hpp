@@ -22,7 +22,9 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "boost/asio.hpp"
@@ -84,9 +86,8 @@ class HESealExecutable : public runtime::Executable {
   /// by the backend.
   /// \param[out] outputs Output tensors storing the result of
   /// the function
-  virtual bool call(
-      const std::vector<std::shared_ptr<runtime::Tensor>>& outputs,
-      const std::vector<std::shared_ptr<runtime::Tensor>>& server_inputs)
+  bool call(const std::vector<std::shared_ptr<runtime::Tensor>>& outputs,
+            const std::vector<std::shared_ptr<runtime::Tensor>>& server_inputs)
       override;
 
   // TOOD

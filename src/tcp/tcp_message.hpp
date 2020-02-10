@@ -17,6 +17,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 #include "protos/message.pb.h"
 
@@ -30,7 +31,7 @@ class TCPMessage {
   /// \brief Creates empty message
   TCPMessage();
 
-  TCPMessage(pb::TCPMessage& pb_message) = delete;
+  explicit TCPMessage(pb::TCPMessage& pb_message) = delete;
 
   /// \brief Creates message from given protobuf message
   /// \param[in,out] pb_message Protobuf message to populate TCPMessage

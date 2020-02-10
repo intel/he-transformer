@@ -20,6 +20,7 @@
 #include <array>
 #include <limits>
 #include <memory>
+#include <utility>
 
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/runtime/backend_manager.hpp"
