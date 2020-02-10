@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+
 #include "aby/aby_executor.hpp"
 #include "he_tensor.hpp"
 #include "he_type.hpp"

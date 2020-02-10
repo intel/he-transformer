@@ -17,8 +17,11 @@
 #pragma once
 
 #include <functional>
+#include <map>
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "he_op_annotations.hpp"

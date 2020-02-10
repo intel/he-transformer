@@ -18,7 +18,7 @@
 cmake_minimum_required(VERSION 3.12)
 
 # Global project name
-project(he_transformer LANGUAGES CXX)
+project(he_transformer LANGUAGES C CXX)
 
 # set directory where the custom finders live
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")

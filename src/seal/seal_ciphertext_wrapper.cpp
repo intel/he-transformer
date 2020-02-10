@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "logging/ngraph_he_log.hpp"

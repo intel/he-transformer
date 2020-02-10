@@ -17,6 +17,7 @@
 #include "aby/aby_client_executor.hpp"
 
 #include <chrono>
+#include <vector>
 
 #include "aby/kernel/relu_aby.hpp"
 #include "nlohmann/json.hpp"

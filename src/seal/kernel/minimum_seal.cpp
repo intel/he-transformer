@@ -16,6 +16,8 @@
 
 #include "seal/kernel/minimum_seal.hpp"
 
+#include <algorithm>
+#include <utility>
 #include <vector>
 
 #include "ngraph/type/element_type.hpp"

@@ -17,6 +17,9 @@
 #include "he_plaintext.hpp"
 
 #include <cstring>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "logging/ngraph_he_log.hpp"
 #include "ngraph/check.hpp"

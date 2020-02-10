@@ -18,11 +18,8 @@
 
 #include <algorithm>
 #include <functional>
-#include <iostream>
-#include <memory>
 #include <numeric>
-#include <string>
-#include <vector>
+#include <unordered_set>
 
 #include "boost/asio.hpp"
 #include "he_util.hpp"

@@ -91,3 +91,7 @@ server_client_gc_300000_1_relu_real_mask_in_out
 # ABY
 server_client_gc_845_400_relu_real_mask_in_out
 # server_client_gc_add_3_relu
+
+# Too slow
+server_client_relu_packed_50000
+server_client_bounded_relu_packed_50000

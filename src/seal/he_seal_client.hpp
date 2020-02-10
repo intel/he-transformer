@@ -20,6 +20,8 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef NGRAPH_HE_ABY_ENABLE
