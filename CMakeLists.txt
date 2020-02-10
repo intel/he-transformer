@@ -22,7 +22,10 @@ project(he_transformer LANGUAGES C CXX)
 
 # set directory where the custom finders live
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-message(STATUS "CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+message(STATUS "CMAKE_GENERATOR:   ${CMAKE_GENERATOR}")
+
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 if(CMAKE_BUILD_TYPE)
   set(RELEASE_TYPES
@@ -73,6 +76,7 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
   message(STATUS "Setting clang flags...")
   include(cmake/clang_flags.cmake)
 endif()
+
 
 include(cmake/sdl.cmake)
 

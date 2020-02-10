@@ -56,6 +56,7 @@ ExternalProject_Add(ext_zlib
     PREFIX            ${ZLIB_PREFIX}
     INSTALL_COMMAND   ""
     UPDATE_COMMAND    ""
+    BUILD_BYPRODUCTS  ${ZLIB_LIB_DIR}/libz.a
 )
 
 add_library(zlib STATIC IMPORTED)

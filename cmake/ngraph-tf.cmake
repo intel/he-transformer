@@ -66,6 +66,7 @@ ExternalProject_Add(ext_ngraph_tf
                     CONFIGURE_COMMAND ""
                     BUILD_IN_SOURCE 1
                     BUILD_BYPRODUCTS ${NGRAPH_TF_CMAKE_PREFIX}
+                    ${NGRAPH_TF_LIB_DIR}/libngraph.so
                     BUILD_COMMAND python3 ${NGRAPH_TF_SRC_DIR}/build_ngtf.py
                                   ${ng_tf_build_flags}
                     INSTALL_COMMAND ln

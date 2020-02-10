@@ -20,6 +20,12 @@ set(NGRAPH_HE_PROTOBUF_GIT_REPO_URL
     "https://github.com/protocolbuffers/protobuf")
 set(NGRAPH_HE_PROTOBUF_GIT_TAG "v3.10.1")
 
+if ("${CMAKE_GENERATOR}" STREQUAL "Ninja")
+    set(MAKE_UTIL make)
+else()
+    set(MAKE_UTIL $(MAKE))
+endif()
+
 ExternalProject_Add(
   ext_protobuf
   PREFIX protobuf
@@ -32,7 +38,7 @@ ExternalProject_Add(
           --prefix=${EXTERNAL_PROJECTS_ROOT}/protobuf
           --disable-shared
           CXX=${CMAKE_CXX_COMPILER}
-  BUILD_COMMAND $(MAKE) "CXXFLAGS=-std=c++${NGRAPH_HE_CXX_STANDARD} -fPIC"
+  BUILD_COMMAND ${MAKE_UTIL} "CXXFLAGS=-std=c++${NGRAPH_HE_CXX_STANDARD} -fPIC"
   TMP_DIR "${EXTERNAL_PROJECTS_ROOT}/protobuf/tmp"
   STAMP_DIR "${EXTERNAL_PROJECTS_ROOT}/protobuf/stamp"
   DOWNLOAD_DIR "${EXTERNAL_PROJECTS_ROOT}/protobuf/download"
