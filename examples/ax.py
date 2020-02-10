@@ -49,9 +49,8 @@ def server_config_from_flags(FLAGS, tensor_param_name):
 
     config = tf.compat.v1.ConfigProto()
     config.MergeFrom(
-        tf.compat.v1.ConfigProto(
-            graph_options=tf.compat.v1.GraphOptions(
-                rewrite_options=rewriter_options)))
+        tf.compat.v1.ConfigProto(graph_options=tf.compat.v1.GraphOptions(
+            rewrite_options=rewriter_options)))
 
     return config
 
@@ -59,8 +58,9 @@ def server_config_from_flags(FLAGS, tensor_param_name):
 def main(FLAGS):
 
     a = tf.constant(np.array([[1, 2, 3, 4]]), dtype=np.float32)
-    b = tf.compat.v1.placeholder(
-        tf.float32, shape=(1, 4), name="client_parameter_name")
+    b = tf.compat.v1.placeholder(tf.float32,
+                                 shape=(1, 4),
+                                 name="client_parameter_name")
     c = tf.compat.v1.placeholder(tf.float32, shape=(1, 4))
     f = c * (a + b)
 
@@ -76,13 +76,14 @@ def main(FLAGS):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--enable_client",
-        type=str2bool,
-        default=False,
-        help="Enable the client")
-    parser.add_argument(
-        "--backend", type=str, default="HE_SEAL", help="Name of backend to use")
+    parser.add_argument("--enable_client",
+                        type=str2bool,
+                        default=False,
+                        help="Enable the client")
+    parser.add_argument("--backend",
+                        type=str,
+                        default="HE_SEAL",
+                        help="Name of backend to use")
     parser.add_argument(
         "--encryption_parameters",
         type=str,

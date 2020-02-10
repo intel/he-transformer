@@ -84,9 +84,8 @@ def main(FLAGS):
     x_test_flat = x_test.flatten(order="C")
     port = 34000
 
-    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size, {
-        "input": ("encrypt", x_test_flat)
-    })
+    client = pyhe_client.HESealClient(FLAGS.hostname, port, batch_size,
+                                      {"input": ("encrypt", x_test_flat)})
 
     results = client.get_results()
 
@@ -116,11 +115,10 @@ if __name__ == "__main__":
         "Directory where cropped ImageNet data and ground truth labels are stored",
     )
     parser.add_argument("--image_size", type=int, default=96, help="image size")
-    parser.add_argument(
-        "--save_images",
-        type=str2bool,
-        default=False,
-        help="save cropped images")
+    parser.add_argument("--save_images",
+                        type=str2bool,
+                        default=False,
+                        help="save cropped images")
     parser.add_argument(
         "--load_cropped_images",
         type=str2bool,
@@ -139,11 +137,15 @@ if __name__ == "__main__":
         default=256,
         help="crop to this size before resizing to image_size",
     )
-    parser.add_argument(
-        "--hostname", type=str, default="localhost", help="server hostname")
+    parser.add_argument("--hostname",
+                        type=str,
+                        default="localhost",
+                        help="server hostname")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--start_batch", type=int, default=0, help="Test data start index")
+    parser.add_argument("--start_batch",
+                        type=int,
+                        default=0,
+                        help="Test data start index")
 
     FLAGS, unparsed = parser.parse_known_args()
     if FLAGS.data_dir == None:

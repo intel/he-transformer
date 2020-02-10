@@ -22,9 +22,10 @@ repos:
           entry: cpplint
           language: system
           files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
+          exclude: ^./test/
           args:
-            - --filter=-legal/copyright,-readability/todo,-build/c++11
-            - --linelength=120
+            - --filter=-runtime/references,-readability/nolint,-build/c++11
+            - --exclude=./src/seal/opset_he_seal_tbl.hpp ./test/*
         - id: yapf
           name: yapf
           entry: yapf

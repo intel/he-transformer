@@ -76,13 +76,9 @@ def squash_layers(cryptonets_relu_model, sess):
     # Pass 0 to get bias
     squashed_bias = y.eval(
         session=sess,
-        feed_dict={
-            "squashed_input:0": np.zeros((1, 14 * 14 * 5))
-        })
+        feed_dict={"squashed_input:0": np.zeros((1, 14 * 14 * 5))})
     squashed_bias_plus_weights = y.eval(
-        session=sess, feed_dict={
-            "squashed_input:0": np.eye(14 * 14 * 5)
-        })
+        session=sess, feed_dict={"squashed_input:0": np.eye(14 * 14 * 5)})
     squashed_weights = squashed_bias_plus_weights - squashed_bias
 
     print("squashed layers")
@@ -100,33 +96,34 @@ def squash_layers(cryptonets_relu_model, sess):
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = mnist_util.load_mnist_data()
 
-    x = Input(
-        shape=(
-            28,
-            28,
-            1,
-        ), name="input")
+    x = Input(shape=(
+        28,
+        28,
+        1,
+    ), name="input")
     y = model.cryptonets_relu_model(x)
     cryptonets_relu_model = Model(inputs=x, outputs=y)
     print(cryptonets_relu_model.summary())
 
     def loss(labels, logits):
-        return keras.losses.categorical_crossentropy(
-            labels, logits, from_logits=True)
+        return keras.losses.categorical_crossentropy(labels,
+                                                     logits,
+                                                     from_logits=True)
 
     optimizer = SGD(learning_rate=0.008, momentum=0.9)
-    cryptonets_relu_model.compile(
-        optimizer=optimizer, loss=loss, metrics=["accuracy"])
+    cryptonets_relu_model.compile(optimizer=optimizer,
+                                  loss=loss,
+                                  metrics=["accuracy"])
 
-    cryptonets_relu_model.fit(
-        x_train,
-        y_train,
-        epochs=FLAGS.epochs,
-        validation_data=(x_test, y_test),
-        batch_size=FLAGS.batch_size)
+    cryptonets_relu_model.fit(x_train,
+                              y_train,
+                              epochs=FLAGS.epochs,
+                              validation_data=(x_test, y_test),
+                              batch_size=FLAGS.batch_size)
 
-    test_loss, test_acc = cryptonets_relu_model.evaluate(
-        x_test, y_test, verbose=2)
+    test_loss, test_acc = cryptonets_relu_model.evaluate(x_test,
+                                                         y_test,
+                                                         verbose=2)
     print("Test accuracy:", test_acc)
 
     # Squash weights and save model
@@ -137,12 +134,11 @@ def main(FLAGS):
     tf.reset_default_graph()
     sess = tf.compat.v1.Session()
 
-    x = Input(
-        shape=(
-            28,
-            28,
-            1,
-        ), name="input")
+    x = Input(shape=(
+        28,
+        28,
+        1,
+    ), name="input")
     y = model.cryptonets_relu_model_squashed(x, conv1_weights, squashed_weights,
                                              fc2_weights)
     sess.run(tf.compat.v1.global_variables_initializer())
