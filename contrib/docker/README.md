@@ -43,32 +43,11 @@ Note that all operations performed inside the docker image are run as a regular 
 
 ## Examples/Hints
 
-* To build an Ubuntu 16.04 docker container, compile with gcc 7.4, and run unit tests:
-
-```
-cd contrib/docker
-make check_gcc
-```
-
-* To build an Ubuntu 16.04 docker container, compile with clang 6.0 , and run unit tests:
-
-```
-cd contrib/docker
-make check_clang
-```
-
-* To build a Ubuntu 18.04 docker container, compile with gcc 7, and run unit tests:
+* To build a Ubuntu 18.04 docker container, compile with gcc 7.4, and run unit tests:
 
 ```
 cd contrib/docker
 make check_gcc OS=ubuntu1804
-```
-
-* To build an Ubuntu 16.04 docker container with persistent builds, compile with gcc 7.4, and run unit tests:
-
-```
-cd contrib/docker
-make build_gcc RM_CONTAINER=false
 ```
 
 To launch the shell with the persistent docker image, run
@@ -100,11 +79,7 @@ A helper script to run as a normal user within the docker container.  This is do
 
 #### `run_as_ubuntu_user.sh`
 
-Same as `run_as_user.sh`, specifically called for _make_ targets with Ubuntu 16.04 docker containers.
-
-#### `run_as_centos_user.sh`
-
-A helper script to run as a normal user within a CentOS 7.4 docker container.
+Same as `run_as_user.sh`, specifically called for _make_ targets with Ubuntu 18.04 docker containers.
 
 ## Notes
 
@@ -113,15 +88,6 @@ A helper script to run as a normal user within a CentOS 7.4 docker container.
 * Due to limitations in how docker mounts work, `make check_*` and `make shell` targets will fail if you try to run them while in a working directory that is in an NFS-mount that has _root squash_ enabled.  The cause results from the process in the docker container running as root.  When a file or directory is created by root in the mounted directory tree, from within the docker image, the NFS-mount (in the host OS) does not allow a root-created file, leading to a permissions error.  This is dependent on whether the host OS performs "root squash" when mounting NFS filesystems.  The fix to this is easy: run `make check_*` and `make shell` from a local filesystem.
 
 * The _make_ targets have been tested with the following docker containers on an Ubuntu 16.04 host OS with docker installed and the docker daemon properly configured.  Some adjustments may be needed to run these on other OSes.
-
-#### Ubuntu 16.04 (default)
-
-```
-Dockerfile: Dockerfile.he-transformer.ubuntu1604
-Reference-OS: Ubuntu 16.04
-BUILD-GCC: gcc 7.4.0
-BUILD-CLANG: clang 6.0.1
-```
 
 #### Ubuntu 18.04
 

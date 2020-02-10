@@ -7,7 +7,7 @@ set -o pipefail
 # Enable job control to allow scl enable command
 set -m
 
-# Debugging to verify builds on Centos 7.4 and Ubuntu 16.04
+# Debugging to verify build OS
 if [ -f "/etc/centos-release" ]; then
     cat /etc/centos-release
 fi
@@ -73,17 +73,7 @@ cd $HE_TRANSFORMER_REPO
 
 export CMAKE_OPTIONS_COMMON="-DCMAKE_BUILD_TYPE=RelWithDebInfo ${CMAKE_OPTIONS_EXTRA}"
 export CMAKE_OPTIONS_GCC="${CMAKE_OPTIONS_COMMON}"
-# Centos 7.4 doesn't have clang6.0 yet
-# https://www.centos.org/forums/viewtopic.php?t=70149
-if [ "${OS_ID}" == "centos74" ]; then
-    #
-    set +e
-    source scl_source enable devtoolset-7 llvm-toolset-7
-    set -e
-    export CMAKE_OPTIONS_CLANG="$CMAKE_OPTIONS_COMMON -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -Werror"
-else
-    export CMAKE_OPTIONS_CLANG="$CMAKE_OPTIONS_COMMON -DCMAKE_CXX_COMPILER=clang++-6.0 -DCMAKE_C_COMPILER=clang-6.0 -Werror"
-fi
+export CMAKE_OPTIONS_CLANG="$CMAKE_OPTIONS_COMMON -DCMAKE_CXX_COMPILER=clang++-6.0 -DCMAKE_C_COMPILER=clang-6.0 -Werror"
 
 echo "CMD_TO_RUN=${CMD_TO_RUN}"
 

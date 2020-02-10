@@ -22,6 +22,7 @@
 
 FROM ubuntu:18.04
 
+
 RUN apt-get update && apt-get install -y \
         python3-pip virtualenv \
         python3-numpy python3-dev python3-wheel \
@@ -34,9 +35,11 @@ RUN apt-get update && apt-get install -y \
         git \
         wget patch diffutils libtinfo-dev \
         autoconf libtool \
-        doxygen graphviz \
-        yapf3==0.27.0 \
-        python3-yapf==0.27.0
+        doxygen graphviz
+
+# Install recent version of yapf3
+RUN add-apt-repository "deb http://ubuntu.osuosl.org/ubuntu/ eoan main universe"
+RUN apt-get update && apt-get install -y yapf3=0.28.0-1
 
 # Install clang-9
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
