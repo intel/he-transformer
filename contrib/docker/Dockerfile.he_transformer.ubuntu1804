@@ -35,7 +35,8 @@ RUN apt-get update && apt-get install -y \
         wget patch diffutils libtinfo-dev \
         autoconf libtool \
         doxygen graphviz \
-        yapf3 python3-yapf
+        yapf3==0.27.0 \
+        python3-yapf==0.27.0
 
 # Install clang-9
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
