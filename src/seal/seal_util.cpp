@@ -468,7 +468,7 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
           NGRAPH_CHECK(plaintext.size() <= slot_count, "Cannot encode ",
                        plaintext.size(), " elements, maximum size is ",
                        slot_count);
-          ckks_encoder.encode(plaintext, parms_id, scale,
+          ckks_encoder.encode(plaintext.as_double_vec(), parms_id, scale,
                               destination.plaintext());
         }
       }
@@ -509,9 +509,10 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
   if (input.complex_packing()) {
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);
-    output = HEPlaintext(complex_vec_to_real_vec(complex_vals));
+    output = complex_vec_to_real_vec<HEPlaintext>(complex_vals);
   } else {
-    ckks_encoder.decode(input.plaintext(), output);
+    auto out_vec = output.as_double_vec();
+    ckks_encoder.decode(input.plaintext(), out_vec);
   }
   output.resize(batch_size);
 

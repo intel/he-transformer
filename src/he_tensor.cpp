@@ -147,8 +147,9 @@ void HETensor::unpack() {
   for (size_t batch_idx = 0; batch_idx < old_batch_size; ++batch_idx) {
     for (auto& data : m_data) {
       auto& plain = data.get_plaintext();
-      new_data.emplace_back(
-          HEPlaintext({static_cast<double>(plain[batch_idx])}), false);
+      new_data.emplace_back(HEPlaintext(std::initializer_list<double>{
+                                static_cast<double>(plain[batch_idx])}),
+                            false);
     }
   }
   m_data = std::move(new_data);

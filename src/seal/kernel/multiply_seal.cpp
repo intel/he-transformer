@@ -115,7 +115,7 @@ void scalar_multiply_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
   // TODO(fboemer): check if abs(values) < scale?
   if (std::all_of(arg1.begin(), arg1.end(),
                   [](double f) { return std::abs(f) < 1e-5f; })) {
-    HEPlaintext zeros({std::vector<double>(arg1.size(), 0)});
+    HEPlaintext zeros(arg1.size(), 0);
     out.set_plaintext(zeros);
   } else if (arg1.size() == 1) {
     if (!out.is_ciphertext()) {

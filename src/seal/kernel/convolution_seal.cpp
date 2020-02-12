@@ -204,7 +204,7 @@ void convolution_seal(
       ++filter_it;
     }
     if (first_add) {
-      HEPlaintext zero(std::vector<double>(batch_size, 0));
+      HEPlaintext zero(batch_size, 0);
       out[out_coord_idx].set_plaintext(zero);
     } else {
       // Write the sum back.

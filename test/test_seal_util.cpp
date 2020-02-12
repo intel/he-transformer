@@ -150,7 +150,8 @@ TEST(seal_util, match_modulus_and_scale_inplace) {
       decrypt(output, cipher, complex_packing, *he_backend->get_decryptor(),
               *he_backend->get_ckks_encoder(), he_backend->get_context(),
               plain.size());
-      EXPECT_TRUE(test::all_close(output, plain));
+      EXPECT_TRUE(
+          test::all_close(output.as_double_vec(), plain.as_double_vec()));
     };
 
     check_decryption(*cipher1);
@@ -323,7 +324,8 @@ TEST(seal_util, match_to_smallest_chain_index) {
   EXPECT_EQ(plains.size(), vec_size);
   for (const auto& elem : plains) {
     EXPECT_TRUE(elem.is_plaintext());
-    EXPECT_TRUE(test::all_close(elem.get_plaintext(), plain));
+    EXPECT_TRUE(test::all_close(elem.get_plaintext().as_double_vec(),
+                                plain.as_double_vec()));
   }
 }
 

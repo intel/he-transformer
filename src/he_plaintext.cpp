@@ -27,28 +27,6 @@
 
 namespace ngraph::runtime::he {
 
-HEPlaintext::HEPlaintext(const std::initializer_list<double>& values)
-    : std::vector<double>(values) {}
-
-HEPlaintext::HEPlaintext(const std::vector<double>& values)
-    : std::vector<double>(values) {}
-
-HEPlaintext::HEPlaintext(std::vector<double>&& values)
-    : std::vector<double>(std::move(values)) {}
-
-HEPlaintext::HEPlaintext(size_t n, double initial_value)
-    : std::vector<double>(n, initial_value) {}
-
-HEPlaintext& HEPlaintext::operator=(const HEPlaintext& v) {
-  static_cast<std::vector<double>*>(this)->operator=(v);
-  return *this;
-}
-
-HEPlaintext& HEPlaintext::operator=(HEPlaintext&& v) noexcept {
-  static_cast<std::vector<double>*>(this)->operator=(v);
-  return *this;
-}
-
 void HEPlaintext::write(void* target, const element::Type& element_type) {
   NGRAPH_CHECK(!empty(), "Input has no values");
   size_t count = this->size();
@@ -59,6 +37,14 @@ void HEPlaintext::write(void* target, const element::Type& element_type) {
   switch (element_type.get_type_enum()) {
     case element::Type_t::f32: {
       std::vector<float> float_values{begin(), end()};
+
+      NGRAPH_INFO << "count " << count;
+      NGRAPH_INFO << "type_byte_size " << type_byte_size;
+
+      for (const auto& elem : float_values) {
+        NGRAPH_INFO << "writing float " << elem;
+      }
+
       auto type_values_src = static_cast<const void*>(float_values.data());
       std::memcpy(target, type_values_src, type_byte_size * count);
       break;

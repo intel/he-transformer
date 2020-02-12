@@ -34,14 +34,13 @@ inline void sum_seal(std::vector<HEType>& arg, std::vector<HEType>& out,
                "Unsupported type ", element_type);
   CoordinateTransform output_transform(out_shape);
 
-  bool complex_packing = arg.size() > 0 ? arg[0].complex_packing() : false;
-  size_t batch_size = arg.size() > 0 ? arg[0].batch_size() : 1;
+  bool complex_packing = !arg.empty() ? arg[0].complex_packing() : false;
+  size_t batch_size = !arg.empty() ? arg[0].batch_size() : 1;
 
   for (const Coordinate& output_coord : output_transform) {
     // TODO(fboemer): batch size
     const auto out_coord_idx = output_transform.index(output_coord);
-    out[out_coord_idx] = HEType(HEPlaintext(std::vector<double>(batch_size, 0)),
-                                complex_packing);
+    out[out_coord_idx] = HEType(HEPlaintext(batch_size, 0), complex_packing);
   }
 
   CoordinateTransform input_transform(in_shape);

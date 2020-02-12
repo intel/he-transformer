@@ -81,8 +81,8 @@ inline void batch_norm_inference_seal(
         channel_beta_vals[0] - (channel_gamma_vals[0] * channel_mean_vals[0]) /
                                    std::sqrt(channel_var_vals[0] + eps);
 
-    HEPlaintext scale_vec(std::vector<double>(batch_size, scale));
-    HEPlaintext bias_vec(std::vector<double>(batch_size, bias));
+    HEPlaintext scale_vec(batch_size, scale);
+    HEPlaintext bias_vec(batch_size, bias);
 
     HEType he_scale(scale_vec, false);
     HEType he_bias(bias_vec, false);

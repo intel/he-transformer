@@ -64,6 +64,22 @@ auto constant_test = [](const bool arg1_encrypted, const bool arg2_encrypted) {
   EXPECT_TRUE(test::all_close(read_vector<float>(t_result), exp_result, 1e-3f));
 };
 
+NGRAPH_TEST(${BACKEND_NAME}, constant_abc_plain_plain) {
+  constant_test(false, false);
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, constant_abc_plain_cipher) {
+  constant_test(false, true);
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, constant_abc_cipher_plain) {
+  constant_test(true, false);
+}
+
+NGRAPH_TEST(${BACKEND_NAME}, constant_abc_cipher_cipher) {
+  constant_test(true, true);
+}
+
 NGRAPH_TEST(${BACKEND_NAME}, constant) {
   auto backend = runtime::Backend::create("${BACKEND_NAME}");
 
@@ -88,20 +104,17 @@ NGRAPH_TEST(${BACKEND_NAME}, constant) {
   }
 }
 
-NGRAPH_TEST(${BACKEND_NAME}, constant_abc_plain_plain) {
-  constant_test(false, false);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, constant_abc_plain_cipher) {
-  constant_test(false, true);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, constant_abc_cipher_plain) {
-  constant_test(true, false);
-}
-
-NGRAPH_TEST(${BACKEND_NAME}, constant_abc_cipher_cipher) {
-  constant_test(true, true);
+NGRAPH_TEST(${BACKEND_NAME}, large_plain_constant) {
+  auto backend = runtime::Backend::create("${BACKEND_NAME}");
+  Shape shape{10000, 1000};
+  auto a = op::Constant::create(element::f32, shape,
+                                std::vector<float>(10000 * 1000, 0.1));
+  auto f = std::make_shared<Function>(a, ParameterVector{});
+  auto result = backend->create_tensor(element::f32, shape);
+  auto handle = backend->compile(f);
+  handle->call_with_validate({result}, {});
+  // EXPECT_TRUE(test::all_close((std::vector<float>{0.1, 0.2, 0.3, 0.4}),
+  //                            read_vector<float>(result)));
 }
 
 }  // namespace ngraph::runtime::he

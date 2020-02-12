@@ -35,8 +35,8 @@ void constant_seal(std::vector<HEType>& out, const element::Type& element_type,
 #pragma omp parallel for
   for (size_t i = 0; i < count; ++i) {
     const void* src = static_cast<const char*>(data_ptr) + i * type_byte_size;
-    auto plaintext =
-        HEPlaintext(std::vector<double>{type_to_double(src, element_type)});
+    auto plaintext = HEPlaintext(
+        std::initializer_list<double>{type_to_double(src, element_type)});
     NGRAPH_CHECK(out[i].is_plaintext(), "Don't support encrypted constants");
     out[i].set_plaintext(plaintext);
   }

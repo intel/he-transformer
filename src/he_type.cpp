@@ -44,7 +44,10 @@ HEType HEType::load(const pb::HEType& pb_he_type,
                     std::shared_ptr<seal::SEALContext> context) {
   if (pb_he_type.is_plaintext()) {
     // TODO(fboemer): HEPlaintext::load function
-    HEPlaintext vals{pb_he_type.plain().begin(), pb_he_type.plain().end()};
+    HEPlaintext vals;
+    for (const auto value : pb_he_type.plain()) {
+      vals.emplace_back(static_cast<double>(value));
+    }
 
     return HEType(vals, pb_he_type.complex_packing());
   }
