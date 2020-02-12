@@ -38,9 +38,6 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
                      std::shared_ptr<SealCiphertextWrapper>& out,
                      const bool complex_packing,
                      HESealBackend& he_seal_backend) {
-  NGRAPH_INFO << "Add seal C+P=>C";
-  NGRAPH_INFO << "arg1 size " << arg1.size();
-
   // TODO(fboemer): handle case where arg1 = {0, 0, 0, 0, ...}
   bool add_zero = (arg1.size() == 0) || (arg1.size() == 1 && arg1[0] == 0.0);
   if (add_zero) {
@@ -74,10 +71,6 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
 
 void scalar_add_seal(const HEPlaintext& arg0, const HEPlaintext& arg1,
                      HEPlaintext& out) {
-  NGRAPH_INFO << "Add seal P+P=>P";
-  NGRAPH_INFO << "arg0 size " << arg0.size();
-  NGRAPH_INFO << "arg1 size " << arg1.size();
-
   HEPlaintext out_vals;
   if (arg0.size() == 1) {
     out_vals.resize(arg1.size());
@@ -95,11 +88,6 @@ void scalar_add_seal(const HEPlaintext& arg0, const HEPlaintext& arg1,
     }
   }
   out = std::move(out_vals);
-
-  NGRAPH_INFO << "Add out plain size " << out.size();
-  for (const auto& elem : out) {
-    NGRAPH_INFO << elem;
-  }
 }
 
 void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
