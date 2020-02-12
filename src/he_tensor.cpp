@@ -57,19 +57,11 @@ HETensor::HETensor(const element::Type& element_type, const Shape& shape,
           : 0;
 
   if (encrypted) {
-    NGRAPH_HE_LOG(1) << "Creating encrypted ensor with batch size "
-                     << get_batch_size();
-    m_data.resize(num_elements, HEType(HESealBackend::create_empty_ciphertext(),
-                                       complex_packing, get_batch_size()));
-
-    // TODO(fboemer): remove below
     for (size_t i = 0; i < num_elements; ++i) {
-      m_data[i] = HEType(HESealBackend::create_empty_ciphertext(),
-                         complex_packing, get_batch_size());
+      m_data.push_back(HEType(HESealBackend::create_empty_ciphertext(),
+                              complex_packing, get_batch_size()));
     }
   } else {
-    NGRAPH_HE_LOG(1) << "Creating HE plain tensor with batch size "
-                     << get_batch_size();
     m_data.resize(num_elements,
                   HEType(HEPlaintext(get_batch_size()), complex_packing));
   }

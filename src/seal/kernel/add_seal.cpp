@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <utility>
 
-#include "logging/ngraph_he_log.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal_util.hpp"
 
@@ -43,18 +42,15 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
   if (add_zero) {
     SealCiphertextWrapper tmp(arg0);
     out = std::make_shared<SealCiphertextWrapper>(tmp);
-    NGRAPH_HE_LOG(1) << "Add zero";
     return;
   }
 
   // TODO(fboemer): optimize for adding single complex number
   if ((arg1.size() == 1) && !complex_packing) {
-    NGRAPH_HE_LOG(1) << "Add scalar";
     add_plain(arg0.ciphertext(), arg1[0], out->ciphertext(), he_seal_backend);
     return;
   }
 
-  NGRAPH_HE_LOG(1) << "Add vec";
   auto p = SealPlaintextWrapper(complex_packing);
   encode(p, arg1, *he_seal_backend.get_ckks_encoder(),
          arg0.ciphertext().parms_id(), element::f32, arg0.ciphertext().scale(),
@@ -123,9 +119,6 @@ void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
     scalar_add_seal(arg0.get_plaintext(), arg1.get_plaintext(),
                     out.get_plaintext());
   }
-
-  NGRAPH_HE_LOG(4) << "arg0.batch_size " << arg0.batch_size();
-  NGRAPH_HE_LOG(4) << "arg1.batch_size " << arg1.batch_size();
 
   if (arg0.batch_size() == 1) {
     out.set_batch_size(arg1.batch_size());

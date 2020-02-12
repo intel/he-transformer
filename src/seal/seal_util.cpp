@@ -512,18 +512,13 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
             seal::CKKSEncoder& ckks_encoder, size_t batch_size,
             double mod_interval) {
-  NGRAPH_HE_LOG(1) << "Decoding to batch size " << batch_size;
   if (input.complex_packing()) {
-    NGRAPH_HE_LOG(1) << "Decoding complex_packing";
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);
-
     complex_vals.resize(2 * batch_size);
     output = complex_vec_to_real_vec<HEPlaintext>(complex_vals);
     output.resize(batch_size);
   } else {
-    NGRAPH_HE_LOG(1) << "Decoding real_packing";
-
     std::vector<double> decoded_vals(batch_size);
     ckks_encoder.decode(input.plaintext(), decoded_vals);
     output.resize(batch_size);

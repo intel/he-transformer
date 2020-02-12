@@ -31,7 +31,7 @@ message("ABSEIL_INCLUDE_DIR ${ABSEIL_INCLUDE_DIR}")
 
 #DCMAKE_CXX_FLAGS="-O2 -Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector-all #-Wall -march=native -Wno-deprecated-declarations -fopenmp=libomp"
 
-set(ABSEIL_CXX_FLAGS "-O2 -Wformat -Wforamt-security")
+set(ABSEIL_CXX_FLAGS "-O2 -Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector-all -march=native")
 
 
 

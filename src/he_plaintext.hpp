@@ -43,10 +43,6 @@ class HEPlaintext : public absl::InlinedVector<double, 1> {
     return std::vector<double>(begin(), end());
   }
 
-  // template <class InputIterator>
-  // HEPlaintext(InputIterator first, InputIterator last)
-  //    : absl::InlinedVector<double, 1>(first, last) {}
-
   HEPlaintext& operator=(const HEPlaintext& v) = default;
 
   HEPlaintext& operator=(HEPlaintext&& v) = default;
