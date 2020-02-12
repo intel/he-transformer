@@ -37,10 +37,18 @@ inline void sum_seal(std::vector<HEType>& arg, std::vector<HEType>& out,
   bool complex_packing = !arg.empty() ? arg[0].complex_packing() : false;
   size_t batch_size = !arg.empty() ? arg[0].batch_size() : 1;
 
+  NGRAPH_HE_LOG(4) << "batch_size " << batch_size;
+
   for (const Coordinate& output_coord : output_transform) {
     // TODO(fboemer): batch size
     const auto out_coord_idx = output_transform.index(output_coord);
     out[out_coord_idx] = HEType(HEPlaintext(batch_size, 0), complex_packing);
+
+    NGRAPH_HE_LOG(5) << "out_coord_idx " << out_coord_idx;
+
+    NGRAPH_HE_LOG(5) << "initialize output to zero, size "
+                     << out[out_coord_idx].get_plaintext().size()
+                     << ", batch size " << out[out_coord_idx].batch_size();
   }
 
   CoordinateTransform input_transform(in_shape);
@@ -50,6 +58,14 @@ inline void sum_seal(std::vector<HEType>& arg, std::vector<HEType>& out,
 
     auto& input = arg[input_transform.index(input_coord)];
     auto& output = out[output_transform.index(output_coord)];
+
+    NGRAPH_HE_LOG(5) << "output_transform.index(output_coord) "
+                     << output_transform.index(output_coord);
+
+    NGRAPH_HE_LOG(5) << "Output size " << output.get_plaintext().size();
+    NGRAPH_HE_LOG(5) << "Output batch size " << output.batch_size();
+
+    NGRAPH_HE_LOG(5) << "calling add seal";
     scalar_add_seal(input, output, output, he_seal_backend);
   }
 }

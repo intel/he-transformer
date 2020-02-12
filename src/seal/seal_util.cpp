@@ -441,6 +441,9 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
             bool complex_packing) {
   const size_t slot_count = ckks_encoder.slot_count();
 
+  NGRAPH_HE_LOG(1) << "Encoding vector size " << plaintext.size();
+  NGRAPH_HE_LOG(1) << "plaintext[0] " << plaintext[0];
+
   switch (element_type.get_type_enum()) {
     case element::Type_t::i32:
     case element::Type_t::i64:
@@ -449,7 +452,7 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
       if (complex_packing) {
         std::vector<std::complex<double>> complex_vals;
         if (plaintext.size() == 1) {
-          std::complex<double> val(plaintext[0], plaintext[0]);
+          std::complex<double> val{plaintext[0], plaintext[0]};
           complex_vals = std::vector<std::complex<double>>(slot_count, val);
         } else {
           complex_vals = real_vec_to_complex_vec(plaintext);
@@ -457,10 +460,12 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
         NGRAPH_CHECK(complex_vals.size() <= slot_count, "Cannot encode ",
                      complex_vals.size(), " elements, maximum size is ",
                      slot_count);
+        NGRAPH_HE_LOG(1) << "Complex vals size " << complex_vals.size();
 
         ckks_encoder.encode(complex_vals, parms_id, scale,
                             destination.plaintext());
       } else {
+        NGRAPH_HE_LOG(1) << "encoding plaintext size " << plaintext.size();
         if (plaintext.size() == 1) {
           ckks_encoder.encode(plaintext[0], parms_id, scale,
                               destination.plaintext());
@@ -498,6 +503,10 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
              seal::CKKSEncoder& ckks_encoder, const seal::Encryptor& encryptor,
              bool complex_packing) {
   auto plaintext = SealPlaintextWrapper(complex_packing);
+
+  for (const auto& elem : input) {
+    NGRAPH_INFO << "Encoding " << elem;
+  }
   encode(plaintext, input, ckks_encoder, parms_id, element_type, scale,
          complex_packing);
   encryptor.encrypt(plaintext.plaintext(), output->ciphertext());

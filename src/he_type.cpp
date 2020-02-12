@@ -48,6 +48,9 @@ HEType HEType::load(const pb::HEType& pb_he_type,
     for (const auto value : pb_he_type.plain()) {
       vals.emplace_back(static_cast<double>(value));
     }
+    for (const auto value : vals) {
+      NGRAPH_INFO << "loading value " << value;
+    }
 
     return HEType(vals, pb_he_type.complex_packing());
   }
@@ -79,7 +82,9 @@ void HEType::set_plaintext(HEPlaintext plain) {
   if (m_cipher != nullptr) {
     m_cipher->ciphertext().release();
   }
-  m_batch_size = plain.size();
+
+  NGRAPH_INFO << "Setting plaintext with batch size " << m_plain.size();
+  m_batch_size = m_plain.size();
 }
 
 }  // namespace ngraph::runtime::he

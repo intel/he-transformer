@@ -57,13 +57,19 @@ HETensor::HETensor(const element::Type& element_type, const Shape& shape,
           : 0;
 
   if (encrypted) {
+    NGRAPH_HE_LOG(1) << "Creating encrypted ensor with batch size "
+                     << get_batch_size();
     m_data.resize(num_elements, HEType(HESealBackend::create_empty_ciphertext(),
                                        complex_packing, get_batch_size()));
+
+    // TODO(fboemer): remove below
     for (size_t i = 0; i < num_elements; ++i) {
       m_data[i] = HEType(HESealBackend::create_empty_ciphertext(),
                          complex_packing, get_batch_size());
     }
   } else {
+    NGRAPH_HE_LOG(1) << "Creating HE plain tensor with batch size "
+                     << get_batch_size();
     m_data.resize(num_elements,
                   HEType(HEPlaintext(get_batch_size()), complex_packing));
   }
@@ -147,9 +153,8 @@ void HETensor::unpack() {
   for (size_t batch_idx = 0; batch_idx < old_batch_size; ++batch_idx) {
     for (auto& data : m_data) {
       auto& plain = data.get_plaintext();
-      new_data.emplace_back(HEPlaintext(std::initializer_list<double>{
-                                static_cast<double>(plain[batch_idx])}),
-                            false);
+      new_data.emplace_back(
+          HEPlaintext({static_cast<double>(plain[batch_idx])}), false);
     }
   }
   m_data = std::move(new_data);

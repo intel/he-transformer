@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "logging/ngraph_he_log.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal_util.hpp"
 
@@ -37,35 +38,46 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
                      std::shared_ptr<SealCiphertextWrapper>& out,
                      const bool complex_packing,
                      HESealBackend& he_seal_backend) {
-  // TODO(fboemer): handle case where arg1 = {0, 0, 0, 0, ...}
-  bool add_zero = (arg1.size() == 1) && (arg1[0] == 0.0);
+  NGRAPH_INFO << "Add seal C+P=>C";
+  NGRAPH_INFO << "arg1 size " << arg1.size();
 
+  // TODO(fboemer): handle case where arg1 = {0, 0, 0, 0, ...}
+  bool add_zero = (arg1.size() == 0) || (arg1.size() == 1 && arg1[0] == 0.0);
   if (add_zero) {
     SealCiphertextWrapper tmp(arg0);
     out = std::make_shared<SealCiphertextWrapper>(tmp);
-  } else {
-    // TODO(fboemer): optimize for adding single complex number
-    if ((arg1.size() == 1) && !complex_packing) {
-      add_plain(arg0.ciphertext(), arg1[0], out->ciphertext(), he_seal_backend);
-    } else {
-      auto p = SealPlaintextWrapper(complex_packing);
-      encode(p, arg1, *he_seal_backend.get_ckks_encoder(),
-             arg0.ciphertext().parms_id(), element::f32,
-             arg0.ciphertext().scale(), complex_packing);
-
-      size_t chain_ind0 = he_seal_backend.get_chain_index(arg0);
-      size_t chain_ind1 = he_seal_backend.get_chain_index(p);
-      NGRAPH_CHECK(chain_ind0 == chain_ind1, "Chain inds ", chain_ind0, ",  ",
-                   chain_ind1, " don't match");
-
-      he_seal_backend.get_evaluator()->add_plain(
-          arg0.ciphertext(), p.plaintext(), out->ciphertext());
-    }
+    NGRAPH_HE_LOG(1) << "Add zero";
+    return;
   }
+
+  // TODO(fboemer): optimize for adding single complex number
+  if ((arg1.size() == 1) && !complex_packing) {
+    NGRAPH_HE_LOG(1) << "Add scalar";
+    add_plain(arg0.ciphertext(), arg1[0], out->ciphertext(), he_seal_backend);
+    return;
+  }
+
+  NGRAPH_HE_LOG(1) << "Add vec";
+  auto p = SealPlaintextWrapper(complex_packing);
+  encode(p, arg1, *he_seal_backend.get_ckks_encoder(),
+         arg0.ciphertext().parms_id(), element::f32, arg0.ciphertext().scale(),
+         complex_packing);
+
+  size_t chain_ind0 = he_seal_backend.get_chain_index(arg0);
+  size_t chain_ind1 = he_seal_backend.get_chain_index(p);
+  NGRAPH_CHECK(chain_ind0 == chain_ind1, "Chain inds ", chain_ind0, ",  ",
+               chain_ind1, " don't match");
+
+  he_seal_backend.get_evaluator()->add_plain(arg0.ciphertext(), p.plaintext(),
+                                             out->ciphertext());
 }
 
 void scalar_add_seal(const HEPlaintext& arg0, const HEPlaintext& arg1,
                      HEPlaintext& out) {
+  NGRAPH_INFO << "Add seal P+P=>P";
+  NGRAPH_INFO << "arg0 size " << arg0.size();
+  NGRAPH_INFO << "arg1 size " << arg1.size();
+
   HEPlaintext out_vals;
   if (arg0.size() == 1) {
     out_vals.resize(arg1.size());
@@ -83,6 +95,11 @@ void scalar_add_seal(const HEPlaintext& arg0, const HEPlaintext& arg1,
     }
   }
   out = std::move(out_vals);
+
+  NGRAPH_INFO << "Add out plain size " << out.size();
+  for (const auto& elem : out) {
+    NGRAPH_INFO << elem;
+  }
 }
 
 void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
@@ -117,6 +134,15 @@ void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
     }
     scalar_add_seal(arg0.get_plaintext(), arg1.get_plaintext(),
                     out.get_plaintext());
+  }
+
+  NGRAPH_HE_LOG(4) << "arg0.batch_size " << arg0.batch_size();
+  NGRAPH_HE_LOG(4) << "arg1.batch_size " << arg1.batch_size();
+
+  if (arg0.batch_size() == 1) {
+    out.set_batch_size(arg1.batch_size());
+  } else {
+    out.set_batch_size(arg0.batch_size());
   }
 }
 

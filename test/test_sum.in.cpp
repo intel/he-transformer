@@ -32,6 +32,10 @@ auto sum_test = [](const Shape& in_shape, const AxisSet& axis_set,
                    const std::vector<float>& input,
                    const std::vector<float>& output, const bool arg1_encrypted,
                    const bool complex_packing, const bool packed) {
+  NGRAPH_INFO << "Sum test: arg1_encrypted " << arg1_encrypted
+              << ", complex_packing " << complex_packing << ", packed "
+              << packed;
+
   auto backend = runtime::Backend::create("${BACKEND_NAME}");
   auto he_backend = static_cast<HESealBackend*>(backend.get());
 

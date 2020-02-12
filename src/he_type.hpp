@@ -21,7 +21,6 @@
 #include "he_plaintext.hpp"
 #include "ngraph/type/element_type.hpp"
 #include "protos/message.pb.h"
-#include "seal/he_seal_backend.hpp"
 #include "seal/seal_ciphertext_wrapper.hpp"
 
 namespace ngraph::runtime::he {
@@ -51,6 +50,8 @@ class HEType {
   bool plaintext_packing() const { return m_batch_size > 1; }
 
   size_t batch_size() const { return m_batch_size; }
+
+  // TODO(fboemer): remove
   void set_batch_size(size_t batch_size) { m_batch_size = batch_size; }
 
   const HEPlaintext& get_plaintext() const { return m_plain; }
@@ -73,7 +74,9 @@ class HEType {
   /// \brief Constructs an empty HEType object
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
   HEType(const bool complex_packing, const size_t batch_size)
-      : m_complex_packing(complex_packing), m_batch_size(batch_size) {}
+      : m_complex_packing(complex_packing), m_batch_size(batch_size) {
+    NGRAPH_HE_LOG(1) << "Creating HEType with bs " << batch_size;
+  }
 
   bool m_is_plain;
   bool m_complex_packing;
