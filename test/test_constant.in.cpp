@@ -113,8 +113,6 @@ NGRAPH_TEST(${BACKEND_NAME}, large_plain_constant) {
   auto result = backend->create_tensor(element::f32, shape);
   auto handle = backend->compile(f);
   handle->call_with_validate({result}, {});
-  // EXPECT_TRUE(test::all_close((std::vector<float>{0.1, 0.2, 0.3, 0.4}),
-  //                            read_vector<float>(result)));
 }
 
 }  // namespace ngraph::runtime::he
