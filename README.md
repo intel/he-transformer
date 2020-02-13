@@ -4,7 +4,7 @@
 
 # HE Transformer for nGraph
 
-The **Intel® HE transformer for nGraph™** is a Homomorphic Encryption (HE) backend to the [**Intel® nGraph Compiler**](https://github.com/NervanaSystems/ngraph), Intel's graph compiler for Artificial Neural Networks.
+The **Intel® HE transformer for nGraph™** is a Homomorphic Encryption (HE) backend to the [**Intel® nGraph Compiler**](https://github.com/IntelAI/ngraph), Intel's graph compiler for Artificial Neural Networks.
 
 Homomorphic encryption is a form of encryption that allows computation on encrypted data, and is an attractive remedy to increasing concerns about data privacy in the field of machine learning. For more information, see our [original paper](https://arxiv.org/pdf/1810.10121.pdf). Our [updated paper](https://arxiv.org/pdf/1908.04172.pdf) showcases many of the recent advances in he-transformer.
 
@@ -15,7 +15,7 @@ Currently, we support the [CKKS](https://eprint.iacr.org/2018/931.pdf) encryptio
 Additionally, we integrate with the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge) to allow users to run inference on trained neural networks through Tensorflow.
 
 ## Examples
-The [examples](https://github.com/NervanaSystems/he-transformer/tree/master/examples) folder contains a deep learning example which depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge).
+The [examples](https://github.com/IntelAI/he-transformer/tree/master/examples) folder contains a deep learning example which depends on the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge).
 
 ## Building HE Transformer
 
@@ -28,7 +28,7 @@ The [examples](https://github.com/NervanaSystems/he-transformer/tree/master/exam
 - virtualenv v16.1.0
 - bazel v0.25.2
 
-For a full list of dependencies, see the [docker containers](https://github.com/NervanaSystems/he-transformer/tree/master/contrib/docker), which build he-transformer on a reference OS.
+For a full list of dependencies, see the [docker containers](https://github.com/IntelAI/he-transformer/tree/master/contrib/docker), which build he-transformer on a reference OS.
 
 #### The following dependencies are built automatically
 - [nGraph](https://github.com/NervanaSystems/ngraph) - v0.28.0-rc.1
@@ -52,7 +52,7 @@ For a full list of dependencies, see the [docker containers](https://github.com/
 ### 1. Build HE-Transformer
 Before building, make sure you deactivate any active virtual environments (i.e. run `deactivate`)
 ```bash
-git clone https://github.com/NervanaSystems/he-transformer.git
+git clone https://github.com/IntelAI/he-transformer.git
 cd he-transformer
 export HE_TRANSFORMER=$(pwd)
 mkdir build
@@ -116,7 +116,7 @@ cd $HE_TRANSFORMER/build
 ```
 
 ### 3. Run python examples
-See [examples/README.md](https://github.com/NervanaSystems/he-transformer/tree/master/examples/README.md) for examples of running he-transformer for deep learning inference on encrypted data.
+See [examples/README.md](https://github.com/IntelAI/he-transformer/tree/master/examples/README.md) for examples of running he-transformer for deep learning inference on encrypted data.
 
 ## Code formatting
 Please run `maint/apply-code-format.sh` before submitting a pull request.

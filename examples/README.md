@@ -26,7 +26,7 @@ python $HE_TRANSFORMER/examples/ax.py \
 # Client-server model
 In a proper deployment setting, the public key and secret key will not be stored in the same location. Instead, a client will store the secret key, and provide the backend with encrypted data.
 
-The client-server model uses python bindings. See the [README.md](https://github.com/NervanaSystems/he-transformer/tree/master/README.md) for instructions to build he-transformer with python bindings.
+The client-server model uses python bindings. See the [README.md](https://github.com/IntelAI/he-transformer/tree/master/README.md) for instructions to build he-transformer with python bindings.
 
 For a simple demonstration of a server-client approach, run
 ```bash

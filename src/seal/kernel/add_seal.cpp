@@ -119,12 +119,6 @@ void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
     scalar_add_seal(arg0.get_plaintext(), arg1.get_plaintext(),
                     out.get_plaintext());
   }
-
-  if (arg0.batch_size() == 1) {
-    out.set_batch_size(arg1.batch_size());
-  } else {
-    out.set_batch_size(arg0.batch_size());
-  }
 }
 
 void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,

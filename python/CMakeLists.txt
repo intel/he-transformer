@@ -42,6 +42,15 @@ install(DIRECTORY ${EXTERNAL_INSTALL_INCLUDE_DIR}/
         PATTERN "*.h"
         PATTERN "*.inc" # For port_def.inc in protobuf
         )
+install(DIRECTORY ${EXTERNAL_INSTALL_LIB_DIR}/
+        DESTINATION ${EXTERNAL_INSTALL_LIB_DIR}
+        FILES_MATCHING
+        PATTERN "*.so"
+        PATTERN "*.a"
+        )
+
+
+
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python/dist/
                    POST_BUILD
                    DEPENDS he_seal_backend

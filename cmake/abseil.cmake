@@ -22,25 +22,14 @@ set(ABSEIL_GIT_TAG master)
 set(ABSEIL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_abseil)
 set(ABSEIL_SRC_DIR ${ABSEIL_PREFIX}/src/)
 set(ABSEIL_INCLUDE_DIR ${ABSEIL_PREFIX}/include)
-
-message("ABSEIL_PREFIX ${ABSEIL_PREFIX}")
-message("CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER}")
-message("CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
-message("EXTERNAL_INSTALL_DIR ${EXTERNAL_INSTALL_DIR}")
-message("ABSEIL_INCLUDE_DIR ${ABSEIL_INCLUDE_DIR}")
-
-#DCMAKE_CXX_FLAGS="-O2 -Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector-all #-Wall -march=native -Wno-deprecated-declarations -fopenmp=libomp"
-
 set(ABSEIL_CXX_FLAGS "-O2 -Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector-all -march=native")
-
-
 
 ExternalProject_Add(ext_abseil
                     PREFIX ${ABSEIL_PREFIX}
                     GIT_REPOSITORY ${ABSEIL_REPO_URL}
                     GIT_TAG ${ABY_GIT_TAG}
                     CMAKE_ARGS -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-                               -DCMAKE_INSTALL_PREFIX=${ABSEIL_PREFIX}
+                               -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
                                -DCMAKE_CXX_FLAGS=${ABSEIL_CXX_FLAGS}
                                -DCMAKE_POSITION_INDEPENDENT_CODE=ON
                                -DCMAKE_CXX_STANDARD=${CMAKE_CXX_STANDARD}

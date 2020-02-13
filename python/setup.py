@@ -254,7 +254,7 @@ setup(
     name="pyhe_client",
     version=__version__,
     author="Intel Corporation",
-    url="https://github.com/NervanaSystems/he-transformer",
+    url="https://github.com/IntelAI/he-transformer",
     description="Client for HE-transformer",
     long_description="",
     ext_modules=ext_modules,

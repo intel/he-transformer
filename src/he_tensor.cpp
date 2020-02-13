@@ -58,8 +58,8 @@ HETensor::HETensor(const element::Type& element_type, const Shape& shape,
 
   if (encrypted) {
     for (size_t i = 0; i < num_elements; ++i) {
-      m_data.push_back(HEType(HESealBackend::create_empty_ciphertext(),
-                              complex_packing, get_batch_size()));
+      m_data.emplace_back(HESealBackend::create_empty_ciphertext(),
+                          complex_packing, get_batch_size());
     }
   } else {
     m_data.resize(num_elements,

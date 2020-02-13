@@ -51,9 +51,6 @@ class HEType {
 
   size_t batch_size() const { return m_batch_size; }
 
-  // TODO(fboemer): remove
-  void set_batch_size(size_t batch_size) { m_batch_size = batch_size; }
-
   const HEPlaintext& get_plaintext() const { return m_plain; }
   HEPlaintext& get_plaintext() { return m_plain; }
 
