@@ -204,11 +204,11 @@ TEST(perf_micro, encode) {
                 << "\n";
   };
 
-  std::vector<size_t> poly_modulus_degrees{4096, 8192, 16384};
+  std::vector<size_t> poly_modulus_degrees{4096, 8192};  //, 16384};
 
   // Bit-widths of default BFV parameters
   std::vector<std::vector<int>> coeff_modulus_bits{
-      {36, 37}, {30, 30, 30, 30}, {30, 30, 30, 30, 30, 30, 30, 30, 30}};
+      {36, 37}, {30, 30, 30, 30}};  // , {30, 30, 30, 30, 30, 30, 30, 30, 30}};
 
   for (size_t parm_ind = 0; parm_ind < poly_modulus_degrees.size();
        ++parm_ind) {

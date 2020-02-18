@@ -195,7 +195,12 @@ class HESealBackend : public runtime::Backend {
   }
 
   /// \brief Returns pointer to Galois keys
-  const std::shared_ptr<seal::GaloisKeys> get_galois_keys() const {
+  const std::shared_ptr<seal::GaloisKeys> get_galois_keys() {
+    // TODO(fboemer): make thread-safe
+    if (m_galois_keys == nullptr) {
+      m_galois_keys =
+          std::make_shared<seal::GaloisKeys>(m_keygen->galois_keys());
+    }
     return m_galois_keys;
   }
 
@@ -209,7 +214,7 @@ class HESealBackend : public runtime::Backend {
     return m_decryptor;
   }
 
-  /// \brief Retursn a pointer to evaluator
+  /// \brief Returns a pointer to evaluator
   const std::shared_ptr<seal::Evaluator> get_evaluator() const {
     return m_evaluator;
   }
