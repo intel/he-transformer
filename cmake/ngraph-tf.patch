@@ -1,0 +1,13 @@
+diff --git a/python/ngraph_bridge/__init__.in.py b/python/ngraph_bridge/__init__.in.py
+index 0db5c524..649d7901 100644
+--- a/python/ngraph_bridge/__init__.in.py
++++ b/python/ngraph_bridge/__init__.in.py
+@@ -140,7 +140,7 @@ if ngraph_classic_loaded:
+         # Importing plaidml.settings -- if it exists -- will have read the
+         # user's settings and configured the runtime environment
+         # appropriately.
+-    except ImportError:
++    except:
+         pass
+ 
+ 
