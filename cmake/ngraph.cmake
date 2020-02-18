@@ -57,5 +57,5 @@ set_target_properties(
     IMPORTED_LOCATION
     ${EXTERNAL_INSTALL_LIB_DIR}/libngraph_test_util.a
   )
-target_include_directories(libngraph_test_util SYSTEM
+target_include_directories(libngraph_test_util
   INTERFACE ${NGRAPH_TEST_INCLUDE_DIR}/)
