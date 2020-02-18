@@ -27,7 +27,8 @@ set(NGRAPH_SRC_DIR
 set(NGRAPH_BUILD_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX}-build)
 
- message("NGRAPH_BUILD_DIR ${NGRAPH_BUILD_DIR}")
+message("NGRAPH_BUILD_DIR ${NGRAPH_BUILD_DIR}")
+message("NGRAPH_SRC_DIR ${NGRAPH_SRC_DIR}")
 
 ExternalProject_Add(ext_ngraph
                     GIT_REPOSITORY ${NGRAPH_REPO_URL}
@@ -44,7 +45,7 @@ add_library(libngraph SHARED IMPORTED)
 add_dependencies(libngraph ext_ngraph)
 
 target_include_directories(libngraph SYSTEM
-                           INTERFACE ${EXTERNAL_INSTALL_INCLUDE_DIR})
+                           INTERFACE ${NGRAPH_SRC_DIR}/src)
 set_target_properties(libngraph
                       PROPERTIES IMPORTED_LOCATION
                       ${NGRAPH_BUILD_DIR}/src/ngraph/libngraph.so)
