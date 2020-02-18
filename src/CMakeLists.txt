@@ -82,10 +82,11 @@ target_link_libraries(he_seal_backend
                       PUBLIC libjson
                              libboost
                              libseal
-                             libngraph_tf
+                             libngraph
+                             #libngraph_tf
                              protobuf::libprotobuf
                              generated_pb_files
-                             ngraph)
+                             )
 if (NGRAPH_HE_ABY_ENABLE)
         target_link_libraries(he_seal_backend PUBLIC libaby)
 endif()

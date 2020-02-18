@@ -59,9 +59,11 @@ ExternalProject_Add(ext_zlib
 )
 
 add_library(zlib STATIC IMPORTED)
-  set_target_properties(zlib
+set_target_properties(zlib
                         PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.a)
-  add_dependencies(zlib ext_zlib)
+add_dependencies(zlib ext_zlib)
+
+message("EXTERNAL_INSTALL_DIR ${EXTERNAL_INSTALL_DIR}")
 
 ExternalProject_Add(
   ext_seal
@@ -76,8 +78,10 @@ ExternalProject_Add(
                     -DCMAKE_CXX_FLAGS=${SEAL_CXX_FLAGS}
                     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                     -DSEAL_USE_CXX17=ON
                     -DZLIB_ROOT=${ZLIB_PREFIX}
+                    -DCMAKE_INSTALL_LIBDIR=${EXTERNAL_INSTALL_LIB_DIR}
   PATCH_COMMAND ${SEAL_PATCH_COMMAND}
   # Skip updates
   UPDATE_COMMAND ""
