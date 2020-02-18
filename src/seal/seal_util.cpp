@@ -441,9 +441,6 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
             bool complex_packing) {
   const size_t slot_count = ckks_encoder.slot_count();
 
-  NGRAPH_HE_LOG(1) << "Encoding vector size " << plaintext.size();
-  NGRAPH_HE_LOG(1) << "plaintext[0] " << plaintext[0];
-
   switch (element_type.get_type_enum()) {
     case element::Type_t::i32:
     case element::Type_t::i64:
@@ -460,12 +457,9 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
         NGRAPH_CHECK(complex_vals.size() <= slot_count, "Cannot encode ",
                      complex_vals.size(), " elements, maximum size is ",
                      slot_count);
-        NGRAPH_HE_LOG(1) << "Complex vals size " << complex_vals.size();
-
         ckks_encoder.encode(complex_vals, parms_id, scale,
                             destination.plaintext());
       } else {
-        NGRAPH_HE_LOG(1) << "encoding plaintext size " << plaintext.size();
         if (plaintext.size() == 1) {
           ckks_encoder.encode(plaintext[0], parms_id, scale,
                               destination.plaintext());

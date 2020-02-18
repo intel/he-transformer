@@ -21,7 +21,6 @@ set(ABSEIL_REPO_URL https://github.com/abseil/abseil-cpp.git)
 set(ABSEIL_GIT_TAG master)
 set(ABSEIL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_abseil)
 set(ABSEIL_SRC_DIR ${ABSEIL_PREFIX}/src/)
-set(ABSEIL_INCLUDE_DIR ${ABSEIL_PREFIX}/include)
 set(ABSEIL_CXX_FLAGS "-O2 -Wformat -Wformat-security -D_FORTIFY_SOURCE=2 -fstack-protector-all -march=native")
 
 ExternalProject_Add(ext_abseil
@@ -36,5 +35,5 @@ ExternalProject_Add(ext_abseil
                     UPDATE_COMMAND "")
 
 add_library(libabseil INTERFACE)
-target_include_directories(libabseil SYSTEM INTERFACE ${ABSEIL_INCLUDE_DIR})
+target_include_directories(libabseil SYSTEM INTERFACE ${EXTERNAL_INSTALL_INCLUDE_DIR})
 add_dependencies(libabseil ext_abseil)
