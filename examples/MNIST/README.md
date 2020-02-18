@@ -79,7 +79,7 @@ python pyclient_mnist.py --batch_size=1024 \
 ```
 
 ### Multi-party computation with garbled circuits (GC)
-To test the network using garbled circuits for secure computation of activations, make sure he-transformer was configured using `-DNGRAPH_HE_ABY_ENABLE=ON`. Then, install the [python client](https://github.com/NervanaSystems/he-transformer/tree/master/python). In one terminal, run
+To test the network using garbled circuits for secure computation of activations, make sure he-transformer was configured using `-DNGRAPH_HE_ABY_ENABLE=ON`. Then, install the [python client](https://github.com/IntelAI/he-transformer/tree/master/python). In one terminal, run
 ```bash
 OMP_NUM_THREADS=24 \
 NGRAPH_HE_VERBOSE_OPS=all \

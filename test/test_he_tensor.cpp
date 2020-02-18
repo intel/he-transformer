@@ -95,8 +95,10 @@ TEST(he_tensor, unpack) {
   HETensor plain(element::f32, shape, true, false, false, *he_backend);
   std::vector<HEType> elements;
 
-  elements.emplace_back(HEPlaintext(std::vector<double>{0, 1}), false);
-  elements.emplace_back(HEPlaintext(std::vector<double>{2, 3}), false);
+  elements.emplace_back(HEPlaintext(std::initializer_list<double>{0, 1}),
+                        false);
+  elements.emplace_back(HEPlaintext(std::initializer_list<double>{2, 3}),
+                        false);
   plain.data() = elements;
   plain.unpack();
 

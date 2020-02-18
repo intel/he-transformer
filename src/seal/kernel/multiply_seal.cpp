@@ -115,9 +115,12 @@ void scalar_multiply_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
   // TODO(fboemer): check if abs(values) < scale?
   if (std::all_of(arg1.begin(), arg1.end(),
                   [](double f) { return std::abs(f) < 1e-5f; })) {
-    HEPlaintext zeros({std::vector<double>(arg1.size(), 0)});
+    HEPlaintext zeros(arg1.size(), 0);
     out.set_plaintext(zeros);
-  } else if (arg1.size() == 1) {
+    return;
+  }
+
+  if (arg1.size() == 1) {
     if (!out.is_ciphertext()) {
       auto empty_cipher = HESealBackend::create_empty_ciphertext();
       out.set_ciphertext(empty_cipher);
@@ -128,36 +131,37 @@ void scalar_multiply_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
     if (out.get_ciphertext()->ciphertext().is_transparent()) {
       out.set_plaintext(HEPlaintext(arg1.size(), 0));
     }
-  } else {
-    if (!out.is_ciphertext()) {
-      auto empty_cipher = HESealBackend::create_empty_ciphertext();
-      out.set_ciphertext(empty_cipher);
-    }
+    return;
+  }
 
-    // Never complex-pack for multiplication
-    auto p = SealPlaintextWrapper(false);
-    encode(p, arg1, *he_seal_backend.get_ckks_encoder(),
-           arg0.ciphertext().parms_id(), element::f32,
-           arg0.ciphertext().scale(), false);
+  if (!out.is_ciphertext()) {
+    auto empty_cipher = HESealBackend::create_empty_ciphertext();
+    out.set_ciphertext(empty_cipher);
+  }
 
-    size_t chain_ind0 = he_seal_backend.get_chain_index(arg0);
-    size_t chain_ind1 = he_seal_backend.get_chain_index(p);
+  // Never complex-pack for multiplication
+  auto p = SealPlaintextWrapper(false);
+  encode(p, arg1, *he_seal_backend.get_ckks_encoder(),
+         arg0.ciphertext().parms_id(), element::f32, arg0.ciphertext().scale(),
+         false);
 
-    NGRAPH_CHECK(chain_ind0 == chain_ind1, "Chain_ind0 ", chain_ind0,
-                 " != chain_ind1 ", chain_ind1);
-    NGRAPH_CHECK(chain_ind0 > 0, "Multiplicative depth exceeded for arg0");
-    NGRAPH_CHECK(chain_ind1 > 0, "Multiplicative depth exceeded for arg1");
+  size_t chain_ind0 = he_seal_backend.get_chain_index(arg0);
+  size_t chain_ind1 = he_seal_backend.get_chain_index(p);
 
-    try {
-      he_seal_backend.get_evaluator()->multiply_plain(
-          arg0.ciphertext(), p.plaintext(), out.get_ciphertext()->ciphertext(),
-          pool);
-    } catch (const std::exception& e) {
-      NGRAPH_ERR << "Error multiplying plain " << e.what();
-      NGRAPH_ERR << "arg1->values().size() " << arg1.size();
-      NGRAPH_ERR << "arg1 " << arg1;
-      throw ngraph_error("Error multiplying plain");
-    }
+  NGRAPH_CHECK(chain_ind0 == chain_ind1, "Chain_ind0 ", chain_ind0,
+               " != chain_ind1 ", chain_ind1);
+  NGRAPH_CHECK(chain_ind0 > 0, "Multiplicative depth exceeded for arg0");
+  NGRAPH_CHECK(chain_ind1 > 0, "Multiplicative depth exceeded for arg1");
+
+  try {
+    he_seal_backend.get_evaluator()->multiply_plain(
+        arg0.ciphertext(), p.plaintext(), out.get_ciphertext()->ciphertext(),
+        pool);
+  } catch (const std::exception& e) {
+    NGRAPH_ERR << "Error multiplying plain " << e.what();
+    NGRAPH_ERR << "arg1->values().size() " << arg1.size();
+    NGRAPH_ERR << "arg1 " << arg1;
+    throw ngraph_error("Error multiplying plain");
   }
 }
 
@@ -215,12 +219,6 @@ void scalar_multiply_seal(HEType& arg0, HEType& arg1, HEType& out,
                          out.get_plaintext());
   }
   out.complex_packing() = arg0.complex_packing();
-
-  if (arg0.batch_size() == 1) {
-    out.set_batch_size(arg1.batch_size());
-  } else {
-    out.set_batch_size(arg0.batch_size());
-  }
 }
 
 void multiply_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,

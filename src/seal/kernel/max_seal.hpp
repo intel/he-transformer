@@ -38,8 +38,8 @@ inline void max_seal(const std::vector<HEType>& arg, std::vector<HEType>& out,
                      seal::Encryptor& encryptor, seal::Decryptor& decryptor,
                      std::shared_ptr<seal::SEALContext> context) {
   std::vector<HEPlaintext> out_plain(
-      out.size(), HEPlaintext(std::vector<double>(
-                      batch_size, -std::numeric_limits<double>::infinity())));
+      out.size(),
+      HEPlaintext(batch_size, -std::numeric_limits<double>::infinity()));
 
   CoordinateTransform output_transform(out_shape);
   CoordinateTransform input_transform(in_shape);

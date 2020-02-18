@@ -137,7 +137,7 @@ inline void avg_pool_seal(std::vector<HEType>& arg, std::vector<HEType>& out,
         if (first_add) {
           sum = arg[input_batch_transform.index(input_batch_coord)];
           // TODO(fboemer): batch size number of zeros?
-          HEPlaintext zero(std::vector<double>{0});
+          HEPlaintext zero(std::initializer_list<double>{0});
           out[out_coord_idx].set_plaintext(zero);
           first_add = false;
         } else {
@@ -154,7 +154,7 @@ inline void avg_pool_seal(std::vector<HEType>& arg, std::vector<HEType>& out,
 
     // TODO(fboemer): batch size number of zeros?
     auto inv_n_elements =
-        HEType(HEPlaintext(std::vector<double>{1.f / n_elements}),
+        HEType(HEPlaintext(std::initializer_list<double>{1.f / n_elements}),
                sum.complex_packing());
 
     scalar_multiply_seal(sum, inv_n_elements, sum, he_seal_backend);

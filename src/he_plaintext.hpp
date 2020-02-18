@@ -19,32 +19,33 @@
 #include <ostream>
 #include <vector>
 
+#include "absl/container/inlined_vector.h"
 #include "ngraph/type/element_type.hpp"
 
 namespace ngraph::runtime::he {
 /// \brief Class representing a plaintext value
-class HEPlaintext : public std::vector<double> {
+
+class HEPlaintext : public absl::InlinedVector<double, 1> {
  public:
   HEPlaintext() = default;
   ~HEPlaintext() = default;
   HEPlaintext(const HEPlaintext& plain) = default;
   HEPlaintext(HEPlaintext&& plain) = default;
 
-  HEPlaintext(const std::initializer_list<double>& values);
+  HEPlaintext(std::initializer_list<double> values)
+      : absl::InlinedVector<double, 1>(values) {}
 
-  explicit HEPlaintext(const std::vector<double>& values);
+  explicit HEPlaintext(size_t n, double initial_value = 0)
+      : absl::InlinedVector<double, 1>(n, initial_value) {}
 
-  explicit HEPlaintext(std::vector<double>&& values);
+  // TODO(fboemer): patch SEAL ckks_encoder to encode/decode on iterators
+  std::vector<double> as_double_vec() const {
+    return std::vector<double>(begin(), end());
+  }
 
-  explicit HEPlaintext(size_t n, double initial_value = 0);
+  HEPlaintext& operator=(const HEPlaintext& v) = default;
 
-  template <class InputIterator>
-  HEPlaintext(InputIterator first, InputIterator last)
-      : std::vector<double>(first, last) {}
-
-  HEPlaintext& operator=(const HEPlaintext& v);
-
-  HEPlaintext& operator=(HEPlaintext&& v) noexcept;
+  HEPlaintext& operator=(HEPlaintext&& v) = default;
 
   /// \brief Writes the plaintext to the target as a vector of type
   void write(void* target, const element::Type& element_type);

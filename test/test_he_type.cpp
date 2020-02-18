@@ -37,7 +37,8 @@ TEST(he_type, plain) {
     EXPECT_FALSE(he_type.complex_packing());
     EXPECT_TRUE(he_type.plaintext_packing());
     EXPECT_EQ(he_type.batch_size(), 3);
-    EXPECT_TRUE(test::all_close(plain, he_type.get_plaintext()));
+    EXPECT_TRUE(test::all_close(plain.as_double_vec(),
+                                he_type.get_plaintext().as_double_vec()));
 
     he_type.set_ciphertext(nullptr);
     EXPECT_FALSE(he_type.is_plaintext());
@@ -52,7 +53,8 @@ TEST(he_type, plain) {
     EXPECT_TRUE(he_type.complex_packing());
     EXPECT_FALSE(he_type.plaintext_packing());
     EXPECT_EQ(he_type.batch_size(), 1);
-    EXPECT_TRUE(test::all_close(plain, he_type.get_plaintext()));
+    EXPECT_TRUE(test::all_close(plain.as_double_vec(),
+                                he_type.get_plaintext().as_double_vec()));
 
     he_type.set_ciphertext(nullptr);
     EXPECT_FALSE(he_type.is_plaintext());
@@ -118,8 +120,8 @@ TEST(he_type, save_load) {
     EXPECT_EQ(loaded_he_type.complex_packing(), he_type.complex_packing());
     EXPECT_EQ(loaded_he_type.batch_size(), he_type.batch_size());
 
-    EXPECT_TRUE(test::all_close(loaded_he_type.get_plaintext(),
-                                he_type.get_plaintext()));
+    EXPECT_TRUE(test::all_close(loaded_he_type.get_plaintext().as_double_vec(),
+                                he_type.get_plaintext().as_double_vec()));
   }
   {
     HEPlaintext plain{7};
@@ -141,8 +143,8 @@ TEST(he_type, save_load) {
     EXPECT_EQ(loaded_he_type.complex_packing(), he_type.complex_packing());
     EXPECT_EQ(loaded_he_type.batch_size(), he_type.batch_size());
 
-    EXPECT_TRUE(test::all_close(loaded_he_type.get_plaintext(),
-                                he_type.get_plaintext()));
+    EXPECT_TRUE(test::all_close(loaded_he_type.get_plaintext().as_double_vec(),
+                                he_type.get_plaintext().as_double_vec()));
   }
 }
 

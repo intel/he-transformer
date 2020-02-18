@@ -31,17 +31,6 @@
 
 namespace ngraph::runtime::he {
 
-std::vector<double> complex_vec_to_real_vec(
-    const std::vector<std::complex<double>>& input) {
-  std::vector<double> output;
-  output.reserve(input.size() * 2);
-  for (const std::complex<double>& value : input) {
-    output.emplace_back(value.real());
-    output.emplace_back(value.imag());
-  }
-  return output;
-}
-
 std::vector<std::complex<double>> real_vec_to_complex_vec(
     const std::vector<double>& input) {
   std::vector<std::complex<double>> output;
