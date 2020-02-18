@@ -32,8 +32,6 @@ ExternalProject_Add(ext_zlib
     UPDATE_COMMAND    ""
 )
 
-message("ZLIB_LIB_DIR ${ZLIB_LIB_DIR}")
-
 add_library(zlib SHARED IMPORTED)
   set_target_properties(zlib
                         PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.so)
