@@ -83,6 +83,7 @@ target_link_libraries(he_seal_backend
                              libboost
                              libseal
                              libngraph
+                             libabseil
                              protobuf::libprotobuf
                              generated_pb_files
                              )

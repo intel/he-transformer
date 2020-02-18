@@ -449,7 +449,7 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
       if (complex_packing) {
         std::vector<std::complex<double>> complex_vals;
         if (plaintext.size() == 1) {
-          std::complex<double> val(plaintext[0], plaintext[0]);
+          std::complex<double> val{plaintext[0], plaintext[0]};
           complex_vals = std::vector<std::complex<double>>(slot_count, val);
         } else {
           complex_vals = real_vec_to_complex_vec(plaintext);
@@ -457,7 +457,6 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
         NGRAPH_CHECK(complex_vals.size() <= slot_count, "Cannot encode ",
                      complex_vals.size(), " elements, maximum size is ",
                      slot_count);
-
         ckks_encoder.encode(complex_vals, parms_id, scale,
                             destination.plaintext());
       } else {
@@ -468,7 +467,7 @@ void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
           NGRAPH_CHECK(plaintext.size() <= slot_count, "Cannot encode ",
                        plaintext.size(), " elements, maximum size is ",
                        slot_count);
-          ckks_encoder.encode(plaintext, parms_id, scale,
+          ckks_encoder.encode(plaintext.as_double_vec(), parms_id, scale,
                               destination.plaintext());
         }
       }
@@ -498,6 +497,7 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
              seal::CKKSEncoder& ckks_encoder, const seal::Encryptor& encryptor,
              bool complex_packing) {
   auto plaintext = SealPlaintextWrapper(complex_packing);
+
   encode(plaintext, input, ckks_encoder, parms_id, element_type, scale,
          complex_packing);
   encryptor.encrypt(plaintext.plaintext(), output->ciphertext());
@@ -509,11 +509,17 @@ void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
   if (input.complex_packing()) {
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);
-    output = HEPlaintext(complex_vec_to_real_vec(complex_vals));
+    complex_vals.resize(2 * batch_size);
+    output = complex_vec_to_real_vec<HEPlaintext>(complex_vals);
+    output.resize(batch_size);
   } else {
-    ckks_encoder.decode(input.plaintext(), output);
+    std::vector<double> decoded_vals(batch_size);
+    ckks_encoder.decode(input.plaintext(), decoded_vals);
+    output.resize(batch_size);
+    for (size_t i = 0; i < batch_size; ++i) {
+      output[i] = decoded_vals[i];
+    }
   }
-  output.resize(batch_size);
 
 #ifdef NGRAPH_HE_ABY_ENABLE
   for (size_t i = 0; i < output.size(); ++i) {

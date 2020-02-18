@@ -24,49 +24,16 @@
 
 namespace ngraph::runtime::he {
 
-TEST(he_plaintext, initialize) {
-  {
-    std::initializer_list<double> data{1, 2, 3};
-    HEPlaintext plain(std::move(data));
-    EXPECT_EQ(plain.size(), 3);
-    EXPECT_DOUBLE_EQ(plain[0], 1.0);
-    EXPECT_DOUBLE_EQ(plain[1], 2.0);
-    EXPECT_DOUBLE_EQ(plain[2], 3.0);
-  }
-  {
-    std::vector<double> data{1, 2, 3};
-    HEPlaintext plain(std::move(data));
-    EXPECT_EQ(plain.size(), 3);
-    EXPECT_DOUBLE_EQ(plain[0], 1.0);
-    EXPECT_DOUBLE_EQ(plain[1], 2.0);
-    EXPECT_DOUBLE_EQ(plain[2], 3.0);
-  }
-  {
-    std::vector<double> data{1, 2, 3};
-    HEPlaintext plain(data);
-    EXPECT_EQ(plain.size(), 3);
-    EXPECT_DOUBLE_EQ(plain[0], 1.0);
-    EXPECT_DOUBLE_EQ(plain[1], 2.0);
-    EXPECT_DOUBLE_EQ(plain[2], 3.0);
-  }
-  {
-    HEPlaintext plain(3, 1);
-    EXPECT_EQ(plain.size(), 3);
-    EXPECT_DOUBLE_EQ(plain[0], 1.0);
-    EXPECT_DOUBLE_EQ(plain[1], 1.0);
-    EXPECT_DOUBLE_EQ(plain[2], 1.0);
-  }
-}
-
 TEST(he_plaintext, write) {
+  std::vector<double> data{1, 2, 3};
   HEPlaintext plain{1, 2, 3};
   {
     auto type = element::f32;
     auto src = static_cast<char*>(ngraph_malloc(plain.size() * type.size()));
     plain.write(src, type);
-    HEPlaintext dest{reinterpret_cast<float*>(src),
-                     reinterpret_cast<float*>(src) + plain.size()};
-    EXPECT_TRUE(test::all_close(dest, plain));
+    std::vector<float> fl_write(reinterpret_cast<float*>(src),
+                                reinterpret_cast<float*>(src) + plain.size());
+    EXPECT_TRUE(test::all_close(std::vector<float>{1, 2, 3}, fl_write));
     ngraph_free(src);
   }
 
@@ -74,9 +41,9 @@ TEST(he_plaintext, write) {
     auto type = element::f64;
     auto src = static_cast<char*>(ngraph_malloc(plain.size() * type.size()));
     plain.write(src, type);
-    HEPlaintext dest{reinterpret_cast<double*>(src),
-                     reinterpret_cast<double*>(src) + plain.size()};
-    EXPECT_TRUE(test::all_close(dest, plain));
+    std::vector<double> fl_write(reinterpret_cast<double*>(src),
+                                 reinterpret_cast<double*>(src) + plain.size());
+    EXPECT_TRUE(test::all_close(std::vector<double>{1, 2, 3}, fl_write));
     ngraph_free(src);
   }
 
@@ -84,9 +51,10 @@ TEST(he_plaintext, write) {
     auto type = element::i32;
     auto src = static_cast<char*>(ngraph_malloc(plain.size() * type.size()));
     plain.write(src, type);
-    HEPlaintext dest{reinterpret_cast<int32_t*>(src),
-                     reinterpret_cast<int32_t*>(src) + plain.size()};
-    EXPECT_TRUE(test::all_close(dest, plain));
+    std::vector<int32_t> fl_write(
+        reinterpret_cast<int32_t*>(src),
+        reinterpret_cast<int32_t*>(src) + plain.size());
+    EXPECT_TRUE(test::all_close(std::vector<int32_t>{1, 2, 3}, fl_write));
     ngraph_free(src);
   }
 
@@ -94,9 +62,10 @@ TEST(he_plaintext, write) {
     auto type = element::i64;
     auto src = static_cast<char*>(ngraph_malloc(plain.size() * type.size()));
     plain.write(src, type);
-    HEPlaintext dest{reinterpret_cast<int64_t*>(src),
-                     reinterpret_cast<int64_t*>(src) + plain.size()};
-    EXPECT_TRUE(test::all_close(dest, plain));
+    std::vector<int64_t> fl_write(
+        reinterpret_cast<int64_t*>(src),
+        reinterpret_cast<int64_t*>(src) + plain.size());
+    EXPECT_TRUE(test::all_close(std::vector<int64_t>{1, 2, 3}, fl_write));
     ngraph_free(src);
   }
 
@@ -113,6 +82,12 @@ TEST(he_plaintext, write) {
   EXPECT_ANY_THROW(plain.write(src, element::dynamic));
   EXPECT_ANY_THROW(plain.write(src, element::boolean));
   ngraph_free(src);
+}
+
+TEST(he_plaintext, as_double_vec) {
+  std::vector<double> data{1, 2, 3};
+  HEPlaintext plain{1, 2, 3};
+  EXPECT_TRUE(test::all_close(data, plain.as_double_vec()));
 }
 
 TEST(he_plaintext, ostream) {

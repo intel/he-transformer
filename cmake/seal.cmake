@@ -16,34 +16,7 @@
 
 include(ExternalProject)
 
-set(SEAL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_seal)
-set(SEAL_SRC_DIR ${SEAL_PREFIX}/src/ext_seal/native/src)
-set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
-set(SEAL_GIT_TAG 3.4.5)
-if (NGRAPH_HE_ABY_ENABLE)
-  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.aby_patch)
-else()
-  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
-endif()
-
-set(SEAL_PATCH_COMMAND git apply ${SEAL_PATCH})
-
-# Without these, SEAL's globals.cpp will be deallocated twice, once by
-# he_seal_backend, which loads libseal.a, and once by the global destructor.
-set(SEAL_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
-  add_compile_options(-Wno-undef)
-  add_compile_options(-Wno-newline-eof)
-  add_compile_options(-Wno-reserved-id-macro)
-  add_compile_options(-Wno-documentation)
-  add_compile_options(-Wno-documentation-unknown-command)
-  add_compile_options(-Wno-inconsistent-missing-destructor-override)
-  add_compile_options(-Wno-extra-semi)
-  add_compile_options(-Wno-old-style-cast)
-endif()
-
-
+# Zlib
 set(ZLIB_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_zlib)
 set(ZLIB_SRC_DIR ${ZLIB_PREFIX}/src)
 set(ZLIB_LIB_DIR ${ZLIB_SRC_DIR}/ext_zlib-build)
@@ -63,6 +36,33 @@ set_target_properties(zlib
                         PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.a)
 add_dependencies(zlib ext_zlib)
 
+# SEAL
+set(SEAL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_seal)
+set(SEAL_SRC_DIR ${SEAL_PREFIX}/src/ext_seal/native/src)
+set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
+set(SEAL_GIT_TAG 3.4.5)
+if (NGRAPH_HE_ABY_ENABLE)
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.aby_patch)
+else()
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
+endif()
+
+# Without these, SEAL's globals.cpp will be deallocated twice, once by
+# he_seal_backend, which loads libseal.a, and once by the global destructor.
+set(SEAL_CXX_FLAGS
+    "${CMAKE_CXX_FLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
+  add_compile_options(-Wno-undef)
+  add_compile_options(-Wno-newline-eof)
+  add_compile_options(-Wno-reserved-id-macro)
+  add_compile_options(-Wno-documentation)
+  add_compile_options(-Wno-documentation-unknown-command)
+  add_compile_options(-Wno-inconsistent-missing-destructor-override)
+  add_compile_options(-Wno-extra-semi)
+  add_compile_options(-Wno-old-style-cast)
+endif()
+
+
 ExternalProject_Add(
   ext_seal
   GIT_REPOSITORY ${SEAL_REPO_URL}
@@ -81,7 +81,7 @@ ExternalProject_Add(
                     -DZLIB_ROOT=${ZLIB_PREFIX}
                     -DCMAKE_INSTALL_LIBDIR=${EXTERNAL_INSTALL_LIB_DIR}
                     -DCMAKE_INSTALL_INCLUDEDIR=${EXTERNAL_INSTALL_INCLUDE_DIR}
-  PATCH_COMMAND ${SEAL_PATCH_COMMAND}
+  PATCH_COMMAND git apply ${SEAL_PATCH}
   # Skip updates
   UPDATE_COMMAND ""
 )

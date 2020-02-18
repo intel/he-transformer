@@ -47,16 +47,35 @@ enum class OP_TYPEID {
 /// (a+bi, c+di) => (a,b,c,d)
 /// \param[in] input Vector of complex values to unpack
 /// \returns Vector storing unpacked real values
-std::vector<double> complex_vec_to_real_vec(
-    const std::vector<std::complex<double>>& input);
+template <typename VecType = std::vector<double>>
+VecType complex_vec_to_real_vec(
+    const std::vector<std::complex<double>>& input) {
+  VecType output;
+  output.reserve(input.size() * 2);
+  for (const std::complex<double>& value : input) {
+    output.emplace_back(value.real());
+    output.emplace_back(value.imag());
+  }
+  return output;
+}
 
-/// \brief Packs elements of input into complex values
-/// (a,b,c,d) => (a+bi, c+di)
-/// (a,b,c) => (a+bi, c+0i)
-/// \param[in] input Vector of real values to unpack
-/// \returns Vector storing packed complex values
+template <typename VecType>
 std::vector<std::complex<double>> real_vec_to_complex_vec(
-    const std::vector<double>& input);
+    const VecType& input) {
+  std::vector<std::complex<double>> output;
+  output.reserve(input.size() / 2);
+  std::vector<double> complex_parts(2, 0);
+  for (size_t i = 0; i < input.size(); ++i) {
+    complex_parts[i % 2] = input[i];
+
+    if (i % 2 == 1 || i == input.size() - 1) {
+      output.emplace_back(
+          std::complex<double>(complex_parts[0], complex_parts[1]));
+      complex_parts = {0, 0};
+    }
+  }
+  return output;
+}
 
 template <typename T>
 inline std::unordered_map<std::string,

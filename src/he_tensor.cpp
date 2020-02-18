@@ -57,11 +57,9 @@ HETensor::HETensor(const element::Type& element_type, const Shape& shape,
           : 0;
 
   if (encrypted) {
-    m_data.resize(num_elements, HEType(HESealBackend::create_empty_ciphertext(),
-                                       complex_packing, get_batch_size()));
     for (size_t i = 0; i < num_elements; ++i) {
-      m_data[i] = HEType(HESealBackend::create_empty_ciphertext(),
-                         complex_packing, get_batch_size());
+      m_data.emplace_back(HESealBackend::create_empty_ciphertext(),
+                          complex_packing, get_batch_size());
     }
   } else {
     m_data.resize(num_elements,
