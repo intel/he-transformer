@@ -39,3 +39,5 @@ ExternalProject_Add(ext_ngraph
 ExternalProject_Get_Property(ext_ngraph SOURCE_DIR)
 add_library(libngraph INTERFACE)
 add_dependencies(libngraph ext_ngraph)
+target_include_directories(libngraph SYSTEM
+                           INTERFACE ${EXTERNAL_INSTALL_INCLUDE_DIR})

@@ -21,12 +21,12 @@ set(SEAL_SRC_DIR ${SEAL_PREFIX}/src/ext_seal/native/src)
 set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
 set(SEAL_GIT_TAG 3.4.5)
 if (NGRAPH_HE_ABY_ENABLE)
-  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
-  set(SEAL_PATCH_COMMAND git apply ${SEAL_PATCH})
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.aby_patch)
 else()
-  set(SEAL_PATCH_COMMAND "")
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
 endif()
 
+set(SEAL_PATCH_COMMAND git apply ${SEAL_PATCH})
 
 # Without these, SEAL's globals.cpp will be deallocated twice, once by
 # he_seal_backend, which loads libseal.a, and once by the global destructor.
@@ -63,8 +63,6 @@ set_target_properties(zlib
                         PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.a)
 add_dependencies(zlib ext_zlib)
 
-message("EXTERNAL_INSTALL_DIR ${EXTERNAL_INSTALL_DIR}")
-
 ExternalProject_Add(
   ext_seal
   GIT_REPOSITORY ${SEAL_REPO_URL}
@@ -82,6 +80,7 @@ ExternalProject_Add(
                     -DSEAL_USE_CXX17=ON
                     -DZLIB_ROOT=${ZLIB_PREFIX}
                     -DCMAKE_INSTALL_LIBDIR=${EXTERNAL_INSTALL_LIB_DIR}
+                    -DCMAKE_INSTALL_INCLUDEDIR=${EXTERNAL_INSTALL_INCLUDE_DIR}
   PATCH_COMMAND ${SEAL_PATCH_COMMAND}
   # Skip updates
   UPDATE_COMMAND ""
