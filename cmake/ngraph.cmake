@@ -24,7 +24,10 @@ set(NGRAPH_GIT_LABEL v0.28.0-rc.1)
 
 set(NGRAPH_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX})
-set(NGRAPH_BUILD_DIR ${NGRAPH_SRC_DIR}/build)
+set(NGRAPH_BUILD_DIR
+    ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX}-build)
+
+ message("NGRAPH_BUILD_DIR ${NGRAPH_BUILD_DIR}")
 
 ExternalProject_Add(ext_ngraph
                     GIT_REPOSITORY ${NGRAPH_REPO_URL}
@@ -39,23 +42,23 @@ ExternalProject_Add(ext_ngraph
 ExternalProject_Get_Property(ext_ngraph SOURCE_DIR)
 add_library(libngraph SHARED IMPORTED)
 add_dependencies(libngraph ext_ngraph)
+
 target_include_directories(libngraph SYSTEM
                            INTERFACE ${EXTERNAL_INSTALL_INCLUDE_DIR})
 set_target_properties(libngraph
                       PROPERTIES IMPORTED_LOCATION
-                      ${EXTERNAL_INSTALL_LIB_DIR}/libngraph.so)
+                      ${NGRAPH_BUILD_DIR}/src/ngraph/libngraph.so)
 
-
-set(NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_SRC_DIR}/test)
-message("NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_TEST_INCLUDE_DIR}")
-
+# ngraph test util
 add_library(libngraph_test_util STATIC IMPORTED)
 add_dependencies(libngraph_test_util ext_ngraph)
 set_target_properties(
   libngraph_test_util
   PROPERTIES
     IMPORTED_LOCATION
-    ${EXTERNAL_INSTALL_LIB_DIR}/libngraph_test_util.a
+    ${NGRAPH_BUILD_DIR}/test/util/libngraph_test_util.a
   )
+
+set(NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_SRC_DIR}/test)
 target_include_directories(libngraph_test_util
   INTERFACE ${NGRAPH_TEST_INCLUDE_DIR}/)

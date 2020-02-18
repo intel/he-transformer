@@ -183,7 +183,9 @@ TEST(perf_micro, encode) {
     NGRAPH_INFO << "time_seal_encode_avg (ns) " << time_seal_encode_avg;
     NGRAPH_INFO << "time_he_encode_avg (ns) " << time_he_encode_avg;
     NGRAPH_INFO << "Runtime improvement: "
-                << (time_seal_encode_avg / float(time_he_encode_avg)) << "\n";
+                << (time_seal_encode_avg /
+                    static_cast<float>(time_he_encode_avg))
+                << "\n";
 
     NGRAPH_INFO << "time_seal_multiply_plain_avg (ns) "
                 << time_seal_multiply_plain_avg;
@@ -191,13 +193,14 @@ TEST(perf_micro, encode) {
                 << time_he_multiply_plain_avg;
     NGRAPH_INFO << "Runtime improvement: "
                 << (time_seal_multiply_plain_avg /
-                    float(time_he_multiply_plain_avg))
+                    static_cast<float>(time_he_multiply_plain_avg))
                 << "\n";
 
     NGRAPH_INFO << "time_seal_add_plain_avg (ns) " << time_seal_add_plain_avg;
     NGRAPH_INFO << "time_he_add_plain_avg (ns) " << time_he_add_plain_avg;
     NGRAPH_INFO << "Runtime improvement: "
-                << (time_seal_add_plain_avg / float(time_he_add_plain_avg))
+                << (time_seal_add_plain_avg /
+                    static_cast<float>(time_he_add_plain_avg))
                 << "\n";
   };
 
