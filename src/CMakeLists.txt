@@ -91,7 +91,6 @@ if (NGRAPH_HE_ABY_ENABLE)
         target_link_libraries(he_seal_backend PUBLIC libaby)
 endif()
 
-
 # TODO: better condition if we don't link with OpenMP
 if (NGRAPH_HE_CODE_COVERAGE)
         find_package(Threads)

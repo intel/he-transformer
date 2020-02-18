@@ -106,7 +106,7 @@ add_executable(unit-test ${SRC})
 target_include_directories(unit-test PRIVATE ".")
 
 target_link_libraries(unit-test PRIVATE libngraph_test_util)
-target_link_libraries(unit-test PRIVATE libngraph libgtest pthread)
+target_link_libraries(unit-test PRIVATE libgtest pthread)
 target_link_libraries(unit-test PRIVATE he_seal_backend libseal)
 target_link_libraries(unit-test PRIVATE protobuf::libprotobuf)
 
