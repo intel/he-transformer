@@ -105,26 +105,8 @@ add_executable(unit-test ${SRC})
 
 target_include_directories(unit-test PRIVATE ".")
 
-# Add ngraph test utils library
-add_library(ngraph_test_util STATIC IMPORTED)
-set_target_properties(
-  ngraph_test_util
-  PROPERTIES
-    IMPORTED_LOCATION
-    ${NGRAPH_TF_LIB_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}ngraph_test_util${CMAKE_STATIC_LIBRARY_SUFFIX}
-  )
-# add_dependencies(ngraph_test_util ext_ngraph_tf)
-# Set the test_utils include folder manually. The
-# ${NGRAPH_TF_BUILD_DIR}/ngraph/test/ folder doesn't exist until ngraph-tf
-# builds, so we cannot set target_include_directories(ngraph_test_util SYSTEM
-# INTERFACE ${NGRAPH_TF_BUILD_DIR}/ngraph/test/) (Note, the work-around
-# file(MAKE_DIRECTORY ${NGRAPH_TF_BUILD_DIR}/ngraph/test/)) doesn't work either,
-# as ngraph-tf will complain about the ngraph folder already existing.
-target_include_directories(unit-test
-                           PRIVATE ${NGRAPH_TF_BUILD_DIR}/ngraph/test/)
-
-target_link_libraries(unit-test PRIVATE ngraph_test_util)
-target_link_libraries(unit-test PRIVATE ngraph libgtest pthread)
+target_link_libraries(unit-test PRIVATE libngraph_test_util)
+target_link_libraries(unit-test PRIVATE libngraph libgtest pthread)
 target_link_libraries(unit-test PRIVATE he_seal_backend libseal)
 target_link_libraries(unit-test PRIVATE protobuf::libprotobuf)
 

@@ -37,7 +37,25 @@ ExternalProject_Add(ext_ngraph
                     UPDATE_COMMAND "")
 
 ExternalProject_Get_Property(ext_ngraph SOURCE_DIR)
-add_library(libngraph INTERFACE)
+add_library(libngraph SHARED IMPORTED)
 add_dependencies(libngraph ext_ngraph)
 target_include_directories(libngraph SYSTEM
                            INTERFACE ${EXTERNAL_INSTALL_INCLUDE_DIR})
+set_target_properties(libngraph
+                      PROPERTIES IMPORTED_LOCATION
+                      ${EXTERNAL_INSTALL_LIB_DIR}/libngraph.so)
+
+
+set(NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_SRC_DIR}/test)
+message("NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_TEST_INCLUDE_DIR}")
+
+add_library(libngraph_test_util STATIC IMPORTED)
+add_dependencies(libngraph_test_util ext_ngraph)
+set_target_properties(
+  libngraph_test_util
+  PROPERTIES
+    IMPORTED_LOCATION
+    ${EXTERNAL_INSTALL_LIB_DIR}/libngraph_test_util.a
+  )
+target_include_directories(libngraph_test_util SYSTEM
+  INTERFACE ${NGRAPH_TEST_INCLUDE_DIR}/)
