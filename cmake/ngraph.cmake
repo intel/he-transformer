@@ -26,26 +26,34 @@ set(NGRAPH_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX})
 set(NGRAPH_BUILD_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX}-build)
+set(NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_SRC_DIR}/test)
+
 
 message("NGRAPH_BUILD_DIR ${NGRAPH_BUILD_DIR}")
 message("NGRAPH_SRC_DIR ${NGRAPH_SRC_DIR}")
 
 ExternalProject_Add(ext_ngraph
-                    GIT_REPOSITORY ${NGRAPH_REPO_URL}
-                    GIT_TAG ${NGRAPH_GIT_LABEL}
-                    PREFIX ${NGRAPH_CMAKE_PREFIX}
-                    CMAKE_ARGS {NGRAPH_HE_FORWARD_CMAKE_ARGS}
-                      -DNGRAPH_UNIT_TEST_ENABLE=OFF
-                      -DNGRAPH_GENERIC_CPU_ENABLE=OFF
-                      -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
-                    UPDATE_COMMAND "")
+      GIT_REPOSITORY ${NGRAPH_REPO_URL}
+      GIT_TAG ${NGRAPH_GIT_LABEL}
+      PREFIX ${NGRAPH_CMAKE_PREFIX}
+      CMAKE_ARGS {NGRAPH_HE_FORWARD_CMAKE_ARGS}
+        -DNGRAPH_UNIT_TEST_ENABLE=OFF
+        -DNGRAPH_GENERIC_CPU_ENABLE=OFF
+        -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+        -DNGRAPH_GENERIC_CPU_ENABLE=OFF
+        -DNGRAPH_CPU_ENABLE=OFF
+      BUILD_BYPRODUCTS "${NGRAPH_BUILD_DIR}/src/ngraph/libngraph.so"
+                       "${NGRAPH_BUILD_DIR}/test/util/libngraph_test_util.a"
+      UPDATE_COMMAND "")
 
 ExternalProject_Get_Property(ext_ngraph SOURCE_DIR)
 add_library(libngraph SHARED IMPORTED)
 add_dependencies(libngraph ext_ngraph)
 
-target_include_directories(libngraph SYSTEM
-                           INTERFACE ${NGRAPH_SRC_DIR}/src)
+# Avoid non-existent path error
+file(MAKE_DIRECTORY ${NGRAPH_SRC_DIR}/src)
+file(MAKE_DIRECTORY ${NGRAPH_TEST_INCLUDE_DIR})
+target_include_directories(libngraph INTERFACE ${NGRAPH_SRC_DIR}/src)
 set_target_properties(libngraph
                       PROPERTIES IMPORTED_LOCATION
                       ${NGRAPH_BUILD_DIR}/src/ngraph/libngraph.so)
@@ -55,11 +63,9 @@ add_library(libngraph_test_util STATIC IMPORTED)
 add_dependencies(libngraph_test_util ext_ngraph)
 set_target_properties(
   libngraph_test_util
-  PROPERTIES
-    IMPORTED_LOCATION
+  PROPERTIES IMPORTED_LOCATION
     ${NGRAPH_BUILD_DIR}/test/util/libngraph_test_util.a
   )
 
-set(NGRAPH_TEST_INCLUDE_DIR ${NGRAPH_SRC_DIR}/test)
 target_include_directories(libngraph_test_util
   INTERFACE ${NGRAPH_TEST_INCLUDE_DIR}/)
