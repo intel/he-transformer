@@ -37,13 +37,16 @@ namespace ngraph::runtime::he {
 /// \param[in] out Stores the ciphertext or plaintext product
 ///  \param[in] he_seal_backend Backend used to perform multiplication
 void scalar_multiply_add_seal(HEType& arg0, HEType& arg1, HEType& out,
+                              size_t batch_size,
                               HESealBackend& he_seal_backend) {
+  auto prod = HEType(HEPlaintext(batch_size), false);
+
   NGRAPH_HE_LOG(3) << "scalar_multiply_add_seal";
-  scalar_multiply_seal(*arg0.get_ciphertext(), arg1.get_plaintext(), out,
+  scalar_multiply_seal(*arg0.get_ciphertext(), arg1.get_plaintext(), prod,
                        he_seal_backend, seal::MemoryManager::GetPool());
 
   NGRAPH_HE_LOG(3) << "scalar_add_seal";
-  scalar_add_seal(*arg0.get_ciphertext(), *out.get_ciphertext(),
+  scalar_add_seal(*prod.get_ciphertext(), *out.get_ciphertext(),
                   out.get_ciphertext(), he_seal_backend);
 }
 
