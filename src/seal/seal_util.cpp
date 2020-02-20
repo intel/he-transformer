@@ -168,7 +168,6 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
          he_seal_backend);
   double new_scale = scale * scale;
   // Check that scale is positive and not too large
-
   if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
                          context_data.total_coeff_modulus_bit_count())) {
     NGRAPH_ERR << "new_scale " << new_scale << " ("
@@ -180,10 +179,12 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
 
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
+      // Multiply by scalar instead of doing dyadic product
       if (coeff_modulus[j].value() < (1UL << 31U)) {
         multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
                                         coeff_count, plaintext_vals[j],
-                                        coeff_modulus[j]);
+                                        coeff_modulus[j],
+                                        encrypted.data(i) + (j * coeff_count));
       } else {
         seal::util::multiply_poly_scalar_coeffmod(
             encrypted.data(i) + (j * coeff_count), coeff_count,
@@ -192,19 +193,22 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
       }
     }
   }
-
   // Set the scale
   encrypted.scale() = new_scale;
 }
 
-void multiply_poly_scalar_coeffmod64(uint64_t* poly, size_t coeff_count,
+void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
-                                     const seal::SmallModulus& modulus) {
+                                     const seal::SmallModulus& modulus,
+                                     std::uint64_t* result) {
   const uint64_t modulus_value = modulus.value();
   const uint64_t const_ratio_1 = modulus.const_ratio()[1];
 
-  for (size_t i = 0; i < coeff_count; ++i) {
-    auto z = poly[i] * scalar;
+  // NOLINTNEXTLINE
+  for (; coeff_count--; poly++, result++) {
+    // Multiplication
+    auto z = *poly * scalar;
+
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
     unsigned long long carry;
@@ -213,12 +217,13 @@ void multiply_poly_scalar_coeffmod64(uint64_t* poly, size_t coeff_count,
     // Barrett subtraction
     carry = z - carry * modulus_value;
     // Possible correction term
-    poly[i] =
+    *result =
         carry -
         (modulus_value &
          static_cast<uint64_t>(-static_cast<int64_t>(carry >= modulus_value)));
   }
 }
+
 size_t match_to_smallest_chain_index(std::vector<HEType>& he_types,
                                      const HESealBackend& he_seal_backend) {
   size_t num_elements = he_types.size();

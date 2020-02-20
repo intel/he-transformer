@@ -112,13 +112,15 @@ inline void add_plain(const seal::Ciphertext& encrypted, double value,
 /// \brief Multiples each element in a polynomial with a scalar modulo
 /// modulus_value. Assumes the scalar, poly, and modulus value are all < 30
 /// bits
-/// \param[in] poly Polynomial to be multiplied in-place
+/// \param[in] poly Polynomial to be multiplied
 /// \param[in] coeff_count Number of terms in the polynomial
 /// \param[in] scalar Value with which to multiply
 /// \param[in] modulus modulus with which to reduce each product
-void multiply_poly_scalar_coeffmod64(uint64_t* poly, size_t coeff_count,
+/// \param[out] result Will store the result of the multiplication
+void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
-                                     const seal::SmallModulus& modulus);
+                                     const seal::SmallModulus& modulus,
+                                     uint64_t* result);
 
 /// \brief Adds each element in a polynomial with a scalar modulo
 /// modulus_value.
