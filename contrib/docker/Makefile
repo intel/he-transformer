@@ -72,24 +72,9 @@ endif
 DBUILD_DIR = ${DIR}/contrib/docker/.build-${DBUILD_VERSION}_${OS_ID}
 
 # Configuration for specific reference OS_ID in Dockerfiles
-ifeq ("$(shell echo ${OS_ID} | grep centos)","centos74")
-    RUN_AS_USER_SCRIPT=${DOCKUSER_HOME}/he-transformer-test/contrib/docker/run_as_centOS_ID_user.sh
-    DOCKERFILE=Dockerfile.he_transformer.centOS_ID74
-endif
-
-ifeq ("$(shell echo ${OS_ID} | grep fedora)","fedora28")
-    RUN_AS_USER_SCRIPT=${DOCKUSER_HOME}/he-transformer-test/contrib/docker/run_as_fedora_user.sh
-    DOCKERFILE=Dockerfile.he_transformer.fedora28
-endif
-
 ifeq ("$(shell echo ${OS_ID} | grep ubuntu)","ubuntu1804")
     RUN_AS_USER_SCRIPT=${DOCKUSER_HOME}/he-transformer-test/contrib/docker/run_as_ubuntu_user.sh
 		DOCKERFILE=Dockerfile.he_transformer.ubuntu1804
-endif
-
-ifeq ("$(shell echo ${OS_ID} | grep ubuntu)","ubuntu1604")
-    RUN_AS_USER_SCRIPT=${DOCKUSER_HOME}/he-transformer-test/contrib/docker/run_as_ubuntu_user.sh
-		DOCKERFILE=Dockerfile.he_transformer.ubuntu1604
 endif
 
 DOCKER_CMD_MESG=Building for CPU support only.

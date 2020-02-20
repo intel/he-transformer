@@ -23,7 +23,7 @@
 #include "util/test_control.hpp"
 #include "util/test_tools.hpp"
 
-static std::string s_manifest = "${MANIFEST}";
+static const char* s_manifest = "${MANIFEST}";
 
 namespace ngraph::runtime::he {
 
@@ -229,7 +229,7 @@ NGRAPH_TEST(${BACKEND_NAME}, reshape_m2m_dim_change_transpose) {
 NGRAPH_TEST(${BACKEND_NAME}, reshape_6d) {
   std::vector<float> a_data(2 * 2 * 3 * 3 * 2 * 4);
   for (int i = 0; i < 2 * 2 * 3 * 3 * 2 * 4; i++) {
-    a_data[i] = float(i + 1);
+    a_data[i] = static_cast<float>(i + 1);
   }
 
   for (bool arg1_encrypted : std::vector<bool>{false, true}) {

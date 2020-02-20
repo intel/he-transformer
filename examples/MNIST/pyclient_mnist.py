@@ -25,8 +25,8 @@ import pyhe_client
 
 
 def test_network(FLAGS):
-    (x_train, y_train, x_test, y_test) = load_mnist_data(
-        FLAGS.start_batch, FLAGS.batch_size)
+    (x_train, y_train, x_test,
+     y_test) = load_mnist_data(FLAGS.start_batch, FLAGS.batch_size)
     data = x_test.flatten("C")
 
     client = pyhe_client.HESealClient(

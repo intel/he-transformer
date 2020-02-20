@@ -89,8 +89,8 @@ def center_crop2(im, new_size):
     # Resize such that shortest side has new_size
     width, height = im.size
     ratio = min(width / new_size, height / new_size)
-    im = im.resize(
-        (int(width / ratio), int(height / ratio)), resample=Image.LANCZOS)
+    im = im.resize((int(width / ratio), int(height / ratio)),
+                   resample=Image.LANCZOS)
 
     # Center crop to new_size x new_size
     im = center_crop(im, new_size)
@@ -140,8 +140,8 @@ def get_validation_image(i, FLAGS):
         stds = [0.229, 0.224, 0.225]
         # Subtract mean, then scale such that result is in (-1, 1)
         for channel in range(3):
-            im[:, :, channel] = (im[:, :, channel] - means[channel]) * (
-                1.0 / means[channel])
+            im[:, :, channel] = (im[:, :, channel] -
+                                 means[channel]) * (1.0 / means[channel])
     else:
         im = im / 128.0 - 1
     im = np.expand_dims(im, axis=0)
@@ -195,13 +195,14 @@ def accuracy(preds, truth):
 def server_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--enable_client",
-        type=str2bool,
-        default=False,
-        help="Enable the client")
-    parser.add_argument(
-        "--backend", type=str, default="HE_SEAL", help="Name of backend to use")
+    parser.add_argument("--enable_client",
+                        type=str2bool,
+                        default=False,
+                        help="Enable the client")
+    parser.add_argument("--backend",
+                        type=str,
+                        default="HE_SEAL",
+                        help="Name of backend to use")
     parser.add_argument(
         "--encryption_parameters",
         type=str,
@@ -216,11 +217,10 @@ def server_argument_parser():
         help=
         "Encrypt server data (should not be used when enable_client is used)",
     )
-    parser.add_argument(
-        "--pack_data",
-        type=str2bool,
-        default=True,
-        help="Use plaintext packing on data")
+    parser.add_argument("--pack_data",
+                        type=str2bool,
+                        default=True,
+                        help="Use plaintext packing on data")
 
     return parser
 
@@ -248,8 +248,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
 
     config = tf.compat.v1.ConfigProto()
     config.MergeFrom(
-        tf.compat.v1.ConfigProto(
-            graph_options=tf.compat.v1.GraphOptions(
-                rewrite_options=rewriter_options)))
+        tf.compat.v1.ConfigProto(graph_options=tf.compat.v1.GraphOptions(
+            rewrite_options=rewriter_options)))
 
     return config

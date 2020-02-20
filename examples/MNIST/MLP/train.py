@@ -33,12 +33,11 @@ import model
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = mnist_util.load_mnist_data()
 
-    x = Input(
-        shape=(
-            28,
-            28,
-            1,
-        ), name="input")
+    x = Input(shape=(
+        28,
+        28,
+        1,
+    ), name="input")
     y = model.mnist_mlp_model(x)
 
     mlp_model = Model(inputs=x, outputs=y)
@@ -50,13 +49,12 @@ def main(FLAGS):
     optimizer = SGD(learning_rate=0.008, momentum=0.9)
     mlp_model.compile(optimizer=optimizer, loss=loss, metrics=["accuracy"])
 
-    mlp_model.fit(
-        x_train,
-        y_train,
-        epochs=FLAGS.epochs,
-        batch_size=FLAGS.batch_size,
-        validation_data=(x_test, y_test),
-        verbose=1)
+    mlp_model.fit(x_train,
+                  y_train,
+                  epochs=FLAGS.epochs,
+                  batch_size=FLAGS.batch_size,
+                  validation_data=(x_test, y_test),
+                  verbose=1)
 
     test_loss, test_acc = mlp_model.evaluate(x_test, y_test, verbose=1)
     print("\nTest accuracy:", test_acc)

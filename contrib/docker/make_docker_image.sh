@@ -12,7 +12,7 @@ if [ -z $DOCKER_IMAGE_NAME ]; then
     DOCKER_IMAGE_NAME=${DOCKER_TAG}
 fi
 
-# Debugging to verify builds on CentOS 7.4 and Ubuntu 16.04
+# Debugging to verify build OS
 if [ -f "/etc/centos-release" ]; then
     cat /etc/centos-release
 fi

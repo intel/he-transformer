@@ -133,11 +133,10 @@ if __name__ == "__main__":
         help="Model to run inference with",
     )
     parser.add_argument("--image_size", type=int, default=96, help="image size")
-    parser.add_argument(
-        "--save_images",
-        type=str2bool,
-        default=False,
-        help="save cropped images")
+    parser.add_argument("--save_images",
+                        type=str2bool,
+                        default=False,
+                        help="save cropped images")
     parser.add_argument(
         "--load_cropped_images",
         type=str2bool,
@@ -156,10 +155,14 @@ if __name__ == "__main__":
         default=256,
         help="crop to this size before resizing to image_size",
     )
-    parser.add_argument(
-        "--ngraph", type=str2bool, default=False, help="use ngraph backend")
-    parser.add_argument(
-        "--start_batch", type=int, default=0, help="Test data start index")
+    parser.add_argument("--ngraph",
+                        type=str2bool,
+                        default=False,
+                        help="use ngraph backend")
+    parser.add_argument("--start_batch",
+                        type=int,
+                        default=0,
+                        help="Test data start index")
 
     FLAGS, unparsed = parser.parse_known_args()
     if FLAGS.data_dir == None:
