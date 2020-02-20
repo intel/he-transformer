@@ -14,15 +14,15 @@
 # the License.
 # ******************************************************************************
 
-include(ExternalProject)
 ExternalProject_Add(pybind11
                     GIT_REPOSITORY "https://github.com/pybind/pybind11.git"
-                    GIT_TAG "v2.2.4"
+                    GIT_TAG master
                     SOURCE_DIR "${CMAKE_BINARY_DIR}/pybind11"
                     CONFIGURE_COMMAND ""
                     BUILD_COMMAND ""
                     INSTALL_COMMAND ""
-                    UPDATE_COMMAND "")
+                    UPDATE_COMMAND ""
+                    )
 
 set(BUILD_SH_IN "${CMAKE_SOURCE_DIR}/python/build_wheel.sh.in")
 set(BUILD_SH "${CMAKE_BINARY_DIR}/python/build_wheel.sh")
@@ -49,11 +49,9 @@ install(DIRECTORY ${EXTERNAL_INSTALL_LIB_DIR}/
         PATTERN "*.a"
         )
 
-
-
 add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/python/dist/
                    POST_BUILD
-                   DEPENDS he_seal_backend
+                   DEPENDS he_seal_backend libngraph_tf
                    COMMAND VERBOSE=1
                            make
                            -C

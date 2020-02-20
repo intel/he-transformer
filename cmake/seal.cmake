@@ -16,7 +16,7 @@
 
 include(ExternalProject)
 
-
+# Zlib
 set(ZLIB_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_zlib)
 set(ZLIB_SRC_DIR ${ZLIB_PREFIX}/src)
 set(ZLIB_LIB_DIR ${ZLIB_SRC_DIR}/ext_zlib-build)
@@ -27,26 +27,32 @@ ExternalProject_Add(ext_zlib
     GIT_REPOSITORY    ${ZLIB_REPO_URL}
     GIT_TAG           ${ZLIB_GIT_TAG}
     PREFIX            ${ZLIB_PREFIX}
-    CONFIGURE_COMMAND cmake ${ZLIB_SRC_DIR}/ext_zlib
-                     -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
+    INSTALL_COMMAND   ""
     UPDATE_COMMAND    ""
 )
 
 add_library(zlib SHARED IMPORTED)
-  set_target_properties(zlib
+set_target_properties(zlib
                         PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.so)
-  add_dependencies(zlib ext_zlib)
+add_dependencies(zlib ext_zlib)
 
+install(DIRECTORY ${ZLIB_LIB_DIR}/
+        DESTINATION ${EXTERNAL_INSTALL_LIB_DIR}
+        FILES_MATCHING
+        PATTERN "*.so"
+        PATTERN "*.so*"
+        PATTERN "*.a"
+        )
 
+# SEAL
 set(SEAL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_seal)
 set(SEAL_SRC_DIR ${SEAL_PREFIX}/src/ext_seal/native/src)
 set(SEAL_REPO_URL https://github.com/Microsoft/SEAL.git)
 set(SEAL_GIT_TAG 3.4.5)
 if (NGRAPH_HE_ABY_ENABLE)
-  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
-  set(SEAL_PATCH_COMMAND git apply ${SEAL_PATCH})
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.aby_patch)
 else()
-  set(SEAL_PATCH_COMMAND "")
+  set(SEAL_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/seal.patch)
 endif()
 
 # Without these, SEAL's globals.cpp will be deallocated twice, once by
@@ -64,6 +70,7 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
   add_compile_options(-Wno-old-style-cast)
 endif()
 
+
 ExternalProject_Add(
   ext_seal
   GIT_REPOSITORY ${SEAL_REPO_URL}
@@ -77,9 +84,12 @@ ExternalProject_Add(
                     -DCMAKE_CXX_FLAGS=${SEAL_CXX_FLAGS}
                     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+                    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
                     -DSEAL_USE_CXX17=ON
                     -DZLIB_ROOT=${ZLIB_PREFIX}
-  PATCH_COMMAND ${SEAL_PATCH_COMMAND}
+                    -DCMAKE_INSTALL_LIBDIR=${EXTERNAL_INSTALL_LIB_DIR}
+                    -DCMAKE_INSTALL_INCLUDEDIR=${EXTERNAL_INSTALL_INCLUDE_DIR}
+  PATCH_COMMAND git apply ${SEAL_PATCH}
   # Skip updates
   UPDATE_COMMAND ""
 )

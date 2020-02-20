@@ -52,7 +52,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type" FORCE)
 endif()
 
 set(NGRAPH_HE_FORWARD_CMAKE_ARGS
@@ -110,6 +110,7 @@ option(NGRAPH_HE_CLANG_TIDY "Enable clang-tidy checks" OFF)
 option(NGRAPH_HE_CODE_COVERAGE "Enable code coverage" OFF)
 option(NGRAPH_HE_ABY_ENABLE "Enable multi-party computation using ABY" OFF)
 option(NGRAPH_HE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
+option(NGRAPH_HE_PARALLEL "Enable multi-threaded computation" ON)
 
 # Print options
 message(STATUS "NGRAPH_HE_CXX_STANDARD:     ${NGRAPH_HE_CXX_STANDARD}")
@@ -118,6 +119,7 @@ message(STATUS "NGRAPH_HE_CODE_COVERAGE:    ${NGRAPH_HE_CODE_COVERAGE}")
 message(STATUS "NGRAPH_HE_ABY_ENABLE:       ${NGRAPH_HE_ABY_ENABLE}")
 message(STATUS "NGRAPH_HE_CLANG_TIDY:       ${NGRAPH_HE_CLANG_TIDY}")
 message(STATUS "NGRAPH_HE_SANITIZE_ADDRESS  ${NGRAPH_HE_SANITIZE_ADDRESS}")
+message(STATUS "NGRAPH_HE_PARALLEL          ${NGRAPH_HE_PARALLEL}")
 message(STATUS "PYTHON_VENV_VERSION:        ${PYTHON_VENV_VERSION}")
 message(STATUS "PYTHON_VERSION_STRING:      ${PYTHON_VERSION_STRING}")
 
@@ -237,6 +239,7 @@ message(STATUS "Shared Link Flags: ${CMAKE_SHARED_LINKER_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 
+include(cmake/ngraph.cmake)
 include(cmake/ngraph-tf.cmake)
 
 # Install he-transformer to installation location and into ngraph-tf
@@ -252,12 +255,12 @@ set(INSTALL_INCLUDE_DIRS ${EXTERNAL_INSTALL_INCLUDE_DIR}
 include(cmake/gtest.cmake)
 include(cmake/json.cmake)
 
-# Exclude openmp for code coverage, since regions will trigger false negatives
-if (NGRAPH_HE_CODE_COVERAGE)
-  add_compile_options(-Wno-source-uses-openmp)
-else()
+if (NGRAPH_HE_PARALLEL)
   include(cmake/openmp.cmake)
+else ()
+  add_compile_options(-Wno-source-uses-openmp)
 endif()
+
 include(cmake/seal.cmake)
 include(cmake/abseil.cmake)
 include(cmake/boost.cmake)

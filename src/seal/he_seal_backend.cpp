@@ -62,7 +62,9 @@ void HESealBackend::generate_context() {
   m_keygen = std::make_shared<seal::KeyGenerator>(m_context);
   if (m_context->using_keyswitching()) {
     m_relin_keys = std::make_shared<seal::RelinKeys>(m_keygen->relin_keys());
-    m_galois_keys = std::make_shared<seal::GaloisKeys>(m_keygen->galois_keys());
+    // Delay creation of m_galois_keys until needed
+    // m_galois_keys =
+    // std::make_shared<seal::GaloisKeys>(m_keygen->galois_keys());
   }
   m_public_key = std::make_shared<seal::PublicKey>(m_keygen->public_key());
   m_secret_key = std::make_shared<seal::SecretKey>(m_keygen->secret_key());

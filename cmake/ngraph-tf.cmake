@@ -21,6 +21,7 @@ set(NGRAPH_TF_CMAKE_PREFIX ext_ngraph_tf)
 
 set(NGRAPH_TF_REPO_URL https://github.com/tensorflow/ngraph-bridge.git)
 set(NGRAPH_TF_GIT_LABEL v0.22.0-rc3)
+set(NGRAPH_TF_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ngraph-tf.patch)
 
 set(NGRAPH_TF_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_TF_CMAKE_PREFIX}/src/${NGRAPH_TF_CMAKE_PREFIX})
@@ -40,55 +41,26 @@ set(
   ${NGRAPH_TF_VENV_DIR}/lib/${PYTHON_VENV_VERSION}/site-packages/ngraph_bridge)
 set(NGRAPH_TF_INCLUDE_DIR ${NGRAPH_TF_ARTIFACTS_DIR}/include)
 
-set(NGRAPH_TEST_UTIL_INCLUDE_DIR ${NGRAPH_TF_BUILD_DIR}/ngraph/test)
-
-set(ng_tf_build_flags "")
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message(STATUS "Using debug build for ng-tf")
-  set(ng_tf_build_flags "--debug_build")
-endif()
-if(${USE_PREBUILT_TF})
-  message(STATUS "Using prebuilt TF")
-  set(
-    ng_tf_build_flags
-
-    "${ng_tf_build_flags} --use_tensorflow_from_location=${NGRAPH_TF_BUILD_DIR}"
-    )
-endif()
-
-# TODO: enable other options
-set(ng_tf_build_flags "--use_grappler_optimizer")
-
 ExternalProject_Add(ext_ngraph_tf
-                    GIT_REPOSITORY ${NGRAPH_TF_REPO_URL}
-                    GIT_TAG ${NGRAPH_TF_GIT_LABEL}
-                    PREFIX ${NGRAPH_TF_CMAKE_PREFIX}
-                    CONFIGURE_COMMAND ""
-                    BUILD_IN_SOURCE 1
-                    BUILD_BYPRODUCTS ${NGRAPH_TF_CMAKE_PREFIX}
-                    BUILD_COMMAND python3 ${NGRAPH_TF_SRC_DIR}/build_ngtf.py
-                                  ${ng_tf_build_flags}
-                    INSTALL_COMMAND ln
-                                    -fs
-                                    ${NGRAPH_TF_VENV_DIR}
-                                    ${EXTERNAL_INSTALL_DIR}
-                    UPDATE_COMMAND "")
+      GIT_REPOSITORY ${NGRAPH_TF_REPO_URL}
+      GIT_TAG ${NGRAPH_TF_GIT_LABEL}
+      PREFIX ${NGRAPH_TF_CMAKE_PREFIX}
+      CONFIGURE_COMMAND ""
+      BUILD_IN_SOURCE 1
+      BUILD_BYPRODUCTS ${NGRAPH_TF_CMAKE_PREFIX}
+      PATCH_COMMAND git apply ${NGRAPH_TF_PATCH}
+      BUILD_COMMAND python3 ${NGRAPH_TF_SRC_DIR}/build_ngtf.py --use_grappler_optimizer --ngraph_src_dir ${NGRAPH_SRC_DIR}
+      INSTALL_COMMAND ln -fs ${NGRAPH_TF_VENV_DIR}
+                      ${EXTERNAL_INSTALL_DIR}
+      UPDATE_COMMAND "")
 
 ExternalProject_Get_Property(ext_ngraph_tf SOURCE_DIR)
 add_library(libngraph_tf INTERFACE)
 add_dependencies(libngraph_tf ext_ngraph_tf)
 
-# Add ngraph library
-add_library(ngraph SHARED IMPORTED)
-set_target_properties(ngraph
-                      PROPERTIES IMPORTED_LOCATION
-                                 ${NGRAPH_TF_LIB_DIR}/libngraph.so)
-
 if(NOT EXISTS ${NGRAPH_TF_INCLUDE_DIR})
   file(MAKE_DIRECTORY ${NGRAPH_TF_INCLUDE_DIR})
 endif()
-
-target_include_directories(ngraph SYSTEM INTERFACE "${NGRAPH_TF_INCLUDE_DIR}")
 
 install(DIRECTORY ${NGRAPH_TF_LIB_DIR}/
         DESTINATION ${EXTERNAL_INSTALL_LIB_DIR}

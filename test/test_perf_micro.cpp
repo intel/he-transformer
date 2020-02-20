@@ -183,7 +183,9 @@ TEST(perf_micro, encode) {
     NGRAPH_INFO << "time_seal_encode_avg (ns) " << time_seal_encode_avg;
     NGRAPH_INFO << "time_he_encode_avg (ns) " << time_he_encode_avg;
     NGRAPH_INFO << "Runtime improvement: "
-                << (time_seal_encode_avg / float(time_he_encode_avg)) << "\n";
+                << (time_seal_encode_avg /
+                    static_cast<float>(time_he_encode_avg))
+                << "\n";
 
     NGRAPH_INFO << "time_seal_multiply_plain_avg (ns) "
                 << time_seal_multiply_plain_avg;
@@ -191,21 +193,22 @@ TEST(perf_micro, encode) {
                 << time_he_multiply_plain_avg;
     NGRAPH_INFO << "Runtime improvement: "
                 << (time_seal_multiply_plain_avg /
-                    float(time_he_multiply_plain_avg))
+                    static_cast<float>(time_he_multiply_plain_avg))
                 << "\n";
 
     NGRAPH_INFO << "time_seal_add_plain_avg (ns) " << time_seal_add_plain_avg;
     NGRAPH_INFO << "time_he_add_plain_avg (ns) " << time_he_add_plain_avg;
     NGRAPH_INFO << "Runtime improvement: "
-                << (time_seal_add_plain_avg / float(time_he_add_plain_avg))
+                << (time_seal_add_plain_avg /
+                    static_cast<float>(time_he_add_plain_avg))
                 << "\n";
   };
 
-  std::vector<size_t> poly_modulus_degrees{4096, 8192, 16384};
+  std::vector<size_t> poly_modulus_degrees{4096, 8192};  //, 16384};
 
   // Bit-widths of default BFV parameters
   std::vector<std::vector<int>> coeff_modulus_bits{
-      {36, 37}, {30, 30, 30, 30}, {30, 30, 30, 30, 30, 30, 30, 30, 30}};
+      {36, 37}, {30, 30, 30, 30}};  // , {30, 30, 30, 30, 30, 30, 30, 30, 30}};
 
   for (size_t parm_ind = 0; parm_ind < poly_modulus_degrees.size();
        ++parm_ind) {
