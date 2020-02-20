@@ -221,6 +221,16 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
         carry -
         (modulus_value &
          static_cast<uint64_t>(-static_cast<int64_t>(carry >= modulus_value)));
+
+    /*
+    NGRAPH_HE_LOG(5) << "poly " << *poly;
+    NGRAPH_HE_LOG(5) << "scalar " << scalar;
+    NGRAPH_HE_LOG(5) << "z " << z;
+    NGRAPH_HE_LOG(5) << "modulus_value " << modulus_value;
+    *result = z;
+
+    NGRAPH_HE_LOG(5) << "*result " << *result;
+    */
   }
 }
 

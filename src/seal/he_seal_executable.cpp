@@ -872,7 +872,7 @@ bool HESealExecutable::call(
     }
     if (verbose) {
       NGRAPH_HE_LOG(3) << "\033[1;31m" << op->get_name() << " took "
-                       << m_timer_map[op].get_milliseconds() << "ms"
+                       << m_timer_map[op].get_microseconds() << "us"
                        << "\033[0m";
     }
   }
