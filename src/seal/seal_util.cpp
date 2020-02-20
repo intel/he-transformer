@@ -177,37 +177,51 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
     throw ngraph_error("scale out of bounds");
   }
 
+  // Before
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
+    uint64_t* poly = encrypted.data(i);
     for (size_t j = 0; j < coeff_mod_count; j++) {
-      // Multiply by scalar instead of doing dyadic product
-      if (coeff_modulus[j].value() < (1UL << 31U)) {
-        multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
-                                        coeff_count, plaintext_vals[j],
-                                        coeff_modulus[j],
-                                        encrypted.data(i) + (j * coeff_count));
-      } else {
-        seal::util::multiply_poly_scalar_coeffmod(
-            encrypted.data(i) + (j * coeff_count), coeff_count,
-            plaintext_vals[j], coeff_modulus[j],
-            encrypted.data(i) + (j * coeff_count));
-      }
+      multiply_poly_scalar_coeffmod64(&poly[j * coeff_count], coeff_count,
+                                      plaintext_vals[j], coeff_modulus[j]);
     }
   }
+
+  /*
+
+    for (size_t i = 0; i < encrypted_ntt_size; i++) {
+      uint64_t* poly = encrypted.data(i);
+      for (size_t j = 0; j < coeff_mod_count; j++) {
+        const auto& modulus = coeff_modulus[j];
+        const uint64_t modulus_value = modulus.value();
+        const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+        const double plain_val = plaintext_vals[j];
+        for (size_t k = 0; k < coeff_count; ++k) {
+          auto z = poly[j * coeff_count + k] * plain_val;
+          unsigned long long carry;
+          seal::util::multiply_uint64_hw64(z, const_ratio_1, &carry);
+          // Barrett subtraction
+          carry = z - carry * modulus_value;
+          // Possible correction term
+          poly[j * coeff_count + k] =
+              carry - (modulus_value &
+                       static_cast<uint64_t>(
+                           -static_cast<int64_t>(carry >= modulus_value)));
+        }
+      }
+    }
+    */
   // Set the scale
   encrypted.scale() = new_scale;
 }
 
-void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
+void multiply_poly_scalar_coeffmod64(uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
-                                     const seal::SmallModulus& modulus,
-                                     std::uint64_t* result) {
+                                     const seal::SmallModulus& modulus) {
   const uint64_t modulus_value = modulus.value();
   const uint64_t const_ratio_1 = modulus.const_ratio()[1];
 
-  // NOLINTNEXTLINE
-  for (; coeff_count--; poly++, result++) {
-    // Multiplication
-    auto z = *poly * scalar;
+  for (size_t i = 0; i < coeff_count; ++i) {
+    auto z = poly[i] * scalar;
 
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
@@ -217,20 +231,10 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
     // Barrett subtraction
     carry = z - carry * modulus_value;
     // Possible correction term
-    *result =
+    poly[i] =
         carry -
         (modulus_value &
          static_cast<uint64_t>(-static_cast<int64_t>(carry >= modulus_value)));
-
-    /*
-    NGRAPH_HE_LOG(5) << "poly " << *poly;
-    NGRAPH_HE_LOG(5) << "scalar " << scalar;
-    NGRAPH_HE_LOG(5) << "z " << z;
-    NGRAPH_HE_LOG(5) << "modulus_value " << modulus_value;
-    *result = z;
-
-    NGRAPH_HE_LOG(5) << "*result " << *result;
-    */
   }
 }
 
