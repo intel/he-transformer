@@ -31,10 +31,18 @@ ExternalProject_Add(ext_zlib
     UPDATE_COMMAND    ""
 )
 
-add_library(zlib STATIC IMPORTED)
+add_library(zlib SHARED IMPORTED)
 set_target_properties(zlib
-                        PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.a)
+                        PROPERTIES IMPORTED_LOCATION ${ZLIB_LIB_DIR}/libz.so)
 add_dependencies(zlib ext_zlib)
+
+install(DIRECTORY ${ZLIB_LIB_DIR}/
+        DESTINATION ${EXTERNAL_INSTALL_LIB_DIR}
+        FILES_MATCHING
+        PATTERN "*.so"
+        PATTERN "*.so*"
+        PATTERN "*.a"
+        )
 
 # SEAL
 set(SEAL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/ext_seal)

@@ -82,6 +82,7 @@ target_link_libraries(he_seal_backend
                       PUBLIC libjson
                              libboost
                              libseal
+                             zlib
                              libngraph
                              libabseil
                              protobuf::libprotobuf
@@ -91,8 +92,7 @@ if (NGRAPH_HE_ABY_ENABLE)
         target_link_libraries(he_seal_backend PUBLIC libaby)
 endif()
 
-# TODO: better condition if we don't link with OpenMP
-if (NGRAPH_HE_CODE_COVERAGE)
+if (NOT ${NGRAPH_HE_PARALLEL})
         find_package(Threads)
         target_link_libraries(he_seal_backend PUBLIC  ${CMAKE_THREAD_LIBS_INIT})
 endif()
@@ -114,6 +114,11 @@ foreach(INSTALL_INCLUDE_DIR ${INSTALL_INCLUDE_DIRS})
           PATTERN "*.hpp"
           PATTERN "*.inc") # For port_def.inc
   install(DIRECTORY ${json_INCLUDE_DIR}/
+          DESTINATION ${INSTALL_INCLUDE_DIR}
+          FILES_MATCHING
+          PATTERN "*.h"
+          PATTERN "*.hpp")
+  install(DIRECTORY ${abseil_INCLUDE_DIR}/
           DESTINATION ${INSTALL_INCLUDE_DIR}
           FILES_MATCHING
           PATTERN "*.h"

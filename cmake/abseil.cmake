@@ -36,3 +36,5 @@ ExternalProject_Add(ext_abseil
 add_library(libabseil INTERFACE)
 target_include_directories(libabseil SYSTEM INTERFACE ${SOURCE_DIR})
 add_dependencies(libabseil ext_abseil)
+
+set(abseil_INCLUDE_DIR ${SOURCE_DIR})

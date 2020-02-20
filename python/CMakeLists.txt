@@ -42,7 +42,6 @@ install(DIRECTORY ${EXTERNAL_INSTALL_INCLUDE_DIR}/
         PATTERN "*.h"
         PATTERN "*.inc" # For port_def.inc in protobuf
         )
-
 install(DIRECTORY ${EXTERNAL_INSTALL_LIB_DIR}/
         DESTINATION ${EXTERNAL_INSTALL_LIB_DIR}
         FILES_MATCHING
