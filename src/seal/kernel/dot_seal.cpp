@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "seal/kernel/add_seal.hpp"
+#include "seal/kernel/multiply_add_seal.hpp"
 #include "seal/kernel/multiply_seal.hpp"
 
 namespace ngraph::runtime::he {
@@ -127,13 +128,26 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
       auto mult_arg1 = arg1[arg1_transform.index(arg1_coord)];
 
       auto prod = HEType(HEPlaintext(batch_size), false);
+
+      // Old
       scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
       if (first_add) {
         sum = prod;
         first_add = false;
       } else {
-        scalar_add_seal(prod, sum, sum, he_seal_backend);
+        scalar_add_seal(mult_arg0, mult_arg1, sum, he_seal_backend);
       }
+
+      /// New
+      /*
+      if (first_add) {
+        scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
+        sum = prod;
+        first_add = false;
+      } else {
+        scalar_multiply_add_seal(mult_arg0, mult_arg1, sum, he_seal_backend);
+      }
+      */
     }
     // Write the sum back.
     if (first_add) {

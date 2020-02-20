@@ -29,14 +29,8 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
                      HESealBackend& he_seal_backend,
                      const seal::MemoryPoolHandle& pool) {
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
-
-  if (&arg1.ciphertext() == &out->ciphertext()) {
-    he_seal_backend.get_evaluator()->add_inplace(out->ciphertext(),
-                                                 arg0.ciphertext());
-  } else {
-    he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
-                                         out->ciphertext());
-  }
+  he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
+                                       out->ciphertext());
 }
 
 void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
