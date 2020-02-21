@@ -240,6 +240,7 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 
 include(cmake/ngraph.cmake)
+include(cmake/ngraph-onnx.cmake)
 include(cmake/ngraph-tf.cmake)
 
 # Install he-transformer to installation location and into ngraph-tf

@@ -79,13 +79,9 @@ def squash_layers(cryptonets_model, sess):
     # Pass 0 to get bias
     squashed_bias = y.eval(
         session=sess,
-        feed_dict={
-            "squashed_input:0": np.zeros((1, 14 * 14 * 5))
-        })
+        feed_dict={"squashed_input:0": np.zeros((1, 14 * 14 * 5))})
     squashed_bias_plus_weights = y.eval(
-        session=sess, feed_dict={
-            "squashed_input:0": np.eye(14 * 14 * 5)
-        })
+        session=sess, feed_dict={"squashed_input:0": np.eye(14 * 14 * 5)})
     squashed_weights = squashed_bias_plus_weights - squashed_bias
 
     print("squashed layers")
@@ -103,31 +99,33 @@ def squash_layers(cryptonets_model, sess):
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = mnist_util.load_mnist_data()
 
-    x = Input(
-        shape=(
-            28,
-            28,
-            1,
-        ), name="input")
+    x = Input(batch_shape=(
+        FLAGS.batch_size,
+        28,
+        28,
+        1,
+    ), name="input")
 
     y = model.cryptonets_model(x)
     cryptonets_model = Model(inputs=x, outputs=y)
     print(cryptonets_model.summary())
 
     def loss(labels, logits):
-        return keras.losses.categorical_crossentropy(
-            labels, logits, from_logits=True)
+        return keras.losses.categorical_crossentropy(labels,
+                                                     logits,
+                                                     from_logits=True)
 
     optimizer = SGD(learning_rate=0.008, momentum=0.9)
-    cryptonets_model.compile(
-        optimizer=optimizer, loss=loss, metrics=["accuracy"])
+    cryptonets_model.compile(optimizer=optimizer,
+                             loss=loss,
+                             metrics=["accuracy"])
 
     cryptonets_model.fit(
         x_train,
         y_train,
         epochs=FLAGS.epochs,
         batch_size=FLAGS.batch_size,
-        validation_data=(x_test, y_test),
+        # validation_data=(x_test, y_test),
         verbose=1)
 
     test_loss, test_acc = cryptonets_model.evaluate(x_test, y_test, verbose=1)
@@ -141,12 +139,13 @@ def main(FLAGS):
     tf.reset_default_graph()
     sess = tf.compat.v1.Session()
 
-    x = Input(
-        shape=(
-            28,
-            28,
-            1,
-        ), name="input")
+    x = Input(batch_shape=(
+        FLAGS.batch_size,
+        28,
+        28,
+        1,
+    ), name="input")
+
     y = model.cryptonets_model_squashed(x, conv1_weights, squashed_weights,
                                         fc2_weights)
     sess.run(tf.compat.v1.global_variables_initializer())

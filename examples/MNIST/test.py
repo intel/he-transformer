@@ -18,7 +18,7 @@
 import time
 import numpy as np
 import tensorflow as tf
-import ngraph_bridge
+#import ngraph_bridge
 
 # Add parent directory to path
 from mnist_util import (
@@ -31,8 +31,8 @@ from mnist_util import (
 
 
 def test_network(FLAGS):
-    (x_train, y_train, x_test, y_test) = load_mnist_data(
-        FLAGS.start_batch, FLAGS.batch_size)
+    (x_train, y_train, x_test,
+     y_test) = load_mnist_data(FLAGS.start_batch, FLAGS.batch_size)
 
     # Load saved model
     tf.import_graph_def(load_pb_file(FLAGS.model_file))
