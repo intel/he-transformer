@@ -31,9 +31,9 @@
 #include "util/test_control.hpp"
 #include "util/test_tools.hpp"
 
-static std::string s_manifest = "${MANIFEST}";
+static const char* s_manifest = "${MANIFEST}";
 
-static std::string gc_param_real_str = R"(
+static const char* gc_param_real_str = R"(
     {
         "scheme_name" : "HE_SEAL",
         "poly_modulus_degree" : 2048,
@@ -43,7 +43,7 @@ static std::string gc_param_real_str = R"(
         "complex_packing": false
     })";
 
-static std::string gc_param_complex_str = R"(
+static const char* gc_param_complex_str = R"(
     {
         "scheme_name" : "HE_SEAL",
         "poly_modulus_degree" : 2048,

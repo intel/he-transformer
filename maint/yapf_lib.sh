@@ -71,4 +71,3 @@ yapf_lib_verify_version() {
         return 1
     fi
 }
-
