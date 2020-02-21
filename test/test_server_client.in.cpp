@@ -32,7 +32,7 @@
 #include "util/test_control.hpp"
 #include "util/test_tools.hpp"
 
-static std::string s_manifest = "${MANIFEST}";
+static const char* s_manifest = "${MANIFEST}";
 
 namespace ngraph::runtime::he {
 

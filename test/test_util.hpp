@@ -17,6 +17,7 @@
 #pragma once
 
 #include <complex>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -63,7 +64,7 @@ bool all_close(const std::vector<T>& a, const std::vector<T>& b,
 inline std::shared_ptr<HEOpAnnotations> annotation_from_flags(
     const bool from_client, const bool encrypted, const bool packed) {
   return std::make_shared<HEOpAnnotations>(from_client, encrypted, packed);
-};
+}
 
 inline std::string config_from_annotation(const HEOpAnnotations& annotation) {
   std::vector<std::string> configs;
@@ -101,6 +102,6 @@ inline std::shared_ptr<runtime::Tensor> tensor_from_flags(
     return he_seal_backend.create_plain_tensor(element::f32, shape);
   }
   throw ngraph_error("Logic error");
-};
+}
 
 }  // namespace ngraph::runtime::he::test
