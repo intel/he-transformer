@@ -14,8 +14,6 @@
 // limitations under the License.
 //*****************************************************************************
 
-#pragma once
-
 #define ID_SUFFIX(NAME) NAME
 #include "ngraph/opsets/opset0_tbl.hpp"
 NGRAPH_OP(BoundedRelu, op)
