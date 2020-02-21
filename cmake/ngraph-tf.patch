@@ -9,3 +9,5 @@ index 0db5c524..649d7901 100644
 -    except ImportError:
 +    except:
          pass
+ 
+ 
