@@ -78,7 +78,8 @@ set(BACKEND_TEST_SRC
     test_softmax.in.cpp
     test_slice.in.cpp
     test_subtract.in.cpp
-    test_sum.in.cpp)
+    test_sum.in.cpp
+    test_transpose.in.cpp)
 
 if (NGRAPH_HE_ABY_ENABLE)
   list(APPEND BACKEND_TEST_SRC test_server_client_gc.in.cpp)
