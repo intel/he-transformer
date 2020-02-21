@@ -136,23 +136,12 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
         sum = prod;
         first_add = false;
       } else {
-        scalar_multiply_add_seal(mult_arg0, mult_arg1, sum, batch_size,
+        scalar_multiply_add_seal(mult_arg1, mult_arg0, sum, batch_size,
                                  he_seal_backend);
 
         // scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
         // scalar_add_seal(prod, sum, sum, he_seal_backend);
       }
-
-      /// New
-      /*
-      if (first_add) {
-        scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
-        sum = prod;
-        first_add = false;
-      } else {
-        scalar_multiply_add_seal(mult_arg0, mult_arg1, sum, he_seal_backend);
-      }
-      */
     }
     // Write the sum back.
     if (first_add) {
