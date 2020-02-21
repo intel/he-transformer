@@ -25,9 +25,9 @@ repos:
           files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
           args:
             - --filter=-runtime/references,-readability/nolint,-build/c++11
-        - id: yapf
-          name: yapf
-          entry: yapf
-          language: system
-          files: \.py$
-          args: [-i]
+       # - id: yapf
+       #   name: yapf
+       #   entry: yapf
+       #   language: system
+       #   files: \.py$
+       #   args: [-i]
