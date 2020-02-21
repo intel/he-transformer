@@ -36,4 +36,3 @@ merge conflicts.
         syntax level). The script has an exit code of `0` when code
         meets the standard and non-zero otherwise. This script does
         *not* modify the source code.
-
