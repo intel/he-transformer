@@ -37,6 +37,7 @@
 #include "ngraph/pass/liveness.hpp"
 #include "ngraph/pass/manager.hpp"
 #include "ngraph/pass/memory_layout.hpp"
+#include "ngraph/pass/opset0_downgrade.hpp"
 #include "ngraph/pass/visualize_tree.hpp"
 #include "ngraph/runtime/backend.hpp"
 #include "ngraph/serializer.hpp"
@@ -135,6 +136,10 @@ HESealExecutable::HESealExecutable(const std::shared_ptr<Function>& function,
   pass_manager.set_pass_serialization(false);
 
   pass_manager.register_pass<ngraph::pass::LikeReplacement>();
+  pass_manager.register_pass<ngraph::pass::FusedOpDecomposition>();
+  pass_manager.register_pass<ngraph::pass::Opset0Downgrade>();
+  // Need to decompose any v0 fused ops, which were produced by the downgrade
+  // pass
   pass_manager.register_pass<ngraph::pass::FusedOpDecomposition>();
   pass_manager.register_pass<ngraph::pass::AssignLayout<DenseTensorLayout>>();
   pass_manager.register_pass<ngraph::pass::CoreFusion>();
