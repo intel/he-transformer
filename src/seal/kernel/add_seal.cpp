@@ -77,8 +77,8 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
         std::uint64_t sum = *operand1 + *operand2;
 
         // New
-        // *result = sum;
-        // continue;
+        *result = sum;
+        continue;
 
         // Old
         *result = sum - (modulus_value &

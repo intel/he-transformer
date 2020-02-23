@@ -16,6 +16,7 @@
 
 #include "seal/he_seal_executable.hpp"
 
+#include <chrono>
 #include <functional>
 #include <limits>
 #include <map>
@@ -1063,29 +1064,32 @@ void HESealExecutable::generate_calls(
                m_he_seal_backend);
 
       //  Mod-reduce
-      /*
-        for (auto& he_data : out[0]->data()) {
-          // NGRAPH_HE_LOG(4) << "mod reduce";
-          seal::Ciphertext& encrypted = he_data.get_ciphertext()->ciphertext();
-          auto& context_data =
-              *m_context->get_context_data(encrypted.parms_id());
-          auto& parms = context_data.parms();
-          auto& coeff_modulus = parms.coeff_modulus();
-          size_t coeff_count = parms.poly_modulus_degree();
-          size_t coeff_mod_count = coeff_modulus.size();
-          size_t encrypted_ntt_size = encrypted.size();
-          for (size_t i = 0; i < encrypted_ntt_size; i++) {
-            for (size_t j = 0; j < coeff_mod_count; j++) {
-              for (size_t k = 0; k < coeff_count; ++k) {
-                std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
-                *poly = (*poly) % coeff_modulus[j].value();
-              }
+
+      auto t0 = std::chrono::system_clock::now();
+      for (auto& he_data : out[0]->data()) {
+        // NGRAPH_HE_LOG(4) << "mod reduce";
+        seal::Ciphertext& encrypted = he_data.get_ciphertext()->ciphertext();
+        auto& context_data = *m_context->get_context_data(encrypted.parms_id());
+        auto& parms = context_data.parms();
+        auto& coeff_modulus = parms.coeff_modulus();
+        size_t coeff_count = parms.poly_modulus_degree();
+        size_t coeff_mod_count = coeff_modulus.size();
+        size_t encrypted_ntt_size = encrypted.size();
+        for (size_t i = 0; i < encrypted_ntt_size; i++) {
+          for (size_t j = 0; j < coeff_mod_count; j++) {
+            for (size_t k = 0; k < coeff_count; ++k) {
+              std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
+              *poly = (*poly) % coeff_modulus[j].value();
             }
           }
         }
       }
-      */
-
+      auto t1 = std::chrono::system_clock::now();
+      NGRAPH_HE_LOG(3) << "lazy mod-reduce took "
+                       << std::chrono::duration_cast<std::chrono::milliseconds>(
+                              t1 - t0)
+                              .count()
+                       << "ms";
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
