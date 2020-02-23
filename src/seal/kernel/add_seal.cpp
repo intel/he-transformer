@@ -28,9 +28,72 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
                      std::shared_ptr<SealCiphertextWrapper>& out,
                      HESealBackend& he_seal_backend,
                      const seal::MemoryPoolHandle& pool) {
+  NGRAPH_INFO << "match_modulus_and_scale_inplace";
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
-  he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
-                                       out->ciphertext());
+  NGRAPH_INFO << "Add seal";
+
+  // he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
+  //                                     out->ciphertext());
+  // return;
+
+  // Inline add
+  // destination = encrypted1;
+  // add_inplace(destination, encrypted2);
+  seal::Ciphertext& encrypted1 = arg0.ciphertext();
+  seal::Ciphertext& encrypted2 = arg1.ciphertext();
+  seal::Ciphertext& destination = out->ciphertext();
+
+  destination = encrypted1;
+
+  // Extract encryption parameters.
+  auto& context_data =
+      *he_seal_backend.get_context()->get_context_data(encrypted1.parms_id());
+  auto& parms = context_data.parms();
+  auto& coeff_modulus = parms.coeff_modulus();
+  size_t coeff_count = parms.poly_modulus_degree();
+  size_t coeff_mod_count = coeff_modulus.size();
+  size_t encrypted1_size = encrypted1.size();
+  size_t encrypted2_size = encrypted2.size();
+  size_t max_count = std::max(encrypted1_size, encrypted2_size);
+  size_t min_count = std::min(encrypted1_size, encrypted2_size);
+
+  NGRAPH_INFO << "Prepare destination";
+
+  // Prepare destination
+  destination.resize(he_seal_backend.get_context(), context_data.parms_id(),
+                     max_count);
+
+  // Add ciphertexts
+  NGRAPH_INFO << "Add seal";
+  for (size_t j = 0; j < min_count; j++) {
+    uint64_t* encrypted1_ptr = destination.data(j);
+    uint64_t* encrypted2_ptr = encrypted2.data(j);
+    for (size_t i = 0; i < coeff_mod_count; i++) {
+      size_t coeff_count_sub = coeff_count;
+      /* add_poly_poly_coeffmod(encrypted1_ptr + (i * coeff_count),
+                             encrypted2_ptr + (i * coeff_count), coeff_count,
+                             coeff_modulus[i],
+                             encrypted1_ptr + (i * coeff_count)); */
+      NGRAPH_INFO << "Getting modulus " << i;
+
+      auto modulus = coeff_modulus[i];
+      std::uint64_t* operand1 = encrypted1_ptr + (i * coeff_count);
+      std::uint64_t* operand2 = encrypted2_ptr + (i * coeff_count);
+      std::uint64_t* result = encrypted1_ptr + (i * coeff_count);
+
+      const uint64_t modulus_value = modulus.value();
+      for (size_t k = 0; k < coeff_count;
+           k++, result++, operand1++, operand2++) {
+        // Explicit inline
+        std::uint64_t sum = *operand1 + *operand2;
+
+        // *result = (sum % modulus_value);
+        *result = sum - (modulus_value &
+                         static_cast<std::uint64_t>(
+                             -static_cast<std::int64_t>(sum >= modulus_value)));
+      }
+    }
+  }
 }
 
 void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,

@@ -133,6 +133,7 @@ void add_plain_inplace(seal::Ciphertext& encrypted, double value,
 void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                             const HESealBackend& he_seal_backend,
                             const seal::MemoryPoolHandle& pool) {
+  NGRAPH_INFO << "Mult plain";
   // Verify parameters.
   auto context = he_seal_backend.get_context();
   if (!seal::is_metadata_valid_for(encrypted, context) ||
@@ -208,6 +209,8 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
   for (; coeff_count--; poly++, result++) {
     // Multiplication
     auto z = *poly * scalar;
+    /* *result = z;
+    continue; */
 
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
