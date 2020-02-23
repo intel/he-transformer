@@ -28,9 +28,9 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
                      std::shared_ptr<SealCiphertextWrapper>& out,
                      HESealBackend& he_seal_backend,
                      const seal::MemoryPoolHandle& pool) {
-  NGRAPH_INFO << "match_modulus_and_scale_inplace";
+  NGRAPH_HE_LOG(5) << "match_modulus_and_scale_inplace";
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
-  NGRAPH_INFO << "Add seal";
+  NGRAPH_HE_LOG(5) << "Add seal";
 
   // he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
   //                                     out->ciphertext());
@@ -53,14 +53,13 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
   size_t max_count = std::max(encrypted1_size, encrypted2_size);
   size_t min_count = std::min(encrypted1_size, encrypted2_size);
 
-  NGRAPH_INFO << "Prepare destination";
-
+  NGRAPH_HE_LOG(5) << "Prepare destination";
   // Prepare destination
   encrypted1.resize(he_seal_backend.get_context(), context_data.parms_id(),
                     max_count);
 
   // Add ciphertexts
-  NGRAPH_INFO << "Add seal";
+  NGRAPH_HE_LOG(5) << "Add seal";
   for (size_t j = 0; j < min_count; j++) {
     uint64_t* encrypted1_ptr = encrypted1.data(j);
     uint64_t* encrypted2_ptr = encrypted2.data(j);
@@ -70,7 +69,7 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
                              encrypted2_ptr + (i * coeff_count), coeff_count,
                              coeff_modulus[i],
                              encrypted1_ptr + (i * coeff_count)); */
-      NGRAPH_INFO << "Getting modulus " << i;
+      NGRAPH_HE_LOG(5) << "Getting modulus " << i;
 
       auto modulus = coeff_modulus[i];
       std::uint64_t* operand1 = encrypted1_ptr + (i * coeff_count);

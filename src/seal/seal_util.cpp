@@ -133,7 +133,7 @@ void add_plain_inplace(seal::Ciphertext& encrypted, double value,
 void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                             const HESealBackend& he_seal_backend,
                             const seal::MemoryPoolHandle& pool) {
-  NGRAPH_INFO << "Mult plain";
+  NGRAPH_HE_LOG(5) << "Mult plain";
   // Verify parameters.
   auto context = he_seal_backend.get_context();
   if (!seal::is_metadata_valid_for(encrypted, context) ||

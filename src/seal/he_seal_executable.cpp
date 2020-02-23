@@ -1063,7 +1063,7 @@ void HESealExecutable::generate_calls(
                m_he_seal_backend);
 
       //  Mod-reduce
-      /*
+
       for (auto& he_data : out[0]->data()) {
         // NGRAPH_HE_LOG(4) << "mod reduce";
         seal::Ciphertext& encrypted = he_data.get_ciphertext()->ciphertext();
@@ -1082,7 +1082,7 @@ void HESealExecutable::generate_calls(
           }
         }
       }
-      */
+
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
