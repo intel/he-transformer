@@ -32,18 +32,14 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
   NGRAPH_INFO << "Add seal";
 
-  he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
-                                       out->ciphertext());
-  return;
+  // he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
+  //                                     out->ciphertext());
+  // return;
 
   // Inline add
-  // destination = encrypted1;
-  // add_inplace(destination, encrypted2);
-  seal::Ciphertext& encrypted1 = arg0.ciphertext();
-  seal::Ciphertext& encrypted2 = arg1.ciphertext();
-  seal::Ciphertext& destination = out->ciphertext();
-
-  destination = encrypted1;
+  // add_inplace(out->ciphertext(), arg0.ciphertext());
+  seal::Ciphertext& encrypted1 = out->ciphertext();
+  seal::Ciphertext& encrypted2 = arg0.ciphertext();
 
   // Extract encryption parameters.
   auto& context_data =
@@ -60,13 +56,13 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
   NGRAPH_INFO << "Prepare destination";
 
   // Prepare destination
-  destination.resize(he_seal_backend.get_context(), context_data.parms_id(),
-                     max_count);
+  encrypted1.resize(he_seal_backend.get_context(), context_data.parms_id(),
+                    max_count);
 
   // Add ciphertexts
   NGRAPH_INFO << "Add seal";
   for (size_t j = 0; j < min_count; j++) {
-    uint64_t* encrypted1_ptr = destination.data(j);
+    uint64_t* encrypted1_ptr = encrypted1.data(j);
     uint64_t* encrypted2_ptr = encrypted2.data(j);
     for (size_t i = 0; i < coeff_mod_count; i++) {
       size_t coeff_count_sub = coeff_count;
