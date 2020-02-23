@@ -24,9 +24,9 @@ These examples depends on the [**Intel® nGraph™ Compiler and runtime engine f
 # Train the networks
 First, train the networks using
 ```bash
-python cryptonets/train.py --epochs=20 --batch_size=128
-python cryptonets-relu/train.py --epochs=20 --batch_size=128
-python mlp/train.py --epochs=20 --batch_size=128
+python Cryptonets/train.py --epochs=20 --batch_size=128
+python Cryptonets-Relu/train.py --epochs=20 --batch_size=128
+python MLP/train.py --epochs=20 --batch_size=128
 ```
 Each `train.py` file takes a `--batch_size` and `--epochs` arguments.
 
@@ -141,10 +141,10 @@ where
  - `complex_packing` specifies whether or not to double the capacity (i.e. maximum batch size) by packing two scalars `(a,b)` in a complex number `a+bi`. Typically, the capacity is `poly_modulus_degree/2`. Enabling complex packing doubles the capacity to `poly_modulus_degree`. Note: enabling `complex_packing` will reduce the performance of ciphertext-ciphertext multiplication.
 
 ## Parameter selection
-Parameter selection remains largely a hnad-tuned process. We give a rough guideline below:
+Parameter selection remains largely a hand-tuned process. We give a rough guideline below:
 
  1) Select the security level, `lambda`. `lambda=128` is a standard minimum selection.
- 2) Compute the multiplicavtive depth, `L` of your computation graph. This is the largest number of multiplications between non-polynomial activations.
+ 2) Compute the multiplicative depth, `L` of your computation graph. This is the largest number of multiplications between non-polynomial activations.
  3) Estimate the bit-precision `s`, required. We have found the best performance-accuracy tradeoff with ~24 bits.
  4) Choose `coeff_modulus = [s, s, s, ..., s]`, a list of `L` coeffficient moduli, each with `s` bits. Set the scale to `s`.
  5) Compute the total coefficient modulus bit width, `L * s` in the above parameter selection
