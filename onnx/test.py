@@ -32,7 +32,7 @@ int_pred = int_cryptonets(picture)
 print(int_pred)
 
 # Run on he_seal
-int_runtime = ng.runtime(backend_name='HE_SEAL')
+int_runtime = ng.runtime(backend_name='HE_SEAL', config={'asdf': 'asdf'})
 int_cryptonets = int_runtime.computation(ng_function)
 int_pred = int_cryptonets(picture)
 print(int_pred)
