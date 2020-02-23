@@ -110,7 +110,8 @@ TEST(perf_micro, encode) {
           auto he_capacity = sizeof(uint64_t) * he_plain.size();
           NGRAPH_INFO << "he plaintext capacity " << he_capacity;
           NGRAPH_INFO << "Memmory improvement: "
-                      << seal_plain_capacity / float(he_capacity) << "\n";
+                      << seal_plain_capacity / static_cast<float>(he_capacity)
+                      << "\n";
         }
       }
 
