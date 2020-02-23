@@ -32,9 +32,9 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
   NGRAPH_INFO << "Add seal";
 
-  // he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
-  //                                     out->ciphertext());
-  // return;
+  he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
+                                       out->ciphertext());
+  return;
 
   // Inline add
   // destination = encrypted1;
