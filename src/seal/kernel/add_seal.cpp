@@ -71,19 +71,39 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
       std::uint64_t* result = encrypted1_ptr + (i * coeff_count);
 
       const uint64_t modulus_value = modulus.value();
+      const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+
       for (size_t k = 0; k < coeff_count;
            k++, result++, operand1++, operand2++) {
         // Explicit inline
-        std::uint64_t sum = *operand1 + *operand2;
 
         // New
-        *result = sum;  // % modulus_value;
+
+        const uint64_t orig_op1 = *operand1;
+
+        *result = (*operand1 + *operand2);
+        //*result = *result % modulus_value;
+        NGRAPH_CHECK(*result > orig_op1 && *result > *operand2,
+                     "Overflow in add at k = ", k, ": orig_op1 ", orig_op1,
+                     ", opreand2 ", *operand2, ", result ", *result,
+                     ", modulus_value ", modulus_value);
         continue;
 
         // Old
-        *result = sum - (modulus_value &
-                         static_cast<std::uint64_t>(
-                             -static_cast<std::int64_t>(sum >= modulus_value)));
+        std::uint64_t sum = *operand1 + *operand2;
+        // Barrett base 2^64 reduction
+        unsigned long long carry;
+        seal::util::multiply_uint64_hw64(sum, const_ratio_1, &carry);
+        carry = sum - carry * modulus_value;
+        *result = carry - (modulus_value &
+                           static_cast<uint64_t>(
+                               -static_cast<int64_t>(carry >= modulus_value)));
+
+        // 128-bit barrett reduction
+        /*  *result = sum - (modulus_value &
+                          static_cast<std::uint64_t>(
+                              -static_cast<std::int64_t>(sum >=
+           modulus_value))); */
       }
     }
   }

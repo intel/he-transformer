@@ -1066,30 +1066,49 @@ void HESealExecutable::generate_calls(
       //  Mod-reduce
 
       auto t0 = std::chrono::system_clock::now();
-      for (auto& he_data : out[0]->data()) {
-        // NGRAPH_HE_LOG(4) << "mod reduce";
-        seal::Ciphertext& encrypted = he_data.get_ciphertext()->ciphertext();
-        auto& context_data = *m_context->get_context_data(encrypted.parms_id());
-        auto& parms = context_data.parms();
-        auto& coeff_modulus = parms.coeff_modulus();
-        size_t coeff_count = parms.poly_modulus_degree();
-        size_t coeff_mod_count = coeff_modulus.size();
-        size_t encrypted_ntt_size = encrypted.size();
-        for (size_t i = 0; i < encrypted_ntt_size; i++) {
-          for (size_t j = 0; j < coeff_mod_count; j++) {
-            for (size_t k = 0; k < coeff_count; ++k) {
-              std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
-              *poly = (*poly) % coeff_modulus[j].value();
+      if (std::getenv("LAZY_REDUCE") != nullptr) {
+        for (auto& he_data : out[0]->data()) {
+          // NGRAPH_HE_LOG(4) << "mod reduce";
+          seal::Ciphertext& encrypted = he_data.get_ciphertext()->ciphertext();
+          auto& context_data =
+              *m_context->get_context_data(encrypted.parms_id());
+          auto& parms = context_data.parms();
+          auto& coeff_modulus = parms.coeff_modulus();
+          size_t coeff_count = parms.poly_modulus_degree();
+          size_t coeff_mod_count = coeff_modulus.size();
+          size_t encrypted_ntt_size = encrypted.size();
+          for (size_t i = 0; i < encrypted_ntt_size; i++) {
+            for (size_t j = 0; j < coeff_mod_count; j++) {
+              auto modulus = coeff_modulus[j];
+              const uint64_t modulus_value = modulus.value();
+              const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+
+              for (size_t k = 0; k < coeff_count; ++k) {
+                std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
+
+                // New
+                *poly = (*poly) % coeff_modulus[j].value();
+                continue;
+
+                // Barrett base 2^64 reduction
+                unsigned long long carry;
+                seal::util::multiply_uint64_hw64(*poly, const_ratio_1, &carry);
+                carry = *poly - carry * modulus_value;
+                *poly = carry - (modulus_value &
+                                 static_cast<uint64_t>(-static_cast<int64_t>(
+                                     carry >= modulus_value)));
+              }
             }
           }
         }
+        auto t1 = std::chrono::system_clock::now();
+        NGRAPH_HE_LOG(3)
+            << "lazy mod-reduce took "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0)
+                   .count()
+            << "ms";
       }
-      auto t1 = std::chrono::system_clock::now();
-      NGRAPH_HE_LOG(3) << "lazy mod-reduce took "
-                       << std::chrono::duration_cast<std::chrono::milliseconds>(
-                              t1 - t0)
-                              .count()
-                       << "ms";
+
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;

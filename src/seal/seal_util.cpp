@@ -209,8 +209,8 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
   for (; coeff_count--; poly++, result++) {
     // Multiplication
     auto z = *poly * scalar;
-    /* *result = z;
-    continue; */
+    *result = z;
+    continue;
 
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
