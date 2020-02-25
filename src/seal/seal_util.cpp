@@ -211,6 +211,7 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
     auto z = *poly * scalar;
     *result = z;
     continue;
+    /*
 
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
@@ -224,6 +225,7 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
         carry -
         (modulus_value &
          static_cast<uint64_t>(-static_cast<int64_t>(carry >= modulus_value)));
+  */
   }
 }
 

@@ -79,15 +79,14 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
 
         // New
 
-        const uint64_t orig_op1 = *operand1;
-
+        // const uint64_t orig_op1 = *operand1;
         *result = (*operand1 + *operand2);
         //*result = *result % modulus_value;
-        NGRAPH_CHECK(*result > orig_op1 && *result > *operand2,
+        /* NGRAPH_CHECK(*result > orig_op1 && *result > *operand2,
                      "Overflow in add at k = ", k, ": orig_op1 ", orig_op1,
                      ", opreand2 ", *operand2, ", result ", *result,
-                     ", modulus_value ", modulus_value);
-        continue;
+                     ", modulus_value ", modulus_value); */
+        /* continue;
 
         // Old
         std::uint64_t sum = *operand1 + *operand2;
@@ -98,6 +97,7 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
         *result = carry - (modulus_value &
                            static_cast<uint64_t>(
                                -static_cast<int64_t>(carry >= modulus_value)));
+      */
 
         // 128-bit barrett reduction
         /*  *result = sum - (modulus_value &

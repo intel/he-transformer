@@ -873,7 +873,7 @@ bool HESealExecutable::call(
     }
     if (verbose) {
       NGRAPH_HE_LOG(3) << "\033[1;31m" << op->get_name() << " took "
-                       << m_timer_map[op].get_microseconds() << "us"
+                       << m_timer_map[op].get_milliseconds() << "ms"
                        << "\033[0m";
     }
   }
@@ -1058,14 +1058,26 @@ void HESealExecutable::generate_calls(
       if (verbose) {
         NGRAPH_HE_LOG(3) << in_shape0 << " dot " << in_shape1;
       }
-      dot_seal(args[0]->data(), args[1]->data(), out[0]->data(), in_shape0,
-               in_shape1, out[0]->get_packed_shape(),
-               dot->get_reduction_axes_count(), type, batch_size(),
-               m_he_seal_backend);
+      {
+        auto t0 = std::chrono::system_clock::now();
+        dot_seal(args[0]->data(), args[1]->data(), out[0]->data(), in_shape0,
+                 in_shape1, out[0]->get_packed_shape(),
+                 dot->get_reduction_axes_count(), type, batch_size(),
+                 m_he_seal_backend);
+        auto t1 = std::chrono::system_clock::now();
+
+        NGRAPH_HE_LOG(3)
+            << "dot only took "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0)
+                   .count()
+            << "ms";
+      }
 
       //  Mod-reduce
 
       auto t0 = std::chrono::system_clock::now();
+      size_t data_size = out[0]->data().size();
+      NGRAPH_INFO << "Mod-reduce size " << data_size;
       if (std::getenv("LAZY_REDUCE") != nullptr) {
         for (auto& he_data : out[0]->data()) {
           // NGRAPH_HE_LOG(4) << "mod reduce";
@@ -1087,8 +1099,8 @@ void HESealExecutable::generate_calls(
                 std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
 
                 // New
-                *poly = (*poly) % coeff_modulus[j].value();
-                continue;
+                //*poly = (*poly) % coeff_modulus[j].value();
+                // continue;
 
                 // Barrett base 2^64 reduction
                 unsigned long long carry;
