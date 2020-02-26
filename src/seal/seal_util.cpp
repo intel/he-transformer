@@ -169,19 +169,29 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
          he_seal_backend);
   double new_scale = scale * scale;
   // Check that scale is positive and not too large
-  if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
+  /* if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
                          context_data.total_coeff_modulus_bit_count())) {
     NGRAPH_ERR << "new_scale " << new_scale << " ("
                << static_cast<int>(log2(new_scale)) << " bits) out of bounds";
     NGRAPH_ERR << "Coeff mod bit count "
                << context_data.total_coeff_modulus_bit_count();
     throw ngraph_error("scale out of bounds");
-  }
+  } */
 
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
+      std::uint64_t* poly = encrypted.data(i) + (j * coeff_count);
+      std::uint64_t scalar = plaintext_vals[j];
+      for (size_t k = 0; k < coeff_count; k++) {
+        *poly = *poly * scalar;
+        poly++;
+      }
+      // multiply_poly_scalar_coeffmod64(
+      //    encrypted.data(i) + (j * coeff_count), coeff_count,
+      //    plaintext_vals[j], coeff_modulus[j], encrypted.data(i) + (j *
+      //    coeff_count));
       // Multiply by scalar instead of doing dyadic product
-      if (coeff_modulus[j].value() < (1UL << 31U)) {
+      /* if (coeff_modulus[j].value() < (1UL << 31U)) {
         multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
                                         coeff_count, plaintext_vals[j],
                                         coeff_modulus[j],
@@ -191,7 +201,7 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
             encrypted.data(i) + (j * coeff_count), coeff_count,
             plaintext_vals[j], coeff_modulus[j],
             encrypted.data(i) + (j * coeff_count));
-      }
+      } */
     }
   }
   // Set the scale
