@@ -130,29 +130,12 @@ void add_plain_inplace(seal::Ciphertext& encrypted, double value,
 #endif
 }
 
-#pragma omp declare simd uniform(poly), \
-    linear(i : 1) aligned(poly : 32) notinbranch simdlen(8)
-void mult_kernel(std::uint64_t* poly, uint64_t i, uint64_t scalar) {
-  poly[i] = poly[i] * scalar;
-}
-
-void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
-                            const HESealBackend& he_seal_backend,
-                            const seal::MemoryPoolHandle& pool) {
-  auto t0 = std::chrono::system_clock::now();
-  // Verify parameters.
+void multiply_plain_no_cpy(const seal::Ciphertext& encrypted, double value,
+                           seal::Ciphertext& destination,
+                           const HESealBackend& he_seal_backend,
+                           seal::MemoryPoolHandle pool) {
+  // destination = encrypted;
   auto context = he_seal_backend.get_context();
-  if (!seal::is_metadata_valid_for(encrypted, context) ||
-      !is_buffer_valid(encrypted) ||
-      !context->get_context_data(encrypted.parms_id())) {
-    throw ngraph_error("encrypted is not valid for encryption parameters");
-  }
-  if (!encrypted.is_ntt_form()) {
-    throw ngraph_error("encrypted is not NTT form");
-  }
-  if (!pool) {
-    throw ngraph_error("pool is uninitialized");
-  }
 
   // Extract encryption parameters.
   auto& context_data = *context->get_context_data(encrypted.parms_id());
@@ -162,30 +145,61 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
   size_t coeff_mod_count = coeff_modulus.size();
   size_t encrypted_ntt_size = encrypted.size();
 
-  // Size check
-  NGRAPH_CHECK(seal::util::product_fits_in(encrypted_ntt_size, coeff_count,
-                                           coeff_mod_count),
-               "invalid parameters");
+  destination = seal::Ciphertext(he_seal_backend.get_context(),
+                                 encrypted.parms_id(), encrypted.size());
+  destination.resize(encrypted.size());
+  destination.is_ntt_form() = encrypted.is_ntt_form();
+  /*  NGRAPH_INFO << " before";
+   NGRAPH_INFO << "dest.poly_mod " << destination.poly_modulus_degree();
+   NGRAPH_INFO << "dest.size " << destination.size();
+
+   // destination = encrypted;
+   NGRAPH_INFO << " after";
+   NGRAPH_INFO << "dest.poly_mod " << destination.poly_modulus_degree();
+   NGRAPH_INFO << "dest.size " << destination.size(); */
 
   std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
-  // TODO(fboemer): explore using different scales! Smaller scales might reduce
-  // # of rescalings
   double scale = encrypted.scale();
   double new_scale = scale * scale;
-  auto t1 = std::chrono::system_clock::now();
   encode(value, element::f32, scale, encrypted.parms_id(), plaintext_vals,
          he_seal_backend);
-  auto t2 = std::chrono::system_clock::now();
-  // Check that scale is positive and not too large
-  /* if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
-                         context_data.total_coeff_modulus_bit_count())) {
-    NGRAPH_ERR << "new_scale " << new_scale << " ("
-               << static_cast<int>(log2(new_scale)) << " bits) out of bounds";
-    NGRAPH_ERR << "Coeff mod bit count "
-               << context_data.total_coeff_modulus_bit_count();
-    throw ngraph_error("scale out of bounds");
-  } */
-  // NGRAPH_INFO << "coeff_mod_count " << coeff_mod_count;
+  std::uint64_t* src = const_cast<std::uint64_t*>(encrypted.data());
+  std::uint64_t* dest = destination.data();
+  for (size_t i = 0; i < encrypted_ntt_size; i++) {
+    for (size_t j = 0; j < coeff_mod_count; j++) {
+      std::uint64_t scalar = plaintext_vals[j];
+#pragma omp simd
+      for (size_t k = 0; k < coeff_count; k++) {
+        *dest = *src * scalar;
+        ++src;
+        ++dest;
+      }
+    }
+  }
+  // Set the scale
+  destination.scale() = new_scale;
+}
+
+void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
+                            const HESealBackend& he_seal_backend,
+                            const seal::MemoryPoolHandle& pool) {
+  auto t0 = std::chrono::system_clock::now();
+  // Verify parameters.
+  auto context = he_seal_backend.get_context();
+
+  // Extract encryption parameters.
+  auto& context_data = *context->get_context_data(encrypted.parms_id());
+  auto& parms = context_data.parms();
+  auto& coeff_modulus = parms.coeff_modulus();
+  size_t coeff_count = parms.poly_modulus_degree();
+  size_t coeff_mod_count = coeff_modulus.size();
+  size_t encrypted_ntt_size = encrypted.size();
+
+  std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
+  double scale = encrypted.scale();
+  double new_scale = scale * scale;
+  encode(value, element::f32, scale, encrypted.parms_id(), plaintext_vals,
+         he_seal_backend);
   std::uint64_t* poly = encrypted.data();
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
@@ -198,57 +212,11 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
         *poly = *poly * scalar;
         ++poly;
       }
-      /* #pragma omp simd
-            for (size_t k = 0; k < coeff_count; k++) {
-              *poly = *poly * scalar;
-              poly++;
-            } */
-      // auto t3b = std::chrono::system_clock::now();
-      /* NGRAPH_HE_LOG(3) << "single mult loop took "
-                       << std::chrono::duration_cast<std::chrono::nanoseconds>(
-                              t3b - t3a)
-                              .count()
-                       << "ns"; */
-
-      // multiply_poly_scalar_coeffmod64(
-      //    encrypted.data(i) + (j * coeff_count), coeff_count,
-      //    plaintext_vals[j], coeff_modulus[j], encrypted.data(i) + (j *
-      //    coeff_count));
-      // Multiply by scalar instead of doing dyadic product
-      /* if (coeff_modulus[j].value() < (1UL << 31U)) {
-        multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
-                                        coeff_count, plaintext_vals[j],
-                                        coeff_modulus[j],
-                                        encrypted.data(i) + (j * coeff_count));
-      } else {
-        seal::util::multiply_poly_scalar_coeffmod(
-            encrypted.data(i) + (j * coeff_count), coeff_count,
-            plaintext_vals[j], coeff_modulus[j],
-            encrypted.data(i) + (j * coeff_count));
-      } */
     }
   }
   // Set the scale
   encrypted.scale() = new_scale;
-  auto t3 = std::chrono::system_clock::now();
-
-  /* NGRAPH_HE_LOG(3)
-      << "mult init took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()
-      << "us";
-  NGRAPH_HE_LOG(3)
-      << "mult encode took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()
-      << "us"; */
-  NGRAPH_HE_LOG(3)
-      << "mult loops took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count()
-      << "us";
-  /* NGRAPH_HE_LOG(3)
-      << "mult total took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t3 - t0).count()
-      << "us"; */
-}  // namespace ngraph::runtime::he
+}
 
 void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,

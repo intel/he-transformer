@@ -192,6 +192,11 @@ inline void multiply_plain(
   multiply_plain_inplace(destination, value, he_seal_backend, std::move(pool));
 }
 
+void multiply_plain_no_cpy(
+    const seal::Ciphertext& encrypted, double value,
+    seal::Ciphertext& destination, const HESealBackend& he_seal_backend,
+    seal::MemoryPoolHandle pool = seal::MemoryManager::GetPool());
+
 void mult_kernel(std::uint64_t* poly, uint64_t i, uint64_t scalar);
 
 /// \brief Optimized encoding of single value into vector of coefficients

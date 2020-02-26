@@ -1101,11 +1101,7 @@ void HESealExecutable::generate_calls(
 
             for (size_t k = 0; k < coeff_count; ++k) {
               std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
-
-              // New
-              //*poly = (*poly) % coeff_modulus[j].value();
-              // continue;
-
+              //*poly = (*poly) % coeff_modulus[j].value(); via
               // Barrett base 2^64 reduction
               unsigned long long carry;
               seal::util::multiply_uint64_hw64(*poly, const_ratio_1, &carry);
