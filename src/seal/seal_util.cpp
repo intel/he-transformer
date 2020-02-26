@@ -130,10 +130,10 @@ void add_plain_inplace(seal::Ciphertext& encrypted, double value,
 #endif
 }
 
-void multiply_plain_no_cpy(const seal::Ciphertext& encrypted, double value,
-                           seal::Ciphertext& destination,
-                           const HESealBackend& he_seal_backend,
-                           seal::MemoryPoolHandle pool) {
+void multiply_plain_lazy_mod(const seal::Ciphertext& encrypted, double value,
+                             seal::Ciphertext& destination,
+                             const HESealBackend& he_seal_backend,
+                             seal::MemoryPoolHandle pool) {
   // destination = encrypted;
   auto context = he_seal_backend.get_context();
 
@@ -186,6 +186,17 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
   auto t0 = std::chrono::system_clock::now();
   // Verify parameters.
   auto context = he_seal_backend.get_context();
+  if (!seal::is_metadata_valid_for(encrypted, context) ||
+      !is_buffer_valid(encrypted) ||
+      !context->get_context_data(encrypted.parms_id())) {
+    throw ngraph_error("encrypted is not valid for encryption parameters");
+  }
+  if (!encrypted.is_ntt_form()) {
+    throw ngraph_error("encrypted is not NTT form");
+  }
+  if (!pool) {
+    throw ngraph_error("pool is uninitialized");
+  }
 
   // Extract encryption parameters.
   auto& context_data = *context->get_context_data(encrypted.parms_id());
@@ -195,22 +206,39 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
   size_t coeff_mod_count = coeff_modulus.size();
   size_t encrypted_ntt_size = encrypted.size();
 
+  // Size check
+  NGRAPH_CHECK(seal::util::product_fits_in(encrypted_ntt_size, coeff_count,
+                                           coeff_mod_count),
+               "invalid parameters");
+
   std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
   double scale = encrypted.scale();
-  double new_scale = scale * scale;
   encode(value, element::f32, scale, encrypted.parms_id(), plaintext_vals,
          he_seal_backend);
-  std::uint64_t* poly = encrypted.data();
+  double new_scale = scale * scale;
+
+  // Check that scale is positive and not too large
+  if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
+                         context_data.total_coeff_modulus_bit_count())) {
+    NGRAPH_ERR << "new_scale " << new_scale << " ("
+               << static_cast<int>(log2(new_scale)) << " bits) out of bounds";
+    NGRAPH_ERR << "Coeff mod bit count "
+               << context_data.total_coeff_modulus_bit_count();
+    throw ngraph_error("scale out of bounds");
+  }
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
-      //  std::uint64_t* poly = encrypted.data(i) + (j * coeff_count);
-      std::uint64_t scalar = plaintext_vals[j];
-      // auto t3a = std::chrono::system_clock::now();
-
-#pragma omp simd
-      for (size_t k = 0; k < coeff_count; k++) {
-        *poly = *poly * scalar;
-        ++poly;
+      // Multiply by scalar instead of doing dyadic product
+      if (coeff_modulus[j].value() < (1UL << 31U)) {
+        multiply_poly_scalar_coeffmod64(encrypted.data(i) + (j * coeff_count),
+                                        coeff_count, plaintext_vals[j],
+                                        coeff_modulus[j],
+                                        encrypted.data(i) + (j * coeff_count));
+      } else {
+        seal::util::multiply_poly_scalar_coeffmod(
+            encrypted.data(i) + (j * coeff_count), coeff_count,
+            plaintext_vals[j], coeff_modulus[j],
+            encrypted.data(i) + (j * coeff_count));
       }
     }
   }
@@ -222,16 +250,13 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
                                      uint64_t scalar,
                                      const seal::SmallModulus& modulus,
                                      std::uint64_t* result) {
-  // const uint64_t modulus_value = modulus.value();
-  // const uint64_t const_ratio_1 = modulus.const_ratio()[1];
+  const uint64_t modulus_value = modulus.value();
+  const uint64_t const_ratio_1 = modulus.const_ratio()[1];
 
   // NOLINTNEXTLINE
   for (; coeff_count--; poly++, result++) {
     // Multiplication
     auto z = *poly * scalar;
-    *result = z;
-    continue;
-    /*
 
     // Barrett base 2^64 reduction
     // NOLINTNEXTLINE(runtime/int)
@@ -245,7 +270,6 @@ void multiply_poly_scalar_coeffmod64(const uint64_t* poly, size_t coeff_count,
         carry -
         (modulus_value &
          static_cast<uint64_t>(-static_cast<int64_t>(carry >= modulus_value)));
-  */
   }
 }
 

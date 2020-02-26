@@ -125,12 +125,15 @@ void scalar_multiply_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,
       auto empty_cipher = HESealBackend::create_empty_ciphertext();
       out.set_ciphertext(empty_cipher);
     }
-    /* multiply_plain(arg0.ciphertext(), arg1[0],
-                   out.get_ciphertext()->ciphertext(), he_seal_backend, pool);
-     */
-    multiply_plain_no_cpy(arg0.ciphertext(), arg1[0],
-                          out.get_ciphertext()->ciphertext(), he_seal_backend,
-                          pool);
+
+    if (he_seal_backend.lazy_mod()) {
+      multiply_plain_lazy_mod(arg0.ciphertext(), arg1[0],
+                              out.get_ciphertext()->ciphertext(),
+                              he_seal_backend, pool);
+    } else {
+      multiply_plain(arg0.ciphertext(), arg1[0],
+                     out.get_ciphertext()->ciphertext(), he_seal_backend, pool);
+    }
 
     if (out.get_ciphertext()->ciphertext().is_transparent()) {
       out.set_plaintext(HEPlaintext(arg1.size(), 0));

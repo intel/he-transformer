@@ -1038,7 +1038,9 @@ void HESealExecutable::generate_calls(
                        1, 1, 0, 0, 1, type, batch_size(), m_he_seal_backend,
                        verbose);
 
-      mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
@@ -1075,7 +1077,9 @@ void HESealExecutable::generate_calls(
             << "ms";
       }
 
-      mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;

@@ -105,8 +105,9 @@ def freeze_session(session,
         if clear_devices:
             for node in input_graph_def.node:
                 node.device = ""
-        frozen_graph = convert_variables_to_constants(
-            session, input_graph_def, output_names, freeze_var_names)
+        frozen_graph = convert_variables_to_constants(session, input_graph_def,
+                                                      output_names,
+                                                      freeze_var_names)
         frozen_graph = remove_training_nodes(frozen_graph)
         return frozen_graph
 
@@ -130,10 +131,14 @@ def str2bool(v):
 
 def train_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--epochs", type=int, default=10, help="Number of training epochs")
-    parser.add_argument(
-        "--batch_size", type=int, default=128, help="Batch Size")
+    parser.add_argument("--epochs",
+                        type=int,
+                        default=10,
+                        help="Number of training epochs")
+    parser.add_argument("--batch_size",
+                        type=int,
+                        default=128,
+                        help="Batch Size")
 
     return parser
 
@@ -141,23 +146,28 @@ def train_argument_parser():
 def client_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--hostname", type=str, default="localhost", help="Hostname of server")
-    parser.add_argument(
-        "--port", type=int, default=34000, help="Port of server")
+    parser.add_argument("--hostname",
+                        type=str,
+                        default="localhost",
+                        help="Hostname of server")
+    parser.add_argument("--port",
+                        type=int,
+                        default=34000,
+                        help="Port of server")
     parser.add_argument(
         "--encrypt_data_str",
         type=str,
         default="encrypt",
         help='"encrypt" to encrypt client data, "plain" to not encrypt',
     )
-    parser.add_argument(
-        "--tensor_name",
-        type=str,
-        default="import/input",
-        help="Input tensor name")
-    parser.add_argument(
-        "--start_batch", type=int, default=0, help="Test data start index")
+    parser.add_argument("--tensor_name",
+                        type=str,
+                        default="import/input",
+                        help="Input tensor name")
+    parser.add_argument("--start_batch",
+                        type=int,
+                        default=0,
+                        help="Test data start index")
 
     return parser
 
@@ -165,16 +175,14 @@ def client_argument_parser():
 def server_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
-    parser.add_argument(
-        "--enable_client",
-        type=str2bool,
-        default=False,
-        help="Enable the client")
-    parser.add_argument(
-        "--enable_gc",
-        type=str2bool,
-        default=False,
-        help="Enable garbled circuits")
+    parser.add_argument("--enable_client",
+                        type=str2bool,
+                        default=False,
+                        help="Enable the client")
+    parser.add_argument("--enable_gc",
+                        type=str2bool,
+                        default=False,
+                        help="Enable garbled circuits")
     parser.add_argument(
         "--mask_gc_inputs",
         type=str2bool,
@@ -193,8 +201,10 @@ def server_argument_parser():
         default=1,
         help="Number of threads to run garbled circuits with",
     )
-    parser.add_argument(
-        "--backend", type=str, default="HE_SEAL", help="Name of backend to use")
+    parser.add_argument("--backend",
+                        type=str,
+                        default="HE_SEAL",
+                        help="Name of backend to use")
     parser.add_argument(
         "--encryption_parameters",
         type=str,
@@ -209,18 +219,18 @@ def server_argument_parser():
         help=
         "Encrypt server data (should not be used when enable_client is used)",
     )
-    parser.add_argument(
-        "--pack_data",
-        type=str2bool,
-        default=True,
-        help="Use plaintext packing on data")
-    parser.add_argument(
-        "--start_batch", type=int, default=0, help="Test data start index")
-    parser.add_argument(
-        "--model_file",
-        type=str,
-        default="",
-        help="Filename of saved protobuf model")
+    parser.add_argument("--pack_data",
+                        type=str2bool,
+                        default=True,
+                        help="Use plaintext packing on data")
+    parser.add_argument("--start_batch",
+                        type=int,
+                        default=0,
+                        help="Test data start index")
+    parser.add_argument("--model_file",
+                        type=str,
+                        default="",
+                        help="Filename of saved protobuf model")
     parser.add_argument(
         "--input_node",
         type=str,
@@ -267,8 +277,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
 
     config = tf.compat.v1.ConfigProto()
     config.MergeFrom(
-        tf.compat.v1.ConfigProto(
-            graph_options=tf.compat.v1.GraphOptions(
-                rewrite_options=rewriter_options)))
+        tf.compat.v1.ConfigProto(graph_options=tf.compat.v1.GraphOptions(
+            rewrite_options=rewriter_options)))
 
     return config
