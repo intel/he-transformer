@@ -176,7 +176,6 @@ void multiply_plain_lazy_mod(const seal::Ciphertext& encrypted, double value,
 void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                             const HESealBackend& he_seal_backend,
                             const seal::MemoryPoolHandle& pool) {
-  auto t0 = std::chrono::system_clock::now();
   // Verify parameters.
   auto context = he_seal_backend.get_context();
   if (!seal::is_metadata_valid_for(encrypted, context) ||
@@ -314,8 +313,6 @@ void encode(double value, const element::Type& element_type, double scale,
             std::vector<std::uint64_t>& destination,
             const HESealBackend& he_seal_backend,
             const seal::MemoryPoolHandle& pool) {
-  auto t0 = std::chrono::system_clock::now();
-
   NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
                "Unsupported type ", element_type);
 
@@ -374,8 +371,6 @@ void encode(double value, const element::Type& element_type, double scale,
   double coeffd = std::round(value);
   bool is_negative = std::signbit(coeffd);
   coeffd = fabs(coeffd);
-
-  auto t1 = std::chrono::system_clock::now();
 
   // Use faster decomposition methods when possible
   if (coeff_bit_count <= 64) {
@@ -480,21 +475,6 @@ void encode(double value, const element::Type& element_type, double scale,
       }
     }
   }
-
-  auto t2 = std::chrono::system_clock::now();
-
-  /* NGRAPH_HE_LOG(3)
-      << "encode setup took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()
-      << "us";
-  NGRAPH_HE_LOG(3)
-      << "encode loop took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()
-      << "us";
-  NGRAPH_HE_LOG(3)
-      << "encode total took "
-      << std::chrono::duration_cast<std::chrono::microseconds>(t2 - t0).count()
-      << "us"; */
 }
 
 void encode(SealPlaintextWrapper& destination, const HEPlaintext& plaintext,
