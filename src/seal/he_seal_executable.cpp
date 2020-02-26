@@ -63,6 +63,7 @@
 #include "seal/kernel/max_pool_seal.hpp"
 #include "seal/kernel/max_seal.hpp"
 #include "seal/kernel/minimum_seal.hpp"
+#include "seal/kernel/mod_reduce_seal.hpp"
 #include "seal/kernel/multiply_seal.hpp"
 #include "seal/kernel/negate_seal.hpp"
 #include "seal/kernel/pad_seal.hpp"
@@ -1037,6 +1038,7 @@ void HESealExecutable::generate_calls(
                        1, 1, 0, 0, 1, type, batch_size(), m_he_seal_backend,
                        verbose);
 
+      mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
@@ -1073,53 +1075,7 @@ void HESealExecutable::generate_calls(
             << "ms";
       }
 
-      //  Mod-reduce
-
-      auto t0 = std::chrono::system_clock::now();
-      size_t data_size = out[0]->data().size();
-      NGRAPH_INFO << "Mod-reduce size " << data_size;
-      seal::Ciphertext& encrypted_first =
-          out[0]->data(0).get_ciphertext()->ciphertext();
-
-      auto& context_data =
-          *m_context->get_context_data(encrypted_first.parms_id());
-      auto& parms = context_data.parms();
-      auto& coeff_modulus = parms.coeff_modulus();
-      size_t coeff_count = parms.poly_modulus_degree();
-      size_t coeff_mod_count = coeff_modulus.size();
-      size_t encrypted_ntt_size = encrypted_first.size();
-#pragma omp parallel for
-      for (size_t he_idx = 0; he_idx < out[0]->data().size(); ++he_idx) {
-        seal::Ciphertext& encrypted =
-            out[0]->data(he_idx).get_ciphertext()->ciphertext();
-
-        for (size_t i = 0; i < encrypted_ntt_size; i++) {
-          for (size_t j = 0; j < coeff_mod_count; j++) {
-            auto modulus = coeff_modulus[j];
-            const uint64_t modulus_value = modulus.value();
-            const uint64_t const_ratio_1 = modulus.const_ratio()[1];
-
-            for (size_t k = 0; k < coeff_count; ++k) {
-              std::uint64_t* poly = encrypted.data(i) + (j * coeff_count) + k;
-              //*poly = (*poly) % coeff_modulus[j].value(); via
-              // Barrett base 2^64 reduction
-              unsigned long long carry;
-              seal::util::multiply_uint64_hw64(*poly, const_ratio_1, &carry);
-              carry = *poly - carry * modulus_value;
-              *poly = carry - (modulus_value &
-                               static_cast<uint64_t>(-static_cast<int64_t>(
-                                   carry >= modulus_value)));
-            }
-          }
-        }
-      }
-      auto t1 = std::chrono::system_clock::now();
-      NGRAPH_HE_LOG(3) << "lazy mod-reduce took "
-                       << std::chrono::duration_cast<std::chrono::milliseconds>(
-                              t1 - t0)
-                              .count()
-                       << "ms";
-
+      mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
