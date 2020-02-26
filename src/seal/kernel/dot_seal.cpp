@@ -17,6 +17,7 @@
 #include "seal/kernel/dot_seal.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include "seal/kernel/add_seal.hpp"
@@ -29,6 +30,12 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
               const Shape& arg1_shape, const Shape& out_shape,
               size_t reduction_axes_count, const element::Type& element_type,
               size_t batch_size, HESealBackend& he_seal_backend) {
+  size_t add_us = 0;
+  size_t mult_us = 0;
+  size_t total_us = 0;
+
+  auto t0 = std::chrono::system_clock::now();
+
   NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
                "Unsupported type ", element_type);
   // Get the sizes of the dot axes. It's easiest to pull them from arg1
@@ -132,14 +139,30 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
       // Old
 
       if (first_add) {
+        auto ta0 = std::chrono::system_clock::now();
         scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
+        auto ta1 = std::chrono::system_clock::now();
+        mult_us +=
+            std::chrono::duration_cast<std::chrono::microseconds>(ta1 - ta0)
+                .count();
         sum = prod;
         first_add = false;
       } else {
         // scalar_multiply_add_seal(mult_arg1, mult_arg0, sum, batch_size,
         //                         he_seal_backend);
+
+        auto ta0 = std::chrono::system_clock::now();
         scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
+        auto ta1 = std::chrono::system_clock::now();
         scalar_add_seal(prod, sum, sum, he_seal_backend);
+        auto ta2 = std::chrono::system_clock::now();
+
+        mult_us +=
+            std::chrono::duration_cast<std::chrono::microseconds>(ta1 - ta0)
+                .count();
+        add_us +=
+            std::chrono::duration_cast<std::chrono::microseconds>(ta2 - ta1)
+                .count();
       }
     }
     // Write the sum back.
@@ -150,6 +173,15 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
       out[out_index] = sum;
     }
   }
+  auto t1 = std::chrono::system_clock::now();
+
+  NGRAPH_HE_LOG(3) << "add total took " << add_us << "us";
+  NGRAPH_HE_LOG(3) << "mult total took " << mult_us << "us";
+
+  NGRAPH_HE_LOG(3)
+      << "dot total took "
+      << std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count()
+      << "us";
 }
 
 }  // namespace ngraph::runtime::he

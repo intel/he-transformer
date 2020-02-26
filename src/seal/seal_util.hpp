@@ -192,6 +192,8 @@ inline void multiply_plain(
   multiply_plain_inplace(destination, value, he_seal_backend, std::move(pool));
 }
 
+void mult_kernel(std::uint64_t* poly, uint64_t i, uint64_t scalar);
+
 /// \brief Optimized encoding of single value into vector of coefficients
 /// \param[in] value Value to be encoded
 /// \param[in] element_type TODO(fboemer): remove
