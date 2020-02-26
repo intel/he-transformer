@@ -961,6 +961,10 @@ void HESealExecutable::generate_calls(
           avg_pool->get_padding_below(), avg_pool->get_padding_above(),
           avg_pool->get_include_padding_in_avg_computation(),
           out[0]->get_batch_size(), m_he_seal_backend);
+
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
       break;
     }
@@ -1071,18 +1075,10 @@ void HESealExecutable::generate_calls(
         NGRAPH_HE_LOG(3) << in_shape0 << " dot " << in_shape1;
       }
       {
-        auto t0 = std::chrono::system_clock::now();
         dot_seal(args[0]->data(), args[1]->data(), out[0]->data(), in_shape0,
                  in_shape1, out[0]->get_packed_shape(),
                  dot->get_reduction_axes_count(), type, batch_size(),
                  m_he_seal_backend);
-        auto t1 = std::chrono::system_clock::now();
-
-        NGRAPH_HE_LOG(3)
-            << "dot only took "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0)
-                   .count()
-            << "ms";
       }
 
       if (m_he_seal_backend.lazy_mod()) {
