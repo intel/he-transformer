@@ -100,8 +100,13 @@ void scalar_multiply_seal(SealCiphertextWrapper& arg0,
     he_seal_backend.get_evaluator()->rescale_to_next_inplace(out->ciphertext(),
                                                              pool);
   } else {
-    he_seal_backend.get_evaluator()->multiply(
-        arg0.ciphertext(), arg1.ciphertext(), out->ciphertext(), pool);
+    if (&arg0.ciphertext() == &arg1.ciphertext()) {
+      he_seal_backend.get_evaluator()->square(arg0.ciphertext(),
+                                              out->ciphertext(), pool);
+    } else {
+      he_seal_backend.get_evaluator()->multiply(
+          arg0.ciphertext(), arg1.ciphertext(), out->ciphertext(), pool);
+    }
 
     he_seal_backend.get_evaluator()->relinearize_inplace(
         out->ciphertext(), *(he_seal_backend.get_relin_keys()), pool);

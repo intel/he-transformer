@@ -320,7 +320,7 @@ class HESealBackend : public runtime::Backend {
     }
   }
 
-  bool lazy_mod() const { return m_lazy_mod; }
+  bool& lazy_mod() { return m_lazy_mod; }
 
  private:
   bool m_enable_client{false};

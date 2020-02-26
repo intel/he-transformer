@@ -149,14 +149,6 @@ void multiply_plain_lazy_mod(const seal::Ciphertext& encrypted, double value,
                                  encrypted.parms_id(), encrypted.size());
   destination.resize(encrypted.size());
   destination.is_ntt_form() = encrypted.is_ntt_form();
-  /*  NGRAPH_INFO << " before";
-   NGRAPH_INFO << "dest.poly_mod " << destination.poly_modulus_degree();
-   NGRAPH_INFO << "dest.size " << destination.size();
-
-   // destination = encrypted;
-   NGRAPH_INFO << " after";
-   NGRAPH_INFO << "dest.poly_mod " << destination.poly_modulus_degree();
-   NGRAPH_INFO << "dest.size " << destination.size(); */
 
   std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
   double scale = encrypted.scale();
@@ -165,6 +157,7 @@ void multiply_plain_lazy_mod(const seal::Ciphertext& encrypted, double value,
          he_seal_backend);
   std::uint64_t* src = const_cast<std::uint64_t*>(encrypted.data());
   std::uint64_t* dest = destination.data();
+
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
       std::uint64_t scalar = plaintext_vals[j];
@@ -323,18 +316,18 @@ void encode(double value, const element::Type& element_type, double scale,
             const seal::MemoryPoolHandle& pool) {
   auto t0 = std::chrono::system_clock::now();
 
-  // NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
-  //             "Unsupported type ", element_type);
+  NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
+               "Unsupported type ", element_type);
 
   // Verify parameters.
   auto context = he_seal_backend.get_context();
   auto context_data_ptr = context->get_context_data(parms_id);
 
-  /* NGRAPH_CHECK(context_data_ptr != nullptr,
+  NGRAPH_CHECK(context_data_ptr != nullptr,
                "parms_id is not valid for encryption parameters");
   if (!pool) {
     throw ngraph_error("pool is uninitialized");
-  } */
+  }
 
   auto& context_data = *context_data_ptr;
   auto& parms = context_data.parms();
@@ -343,23 +336,23 @@ void encode(double value, const element::Type& element_type, double scale,
   size_t coeff_count = parms.poly_modulus_degree();
 
   // Quick sanity check
-  // NGRAPH_CHECK(seal::util::product_fits_in(coeff_mod_count, coeff_count),
-  //             "invalid parameters");
+  NGRAPH_CHECK(seal::util::product_fits_in(coeff_mod_count, coeff_count),
+               "invalid parameters");
 
   // Check that scale is positive and not too large
-  /* if (scale <= 0 || (static_cast<int>(log2(scale)) >=
+  if (scale <= 0 || (static_cast<int>(log2(scale)) >=
                      context_data.total_coeff_modulus_bit_count())) {
     NGRAPH_ERR << "scale " << scale;
     NGRAPH_ERR << "context_data.total_coeff_modulus_bit_count "
                << context_data.total_coeff_modulus_bit_count();
     throw ngraph_error("scale out of bounds");
-  } */
+  }
 
   // Compute the scaled value
   value *= scale;
 
   int coeff_bit_count = static_cast<int>(log2(fabs(value))) + 2;
-  /* if (coeff_bit_count >= context_data.total_coeff_modulus_bit_count()) {
+  if (coeff_bit_count >= context_data.total_coeff_modulus_bit_count()) {
     {
 #ifndef NGRAPH_HE_ABY_ENABLE
       NGRAPH_ERR << "Failed to encode " << value / scale << " at scale "
@@ -370,7 +363,7 @@ void encode(double value, const element::Type& element_type, double scale,
       throw ngraph_error("encoded value is too large");
 #endif
     }
-  } */
+  }
 
   double two_pow_64 = pow(2.0, 64);
 
@@ -398,6 +391,7 @@ void encode(double value, const element::Type& element_type, double scale,
         destination[j] = coeffu % coeff_modulus[j].value();
       }
     }
+
   } else if (coeff_bit_count <= 128) {
     // NOLINTNEXTLINE
     uint64_t coeffu[2]{static_cast<uint64_t>(fmod(coeffd, two_pow_64)),

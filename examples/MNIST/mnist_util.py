@@ -102,6 +102,7 @@ def freeze_session(session,
         output_names += [v.op.name for v in tf.global_variables()]
         # Graph -> GraphDef ProtoBuf
         input_graph_def = graph.as_graph_def()
+        print_nodes(input_graph_def)
         if clear_devices:
             for node in input_graph_def.node:
                 node.device = ""
@@ -114,6 +115,7 @@ def freeze_session(session,
 
 def save_model(sess, output_names, directory, filename):
     frozen_graph = freeze_session(sess, output_names=output_names)
+    print_nodes(frozen_graph)
     tf.io.write_graph(frozen_graph, directory, filename + ".pb", as_text=False)
     print("Model saved to: %s" % filename + ".pb")
 

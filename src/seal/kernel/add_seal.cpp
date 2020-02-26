@@ -61,25 +61,21 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
   for (size_t j = 0; j < min_count; j++) {
     uint64_t* encrypted1_ptr = encrypted1.data(j);
     uint64_t* encrypted2_ptr = encrypted2.data(j);
-    //#pragma omp simd
     for (size_t i = 0; i < coeff_mod_count; i++) {
-      /* add_poly_poly_coeffmod(encrypted1_ptr + (i * coeff_count),
-                             encrypted2_ptr + (i * coeff_count), coeff_count,
-                             coeff_modulus[i],
-                             encrypted1_ptr + (i * coeff_count)); */
-
-      // auto modulus = coeff_modulus[i];
       std::uint64_t* operand1 = encrypted1_ptr + (i * coeff_count);
       std::uint64_t* operand2 = encrypted2_ptr + (i * coeff_count);
-      // std::uint64_t* result = encrypted1_ptr + (i * coeff_count);
-
-      // const uint64_t modulus_value = modulus.value();
-      // const uint64_t const_ratio_1 = modulus.const_ratio()[1];
-
 #pragma omp simd
       for (size_t k = 0; k < coeff_count; k++) {
-        // const uint64_t orig_op1 = *operand1;
-        *operand1 = (*operand1 + *operand2);
+        *operand1 = *operand1 + *operand2;
+        /*
+        std::uint64_t sum = (*operand1 + *operand2);
+        if (sum < *operand1 || sum < *operand2) {
+          NGRAPH_INFO << "Overflow in add idx=" << k << "\n"
+                      << "op1 = " << *operand1 << "\nop2 = " << *operand2
+                      << "\nsum = " << sum;
+          throw std::runtime_error("Overflow in add");
+        }
+        *operand1 = sum; */
         operand1++;
         operand2++;
       }
