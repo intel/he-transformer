@@ -21,7 +21,6 @@
 #include <utility>
 
 #include "seal/kernel/add_seal.hpp"
-// #include "seal/kernel/multiply_add_seal.hpp"
 #include "seal/kernel/multiply_seal.hpp"
 
 namespace ngraph::runtime::he {
