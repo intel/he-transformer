@@ -16,6 +16,7 @@
 
 #include "seal/he_seal_executable.hpp"
 
+#include <chrono>
 #include <functional>
 #include <limits>
 #include <map>
@@ -62,6 +63,7 @@
 #include "seal/kernel/max_pool_seal.hpp"
 #include "seal/kernel/max_seal.hpp"
 #include "seal/kernel/minimum_seal.hpp"
+#include "seal/kernel/mod_reduce_seal.hpp"
 #include "seal/kernel/multiply_seal.hpp"
 #include "seal/kernel/negate_seal.hpp"
 #include "seal/kernel/pad_seal.hpp"
@@ -932,8 +934,16 @@ void HESealExecutable::generate_calls(
 #pragma clang diagnostic error "-Wswitch-enum"
   switch (get_typeid(node.get_type_info())) {
     case OP_TYPEID::Add: {
-      add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
-               out[0]->get_batched_element_count(), type, m_he_seal_backend);
+      // Avoid lazy mod for single add op
+      if (m_he_seal_backend.lazy_mod()) {
+        m_he_seal_backend.lazy_mod() = false;
+        add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
+                 out[0]->get_batched_element_count(), type, m_he_seal_backend);
+        m_he_seal_backend.lazy_mod() = true;
+      } else {
+        add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
+                 out[0]->get_batched_element_count(), type, m_he_seal_backend);
+      }
       break;
     }
     case OP_TYPEID::AvgPool: {
@@ -951,6 +961,10 @@ void HESealExecutable::generate_calls(
           avg_pool->get_padding_below(), avg_pool->get_padding_above(),
           avg_pool->get_include_padding_in_avg_computation(),
           out[0]->get_batch_size(), m_he_seal_backend);
+
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
       break;
     }
@@ -1036,6 +1050,9 @@ void HESealExecutable::generate_calls(
                        1, 1, 0, 0, 1, type, batch_size(), m_he_seal_backend,
                        verbose);
 
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
@@ -1057,10 +1074,16 @@ void HESealExecutable::generate_calls(
       if (verbose) {
         NGRAPH_HE_LOG(3) << in_shape0 << " dot " << in_shape1;
       }
-      dot_seal(args[0]->data(), args[1]->data(), out[0]->data(), in_shape0,
-               in_shape1, out[0]->get_packed_shape(),
-               dot->get_reduction_axes_count(), type, batch_size(),
-               m_he_seal_backend);
+      {
+        dot_seal(args[0]->data(), args[1]->data(), out[0]->data(), in_shape0,
+                 in_shape1, out[0]->get_packed_shape(),
+                 dot->get_reduction_axes_count(), type, batch_size(),
+                 m_he_seal_backend);
+      }
+
+      if (m_he_seal_backend.lazy_mod()) {
+        mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
 
       break;
@@ -1120,9 +1143,18 @@ void HESealExecutable::generate_calls(
       break;
     }
     case OP_TYPEID::Multiply: {
-      multiply_seal(args[0]->data(), args[1]->data(), out[0]->data(),
-                    out[0]->get_batched_element_count(), type,
-                    m_he_seal_backend);
+      // Avoid lazy mod for single multiply op
+      if (m_he_seal_backend.lazy_mod()) {
+        m_he_seal_backend.lazy_mod() = false;
+        multiply_seal(args[0]->data(), args[1]->data(), out[0]->data(),
+                      out[0]->get_batched_element_count(), type,
+                      m_he_seal_backend);
+        m_he_seal_backend.lazy_mod() = true;
+      } else {
+        multiply_seal(args[0]->data(), args[1]->data(), out[0]->data(),
+                      out[0]->get_batched_element_count(), type,
+                      m_he_seal_backend);
+      }
       rescale_seal(out[0]->data(), m_he_seal_backend, verbose);
       break;
     }
@@ -1156,8 +1188,8 @@ void HESealExecutable::generate_calls(
       if (enable_client()) {
         handle_server_relu_op(args[0], out[0], node);
       } else {
-        NGRAPH_WARN
-            << "Performing Relu without client is not privacy preserving ";
+        NGRAPH_WARN << "Performing Relu without client is not privacy "
+                       "preserving ";
         size_t output_size = args[0]->get_batched_element_count();
         NGRAPH_CHECK(output_size == args[0]->data().size(), "output size ",
                      output_size, "doesn't match number of elements",
