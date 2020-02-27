@@ -67,7 +67,7 @@ auto dot_test = [](const Shape& shape_a, const Shape& shape_b,
 
   auto handle = backend->compile(f);
   handle->call_with_validate({t_result}, {t_a, t_b});
-  EXPECT_TRUE(test::all_close(read_vector<float>(t_result), output, 1e-3f));
+  EXPECT_TRUE(test::all_close(read_vector<float>(t_result), output, 1e-2f));
 };
 
 NGRAPH_TEST(${BACKEND_NAME}, dot1d_plain_plain_real_unpacked) {
@@ -173,7 +173,7 @@ NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_plain_plain_complex_unpacked) {
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, false, false, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_plain_cipher_real_unpacked) {
@@ -181,7 +181,7 @@ NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_plain_cipher_real_unpacked) {
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, false, true, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME},
@@ -190,7 +190,7 @@ NGRAPH_TEST(${BACKEND_NAME},
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, false, true, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_cipher_plain_real_unpacked) {
@@ -198,7 +198,7 @@ NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_cipher_plain_real_unpacked) {
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, true, false, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME},
@@ -207,7 +207,7 @@ NGRAPH_TEST(${BACKEND_NAME},
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, true, false, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_cipher_cipher_real_unpacked) {
@@ -215,7 +215,7 @@ NGRAPH_TEST(${BACKEND_NAME}, dot1d_matrix_vector_cipher_cipher_real_unpacked) {
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, true, true, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME},
@@ -224,7 +224,7 @@ NGRAPH_TEST(${BACKEND_NAME},
       Shape{4, 4}, Shape{4},
       std::vector<float>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
       std::vector<float>{17, 18, 19, 20},
-      std::vector<float>{190, 486, 782, 1078}, false, false, false, false);
+      std::vector<float>{190, 486, 782, 1078}, true, true, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_plain_plain_real_unpacked) {
@@ -234,42 +234,77 @@ NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_plain_plain_real_unpacked) {
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_plain_plain_complex_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, false, false, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_plain_cipher_real_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, false, true, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_plain_cipher_complex_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, false, true, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_cipher_plain_real_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, true, false, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_cipher_plain_complex_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, true, false, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_cipher_cipher_real_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, true, true, false, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_scalar_cipher_cipher_complex_unpacked) {
   dot_test(Shape{}, Shape{}, std::vector<float>{8}, std::vector<float>{6},
-           std::vector<float>{48}, false, false, false, false);
+           std::vector<float>{48}, true, true, true, false);
 }
 
 NGRAPH_TEST(${BACKEND_NAME}, dot_2x0_0_cipher_cipher_complex_unpacked) {
   dot_test(Shape{2, 0}, Shape{0}, std::vector<float>{}, std::vector<float>{},
            std::vector<float>{0, 0}, false, false, false, false);
+}
+
+NGRAPH_TEST(${BACKEND_NAME},
+            dot1d_large_matrix_vector_cipher_plain_real_unpacked) {
+  size_t dim1 = 845;
+  size_t dim2 = 100;
+  std::vector<float> plain(dim1 * dim2);
+  std::vector<float> cipher(dim2);
+  std::vector<float> exp_output(dim1);
+
+  size_t plain_offset = 0;
+  for (size_t i = 0; i < dim1; ++i) {
+    for (size_t j = 0; j < dim2; ++j) {
+      plain[plain_offset] = (i + j) / static_cast<float>(dim1 + dim2);
+      plain_offset++;
+    }
+  }
+  for (size_t i = 0; i < dim2; ++i) {
+    cipher[i] = i / static_cast<float>(dim2);
+  }
+
+  plain_offset = 0;
+  size_t out_offset = 0;
+  for (size_t i = 0; i < dim1; ++i) {
+    float sum = 0;
+    for (size_t j = 0; j < dim2; ++j) {
+      sum += cipher[j] * plain[plain_offset];
+      plain_offset++;
+    }
+    exp_output[out_offset] = sum;
+    out_offset++;
+  }
+
+  dot_test(Shape{dim1, dim2}, Shape{dim2}, plain, cipher, exp_output, false,
+           true, false, false);
 }
 
 }  // namespace ngraph::runtime::he

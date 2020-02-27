@@ -130,6 +130,49 @@ void add_plain_inplace(seal::Ciphertext& encrypted, double value,
 #endif
 }
 
+void multiply_plain_lazy_mod(const seal::Ciphertext& encrypted, double value,
+                             seal::Ciphertext& destination,
+                             const HESealBackend& he_seal_backend,
+                             seal::MemoryPoolHandle pool) {
+  // destination = encrypted;
+  auto context = he_seal_backend.get_context();
+
+  // Extract encryption parameters.
+  auto& context_data = *context->get_context_data(encrypted.parms_id());
+  auto& parms = context_data.parms();
+  auto& coeff_modulus = parms.coeff_modulus();
+  size_t coeff_count = parms.poly_modulus_degree();
+  size_t coeff_mod_count = coeff_modulus.size();
+  size_t encrypted_ntt_size = encrypted.size();
+
+  destination = seal::Ciphertext(he_seal_backend.get_context(),
+                                 encrypted.parms_id(), encrypted.size());
+  destination.resize(encrypted.size());
+  destination.is_ntt_form() = encrypted.is_ntt_form();
+
+  std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
+  double scale = encrypted.scale();
+  double new_scale = scale * scale;
+  encode(value, element::f32, scale, encrypted.parms_id(), plaintext_vals,
+         he_seal_backend);
+  std::uint64_t* src = const_cast<std::uint64_t*>(encrypted.data());
+  std::uint64_t* dest = destination.data();
+
+  for (size_t i = 0; i < encrypted_ntt_size; i++) {
+    for (size_t j = 0; j < coeff_mod_count; j++) {
+      std::uint64_t scalar = plaintext_vals[j];
+#pragma omp simd
+      for (size_t k = 0; k < coeff_count; k++) {
+        *dest = *src * scalar;
+        ++src;
+        ++dest;
+      }
+    }
+  }
+  // Set the scale
+  destination.scale() = new_scale;
+}
+
 void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                             const HESealBackend& he_seal_backend,
                             const seal::MemoryPoolHandle& pool) {
@@ -161,12 +204,11 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                "invalid parameters");
 
   std::vector<std::uint64_t> plaintext_vals(coeff_mod_count, 0);
-  // TODO(fboemer): explore using different scales! Smaller scales might reduce
-  // # of rescalings
   double scale = encrypted.scale();
   encode(value, element::f32, scale, encrypted.parms_id(), plaintext_vals,
          he_seal_backend);
   double new_scale = scale * scale;
+
   // Check that scale is positive and not too large
   if (new_scale <= 0 || (static_cast<int>(log2(new_scale)) >=
                          context_data.total_coeff_modulus_bit_count())) {
@@ -176,7 +218,6 @@ void multiply_plain_inplace(seal::Ciphertext& encrypted, double value,
                << context_data.total_coeff_modulus_bit_count();
     throw ngraph_error("scale out of bounds");
   }
-
   for (size_t i = 0; i < encrypted_ntt_size; i++) {
     for (size_t j = 0; j < coeff_mod_count; j++) {
       // Multiply by scalar instead of doing dyadic product
@@ -345,6 +386,7 @@ void encode(double value, const element::Type& element_type, double scale,
         destination[j] = coeffu % coeff_modulus[j].value();
       }
     }
+
   } else if (coeff_bit_count <= 128) {
     // NOLINTNEXTLINE
     uint64_t coeffu[2]{static_cast<uint64_t>(fmod(coeffd, two_pow_64)),

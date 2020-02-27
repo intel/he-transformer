@@ -29,8 +29,58 @@ void scalar_add_seal(SealCiphertextWrapper& arg0, SealCiphertextWrapper& arg1,
                      HESealBackend& he_seal_backend,
                      const seal::MemoryPoolHandle& pool) {
   match_modulus_and_scale_inplace(arg0, arg1, he_seal_backend, pool);
-  he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
-                                       out->ciphertext());
+
+  if (!he_seal_backend.lazy_mod()) {
+    he_seal_backend.get_evaluator()->add(arg0.ciphertext(), arg1.ciphertext(),
+                                         out->ciphertext());
+    return;
+  }
+
+  // Inline add
+  // add_inplace(out->ciphertext(), arg0.ciphertext());
+  seal::Ciphertext& encrypted1 = out->ciphertext();
+  seal::Ciphertext& encrypted2 = arg0.ciphertext();
+
+  // Extract encryption parameters.
+  auto& context_data =
+      *he_seal_backend.get_context()->get_context_data(encrypted1.parms_id());
+  auto& parms = context_data.parms();
+  auto& coeff_modulus = parms.coeff_modulus();
+  size_t coeff_count = parms.poly_modulus_degree();
+  size_t coeff_mod_count = coeff_modulus.size();
+  size_t encrypted1_size = encrypted1.size();
+  size_t encrypted2_size = encrypted2.size();
+  size_t max_count = std::max(encrypted1_size, encrypted2_size);
+  size_t min_count = std::min(encrypted1_size, encrypted2_size);
+
+  // Prepare destination
+  encrypted1.resize(he_seal_backend.get_context(), context_data.parms_id(),
+                    max_count);
+
+  // Add ciphertexts
+  for (size_t j = 0; j < min_count; j++) {
+    uint64_t* encrypted1_ptr = encrypted1.data(j);
+    uint64_t* encrypted2_ptr = encrypted2.data(j);
+    for (size_t i = 0; i < coeff_mod_count; i++) {
+      std::uint64_t* operand1 = encrypted1_ptr + (i * coeff_count);
+      std::uint64_t* operand2 = encrypted2_ptr + (i * coeff_count);
+#pragma omp simd
+      for (size_t k = 0; k < coeff_count; k++) {
+        *operand1 = *operand1 + *operand2;
+        /*
+        std::uint64_t sum = (*operand1 + *operand2);
+        if (sum < *operand1 || sum < *operand2) {
+          NGRAPH_INFO << "Overflow in add idx=" << k << "\n"
+                      << "op1 = " << *operand1 << "\nop2 = " << *operand2
+                      << "\nsum = " << sum;
+          throw std::runtime_error("Overflow in add");
+        }
+        *operand1 = sum; */
+        operand1++;
+        operand2++;
+      }
+    }
+  }
 }
 
 void scalar_add_seal(SealCiphertextWrapper& arg0, const HEPlaintext& arg1,

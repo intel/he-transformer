@@ -81,6 +81,7 @@ sudo apt-get install doxygen graphviz
 ```
 Then add the following CMake flag
 ```bash
+cd doc
 cmake .. -DNGRAPH_HE_DOC_BUILD_ENABLE=ON
 ```
 and call

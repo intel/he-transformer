@@ -17,6 +17,7 @@
 #include "seal/kernel/dot_seal.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <utility>
 
 #include "seal/kernel/add_seal.hpp"
@@ -128,11 +129,12 @@ void dot_seal(const std::vector<HEType>& arg0, const std::vector<HEType>& arg1,
 
       auto prod = HEType(HEPlaintext(batch_size), false);
 
-      scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
       if (first_add) {
+        scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
         sum = prod;
         first_add = false;
       } else {
+        scalar_multiply_seal(mult_arg0, mult_arg1, prod, he_seal_backend);
         scalar_add_seal(prod, sum, sum, he_seal_backend);
       }
     }

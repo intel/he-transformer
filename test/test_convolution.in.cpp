@@ -76,7 +76,7 @@ auto conv_test = [](const Shape& shape_a, const Shape& shape_b,
 
   auto handle = backend->compile(f);
   handle->call_with_validate({t_result}, {t_a, t_b});
-  EXPECT_TRUE(test::all_close(read_vector<float>(t_result), output, 1e-3f));
+  EXPECT_TRUE(test::all_close(read_vector<float>(t_result), output, 1e-2f));
 };
 
 NGRAPH_TEST(${BACKEND_NAME}, convolution_2d_1image_plain_plain_real_unpacked) {

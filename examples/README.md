@@ -60,7 +60,7 @@ See the `MNIST` folder for a DL example using garbled circuits.
     - `NGRAPH_HE_LOG_LEVEL=1` will print encryption parameters
     - `NGRAPH_HE_LOG_LEVEL=3` will print op information (when `NGRAPH_HE_VERBOSE_OPS` is enabled)
     - `NGRAPH_HE_LOG_LEVEL=4` will print communication information
-    - `NGARPH_HE_LOG_LEVEL=5` is the highest debug level
+    - `NGRAPH_HE_LOG_LEVEL=5` is the highest debug level
 
   # Creating your own DL model
   We currently only support DL models with a single `Parameter`, as is the case for most standard DL models. During training, the weights may be TensorFlow `Variable` ops, which translate to nGraph `Parameter` ops. In this case, he-transformer will be unable to tell what tensor represents the data to encrypt. So, you will need to convert the ops representing the model weights to `Constant` ops. TensorFlow, for example, has a `freeze_graph` utility to do so. See the `MNIST` folder for examples using `freeze_graph`.
