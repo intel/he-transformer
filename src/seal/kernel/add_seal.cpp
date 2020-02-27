@@ -186,10 +186,6 @@ void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,
    NGRAPH_CHECK(count <= arg1.size(), "Count ", count,
                 " is too large for arg1, with size ", arg1.size()); */
 
-  NGRAPH_INFO << "arg0 size " << arg0.size();
-  NGRAPH_INFO << "arg1 size " << arg1.size();
-  NGRAPH_INFO << "out size " << out.size();
-
   switch (broadcast_spec.m_type) {
     case op::AutoBroadcastType::NONE: {
 #pragma omp parallel for
@@ -199,7 +195,6 @@ void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,
       break;
     }
     case op::AutoBroadcastType::NUMPY: {
-      NGRAPH_INFO << "Add NUMPY";
       // We'll be using CoordinateTransform to handle the broadcasting. The
       // general procedure is as follows:
       //
