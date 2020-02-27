@@ -88,8 +88,9 @@ void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
 /// \param[in] element_type datatype of the data to add
 /// \param[in] he_seal_backend Backend used to perform addition
 void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,
-              std::vector<HEType>& out, size_t count,
-              const element::Type& element_type,
+              std::vector<HEType>& out, size_t count, const Shape& arg0_shape,
+              const Shape& arg1_shape, const element::Type& element_type,
+              const op::AutoBroadcastSpec& broadcast_spec,
               HESealBackend& he_seal_backend);
 
 }  // namespace ngraph::runtime::he

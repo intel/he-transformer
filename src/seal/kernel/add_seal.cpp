@@ -19,6 +19,9 @@
 #include <algorithm>
 #include <utility>
 
+#include "ngraph/coordinate_transform.hpp"
+#include "ngraph/op/util/attr_types.hpp"
+#include "ngraph/shape_util.hpp"
 #include "seal/he_seal_backend.hpp"
 #include "seal/seal_util.hpp"
 
@@ -172,19 +175,112 @@ void scalar_add_seal(HEType& arg0, HEType& arg1, HEType& out,
 }
 
 void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,
-              std::vector<HEType>& out, size_t count,
-              const element::Type& element_type,
+              std::vector<HEType>& out, size_t count, const Shape& arg0_shape,
+              const Shape& arg1_shape, const element::Type& element_type,
+              const op::AutoBroadcastSpec& broadcast_spec,
               HESealBackend& he_seal_backend) {
-  NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
-               "Unsupported type ", element_type);
-  NGRAPH_CHECK(count <= arg0.size(), "Count ", count,
-               " is too large for arg0, with size ", arg0.size());
-  NGRAPH_CHECK(count <= arg1.size(), "Count ", count,
-               " is too large for arg1, with size ", arg1.size());
+  /* NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
+                "Unsupported type ", element_type);
+   NGRAPH_CHECK(count <= arg0.size(), "Count ", count,
+                " is too large for arg0, with size ", arg0.size());
+   NGRAPH_CHECK(count <= arg1.size(), "Count ", count,
+                " is too large for arg1, with size ", arg1.size()); */
 
+  NGRAPH_INFO << "arg0 size " << arg0.size();
+  NGRAPH_INFO << "arg1 size " << arg1.size();
+  NGRAPH_INFO << "out size " << out.size();
+
+  switch (broadcast_spec.m_type) {
+    case op::AutoBroadcastType::NONE: {
 #pragma omp parallel for
-  for (size_t i = 0; i < count; ++i) {
-    scalar_add_seal(arg0[i], arg1[i], out[i], he_seal_backend);
+      for (size_t i = 0; i < count; ++i) {
+        scalar_add_seal(arg0[i], arg1[i], out[i], he_seal_backend);
+      }
+      break;
+    }
+    case op::AutoBroadcastType::NUMPY: {
+      NGRAPH_INFO << "Add NUMPY";
+      // We'll be using CoordinateTransform to handle the broadcasting. The
+      // general procedure is as follows:
+      //
+      // (1) Left pad the shorter of the two shapes with ones.
+      // (2) Squeeze (remove ones from) both shapes, and record the squeezed
+      // axis
+      //     indices.
+      // (3) Using CoordinateTransform, broadcast both args to the final
+      // output
+      //     shape. The "broadcasted axes" will be those that were squeezed in
+      //     step 2.
+      //
+      // Example:
+      //
+      //    Input shape->Padded shape->Squeezed Shape/Squeezed Axes
+      //    -----------  ------------  ----------------------------
+      // a: [ 3, 2, 1]   [ 3, 2, 1]    [ 3, 2   ]     {2}
+      // b: [    1, 6]   [ 1, 1, 6]    [       6]     {0,1}
+      //                   |  |  |
+      //                   v  v  v
+      //                 Output shape
+      //                 ------------
+      //                 [ 3, 2, 6]
+      {
+        Shape arg0_padded_shape = arg0_shape;
+        Shape arg1_padded_shape = arg1_shape;
+
+        while (arg0_padded_shape.size() < arg1_padded_shape.size()) {
+          arg0_padded_shape.insert(arg0_padded_shape.begin(), 1);
+        }
+
+        while (arg1_padded_shape.size() < arg0_padded_shape.size()) {
+          arg1_padded_shape.insert(arg1_padded_shape.begin(), 1);
+        }
+
+        Shape arg0_squeezed_shape;
+        Shape arg1_squeezed_shape;
+        AxisSet arg0_squeezed_axes;
+        AxisSet arg1_squeezed_axes;
+        Shape output_shape;
+
+        for (size_t i = 0; i < arg0_padded_shape.size(); i++) {
+          if (arg0_padded_shape[i] == 1) {
+            arg0_squeezed_axes.insert(i);
+          } else {
+            arg0_squeezed_shape.push_back(arg0_padded_shape[i]);
+          }
+
+          if (arg1_padded_shape[i] == 1) {
+            arg1_squeezed_axes.insert(i);
+          } else {
+            arg1_squeezed_shape.push_back(arg1_padded_shape[i]);
+          }
+
+          output_shape.push_back(arg0_padded_shape[i] == 1
+                                     ? arg1_padded_shape[i]
+                                     : arg0_padded_shape[i]);
+        }
+
+        CoordinateTransform arg0_transform(arg0_squeezed_shape);
+        CoordinateTransform arg1_transform(arg1_squeezed_shape);
+        CoordinateTransform output_transform(output_shape);
+
+        for (const Coordinate& output_coord : output_transform) {
+          Coordinate arg0_coord = reduce(output_coord, arg0_squeezed_axes);
+          Coordinate arg1_coord = reduce(output_coord, arg1_squeezed_axes);
+          scalar_add_seal(arg0[arg0_transform.index(arg0_coord)],
+                          arg1[arg1_transform.index(arg1_coord)],
+                          out[output_transform.index(output_coord)],
+                          he_seal_backend);
+          // elementwise_functor(arg0[arg0_transform.index(arg0_coord)],
+          //                     arg1[arg1_transform.index(arg1_coord)]);
+        }
+      }
+      break;
+    }
+    case op::AutoBroadcastType::PDPD:
+    default: {
+      NGRAPH_ERR << "Unsupported broadcast type";
+      break;
+    }
   }
 }
 

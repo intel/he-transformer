@@ -27,8 +27,8 @@ namespace ngraph::runtime::he {
 void constant_seal(std::vector<HEType>& out, const element::Type& element_type,
                    const void* data_ptr, const HESealBackend& he_seal_backend,
                    size_t count) {
-  NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
-               "Unsupported type ", element_type);
+  // NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
+  //             "Unsupported type ", element_type);
   size_t type_byte_size = element_type.size();
   NGRAPH_CHECK(out.size() == count, "out.size() != count for constant op");
 

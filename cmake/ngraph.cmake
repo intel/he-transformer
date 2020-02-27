@@ -20,7 +20,7 @@ set(EXTERNAL_NGRAPH_INSTALL_DIR ${EXTERNAL_INSTALL_DIR})
 set(NGRAPH_CMAKE_PREFIX ext_ngraph)
 
 set(NGRAPH_REPO_URL https://github.com/NervanaSystems/ngraph.git)
-set(NGRAPH_GIT_LABEL v0.28.0-rc.1)
+set(NGRAPH_GIT_LABEL master)
 
 set(NGRAPH_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX})
@@ -41,12 +41,12 @@ ExternalProject_Add(ext_ngraph
         -DNGRAPH_GENERIC_CPU_ENABLE=OFF
         -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_DIR}
         -DNGRAPH_GENERIC_CPU_ENABLE=OFF
-        -DNGRAPH_CPU_ENABLE=ON
+        -DNGRAPH_CPU_ENABLE=OFF
         -DNGRAPH_PYTHON_BUILD_ENABLE=ON
         -DNGRAPH_ONNX_IMPORT_ENABLE=ON
       BUILD_BYPRODUCTS "${NGRAPH_BUILD_DIR}/src/ngraph/libngraph.so"
                        "${NGRAPH_BUILD_DIR}/test/util/libngraph_test_util.a"
-      BUILD_COMMAND make && make python_wheel
+      BUILD_COMMAND make -j && make -j python_wheel
       UPDATE_COMMAND "")
 
 ExternalProject_Get_Property(ext_ngraph SOURCE_DIR)

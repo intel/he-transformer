@@ -128,6 +128,7 @@ class HESealBackend : public runtime::Backend {
   /// \param[in] type Datatype
   /// \returns True if datatype is supported, false otherwise
   bool is_supported_type(const ngraph::element::Type& type) const {
+    return true;
     return m_supported_types.find(type.hash()) != m_supported_types.end();
   }
 

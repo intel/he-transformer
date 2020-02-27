@@ -941,15 +941,34 @@ void HESealExecutable::generate_calls(
 #pragma clang diagnostic error "-Wswitch-enum"
   switch (get_typeid(node.get_type_info())) {
     case OP_TYPEID::Add: {
+      const op::Add* add = static_cast<const op::Add*>(&node);
+      auto autob = add->get_autob();
+
+      if (autob == op::AutoBroadcastSpec::NONE) {
+        NGRAPH_INFO << "autob none ";
+      } else if (autob == op::AutoBroadcastSpec::NUMPY) {
+        NGRAPH_INFO << "autob numpy ";
+      }
+
+      Shape in_shape0 = args[0]->get_packed_shape();
+      Shape in_shape1 = args[1]->get_packed_shape();
+
+      if (verbose) {
+        NGRAPH_HE_LOG(3) << in_shape0 << " Add " << in_shape1 << " => "
+                         << out[0]->get_packed_shape();
+      }
+
       // Avoid lazy mod for single add op
       if (m_he_seal_backend.lazy_mod()) {
         m_he_seal_backend.lazy_mod() = false;
         add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
-                 out[0]->get_batched_element_count(), type, m_he_seal_backend);
+                 out[0]->get_batched_element_count(), in_shape0, in_shape1,
+                 type, autob, m_he_seal_backend);
         m_he_seal_backend.lazy_mod() = true;
       } else {
         add_seal(args[0]->data(), args[1]->data(), out[0]->data(),
-                 out[0]->get_batched_element_count(), type, m_he_seal_backend);
+                 out[0]->get_batched_element_count(), in_shape0, in_shape1,
+                 type, autob, m_he_seal_backend);
       }
       break;
     }
@@ -1056,6 +1075,12 @@ void HESealExecutable::generate_calls(
                        padding_below, padding_above, data_dilation_strides, 0,
                        1, 1, 0, 0, 1, type, batch_size(), m_he_seal_backend,
                        verbose);
+
+      if (verbose) {
+        for (const auto& value : out[0]->data()) {
+          NGRAPH_HE_LOG(3) << value.get_plaintext();
+        }
+      }
 
       if (m_he_seal_backend.lazy_mod()) {
         mod_reduce_seal(out[0]->data(), m_he_seal_backend, verbose);
@@ -1343,7 +1368,6 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::GroupConvolution:
     case OP_TYPEID::GroupConvolutionBackpropData:
     case OP_TYPEID::GroupConvolutionBackpropFilters:
-    case OP_TYPEID::GroupConvolutionTranspose:
     case OP_TYPEID::GeluBackpropFactor:
     case OP_TYPEID::Greater:
     case OP_TYPEID::GreaterEq:

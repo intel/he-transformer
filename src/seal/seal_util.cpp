@@ -548,6 +548,7 @@ void encrypt(std::shared_ptr<SealCiphertextWrapper>& output,
 void decode(HEPlaintext& output, const SealPlaintextWrapper& input,
             seal::CKKSEncoder& ckks_encoder, size_t batch_size,
             double mod_interval) {
+  NGRAPH_INFO << "Decoding with bs " << batch_size;
   if (input.complex_packing()) {
     std::vector<std::complex<double>> complex_vals;
     ckks_encoder.decode(input.plaintext(), complex_vals);

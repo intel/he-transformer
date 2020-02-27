@@ -37,7 +37,7 @@ namespace ngraph::runtime::he {
 
 bool pass::PropagateHEAnnotations::run_on_function(
     std::shared_ptr<Function> function) {
-  std::list<std::shared_ptr<Node>> nodes = function->get_ordered_ops();
+  auto nodes = function->get_ordered_ops();
 
   NGRAPH_HE_LOG(3) << "Running Propagate HE Annotations pass";
 

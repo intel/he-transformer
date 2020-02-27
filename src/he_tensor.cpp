@@ -239,7 +239,7 @@ void HETensor::read(void* p, size_t n) const {
   const element::Type& element_type = get_tensor_layout()->get_element_type();
   size_t type_byte_size = element_type.size();
   size_t num_elements_to_read = n / (type_byte_size * get_batch_size());
-
+  NGRAPH_INFO << "Reading batch sizse " << get_batch_size();
   auto copy_batch_values_to_src = [&](size_t element_idx, void* copy_target,
                                       const void* type_values_src) {
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
@@ -262,6 +262,7 @@ void HETensor::read(void* p, size_t n) const {
               m_decryptor, m_ckks_encoder, m_context, m_data[i].batch_size());
     } else {
       plain = m_data[i].get_plaintext();
+      NGRAPH_INFO << "Got plaintext with size " << plain.size();
     }
 
     void* dst = ngraph_malloc(type_byte_size * get_batch_size());
