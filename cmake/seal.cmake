@@ -68,7 +68,6 @@ if("${CMAKE_CXX_COMPILER_ID}" MATCHES "^(Apple)?Clang$")
   add_compile_options(-Wno-inconsistent-missing-destructor-override)
   add_compile_options(-Wno-extra-semi)
   add_compile_options(-Wno-old-style-cast)
-  add_compile_options(-fnew-alignment=64)
 endif()
 
 
