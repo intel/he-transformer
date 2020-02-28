@@ -111,6 +111,7 @@ option(NGRAPH_HE_CODE_COVERAGE "Enable code coverage" OFF)
 option(NGRAPH_HE_ABY_ENABLE "Enable multi-party computation using ABY" OFF)
 option(NGRAPH_HE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(NGRAPH_HE_PARALLEL "Enable multi-threaded computation" ON)
+option(NGRAPH_HE_ONNX_ENABLE "Enable onnx import" ON)
 
 # Print options
 message(STATUS "NGRAPH_HE_CXX_STANDARD:     ${NGRAPH_HE_CXX_STANDARD}")
@@ -120,6 +121,7 @@ message(STATUS "NGRAPH_HE_ABY_ENABLE:       ${NGRAPH_HE_ABY_ENABLE}")
 message(STATUS "NGRAPH_HE_CLANG_TIDY:       ${NGRAPH_HE_CLANG_TIDY}")
 message(STATUS "NGRAPH_HE_SANITIZE_ADDRESS  ${NGRAPH_HE_SANITIZE_ADDRESS}")
 message(STATUS "NGRAPH_HE_PARALLEL          ${NGRAPH_HE_PARALLEL}")
+message(STATUS "NGRAPH_HE_ONNX_ENABLE       ${NGRAPH_HE_ONNX_ENABLE}")
 message(STATUS "PYTHON_VENV_VERSION:        ${PYTHON_VENV_VERSION}")
 message(STATUS "PYTHON_VERSION_STRING:      ${PYTHON_VERSION_STRING}")
 
@@ -239,8 +241,10 @@ message(STATUS "Shared Link Flags: ${CMAKE_SHARED_LINKER_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 
-include(cmake/ngraph.cmake)
-include(cmake/ngraph-onnx.cmake)
+if (${NGRAPH_HE_ONNX_ENABLE})
+  include(cmake/ngraph.cmake)
+  include(cmake/ngraph-onnx.cmake
+endif()
 include(cmake/ngraph-tf.cmake)
 
 # Install he-transformer to installation location and into ngraph-tf

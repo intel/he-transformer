@@ -932,13 +932,6 @@ void HESealExecutable::generate_calls(
     const std::vector<std::shared_ptr<HETensor>>& args) {
   bool verbose = verbose_op(&node);
 
-// We want to check that every OP_TYPEID enumeration is included in the
-// list. These clang flags enable compile-time checking so that if an
-//      enumeration
-// is not in the list an error is generated.
-#pragma clang diagnostic push
-#pragma clang diagnostic error "-Wswitch"
-#pragma clang diagnostic error "-Wswitch-enum"
   switch (get_typeid(node.get_type_info())) {
     case OP_TYPEID::Add: {
       const op::Add* add = static_cast<const op::Add*>(&node);
@@ -1433,8 +1426,8 @@ void HESealExecutable::generate_calls(
     case OP_TYPEID::Unsqueeze:
     case OP_TYPEID::Xor:
     case OP_TYPEID::UnknownOp:
+    case default:
       throw unsupported_op("Unsupported op '" + node.description() + "'");
-#pragma clang diagnostic pop
   }
 }  // namespace ngraph::runtime::he
 
