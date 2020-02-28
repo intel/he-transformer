@@ -20,7 +20,13 @@ set(EXTERNAL_NGRAPH_INSTALL_DIR ${EXTERNAL_INSTALL_DIR})
 set(NGRAPH_CMAKE_PREFIX ext_ngraph)
 
 set(NGRAPH_REPO_URL https://github.com/NervanaSystems/ngraph.git)
-set(NGRAPH_GIT_LABEL master)
+
+if (${NGRAPH_HE_ONNX_ENABLE})
+  set(NGRAPH_GIT_LABEL master)
+else()
+  # For ngraph-bridge
+  set(NGRAPH_GIT_LABEL v0.28.0-rc.1)
+endif()
 
 set(NGRAPH_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_CMAKE_PREFIX}/src/${NGRAPH_CMAKE_PREFIX})

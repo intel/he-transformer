@@ -103,13 +103,22 @@ def squash_layers(cryptonets_model, sess):
 def main(FLAGS):
     (x_train, y_train, x_test, y_test) = mnist_util.load_mnist_data()
 
-    x = Input(
-        batch_shape=(
-            FLAGS.batch_size,
-            28,
-            28,
-            1,
-        ), name="input")
+    if FLAGS.export_batch_size:
+        x = Input(
+            batch_shape=(
+                FLAGS.batch_size,
+                28,
+                28,
+                1,
+            ), name="input")
+    else:
+        x = Input(
+            shape=(
+                FLAGS.batch_size,
+                28,
+                28,
+                1,
+            ), name="input")
 
     y = model.cryptonets_model(x)
     cryptonets_model = Model(inputs=x, outputs=y)
@@ -142,13 +151,22 @@ def main(FLAGS):
     tf.reset_default_graph()
     sess = tf.compat.v1.Session()
 
-    x = Input(
-        batch_shape=(
-            FLAGS.batch_size,
-            28,
-            28,
-            1,
-        ), name="input")
+    if FLAGS.export_batch_size:
+        x = Input(
+            batch_shape=(
+                FLAGS.batch_size,
+                28,
+                28,
+                1,
+            ), name="input")
+    else:
+        x = Input(
+            shape=(
+                FLAGS.batch_size,
+                28,
+                28,
+                1,
+            ), name="input")
 
     y = model.cryptonets_model_squashed(x, conv1_weights, squashed_weights,
                                         fc2_weights)

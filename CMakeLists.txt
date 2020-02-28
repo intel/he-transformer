@@ -111,7 +111,7 @@ option(NGRAPH_HE_CODE_COVERAGE "Enable code coverage" OFF)
 option(NGRAPH_HE_ABY_ENABLE "Enable multi-party computation using ABY" OFF)
 option(NGRAPH_HE_SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(NGRAPH_HE_PARALLEL "Enable multi-threaded computation" ON)
-option(NGRAPH_HE_ONNX_ENABLE "Enable onnx import" ON)
+option(NGRAPH_HE_ONNX_ENABLE "Enable onnx import" OFF)
 
 # Print options
 message(STATUS "NGRAPH_HE_CXX_STANDARD:     ${NGRAPH_HE_CXX_STANDARD}")
@@ -243,7 +243,7 @@ message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 
 if (${NGRAPH_HE_ONNX_ENABLE})
   include(cmake/ngraph.cmake)
-  include(cmake/ngraph-onnx.cmake
+  include(cmake/ngraph-onnx.cmake)
 endif()
 include(cmake/ngraph-tf.cmake)
 

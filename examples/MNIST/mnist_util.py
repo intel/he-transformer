@@ -133,6 +133,12 @@ def str2bool(v):
 def train_argument_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--export_batch_size",
+        type=bool,
+        default=False,
+        help="Whether or not to export (and train) model with given batch size."
+    )
+    parser.add_argument(
         "--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument(
         "--batch_size", type=int, default=128, help="Batch Size")
