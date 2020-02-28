@@ -31,6 +31,6 @@ ExternalProject_Add(ext_ngraph_onnx
       GIT_TAG ${NGRAPH_ONNX_GIT_LABEL}
       PREFIX ${NGRAPH_ONNX_CMAKE_PREFIX}
       CONFIGURE_COMMAND ""
-      BUILD_COMMAND pip install -r ${NGRAPH_ONNX_SRC_DIR}/requirements.txt && pip install -e ${NGRAPH_ONNX_SRC_DIR}
+      BUILD_COMMAND ""
       UPDATE_COMMAND ""
       INSTALL_COMMAND "")

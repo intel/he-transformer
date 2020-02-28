@@ -32,10 +32,6 @@ python ${HE_TRANSFORMER}/examples/MNIST/cryptonets/train.py --epochs=3 --batch_s
 python -m tf2onnx.convert --input ${HE_TRANSFORMER}/examples/MNIST/models/cryptonets.pb --output ${HE_TRANSFORMER}/onnx/cryptonets.onnx --verbose --outputs=output/BiasAdd:0 --inputs=input:0
 
 # Install he_seal_backend to virual-env used
-# Note: target directory may differ based on python environment.
-# To figure out the target directory, just run test.py and look for an error message such as
-# RuntimeError: Unable to find backend 'HE_SEAL' as file '/ec/pdx/disks/aipg_lab_home_pool_02/fboemer/repos/he-transformer/build/ngraph-venv/lib/python3.7/site-packages/../../libhe_seal_backend.so
-
 cp ${HE_TRANSFORMER}/build/src/libhe_seal_backend.so $VIRTUAL_ENV/lib/libhe_seal_backend.so
 
 # Evaluate with ngraph-onnx on plaintext model

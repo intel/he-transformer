@@ -44,14 +44,11 @@ def test_interpreter_backend(ng_function, x_test, y_test):
     int_runtime = ng.runtime(backend_name='INTERPRETER')
     int_cryptonets = int_runtime.computation(ng_function)
     int_pred = int_cryptonets(x_test)[0]
-    print('int_pred', int_pred)
     print_accuracy(int_pred, y_test)
 
 
 def test_he_backend(FLAGS, ng_function, x_test, y_test):
-    print('creating runtime')
     he_runtime = ng.runtime(backend_name='HE_SEAL')
-    print('created runtime')
     config = {}
     if FLAGS.encryption_parameters != '':
         config['encryption_parameters'] = FLAGS.encryption_parameters
@@ -61,25 +58,15 @@ def test_he_backend(FLAGS, ng_function, x_test, y_test):
     else:
         config['Parameter_8'] = 'packed'
 
-    print('config', config)
-
     he_runtime.set_config(config)
     he_cryptonets = he_runtime.computation(ng_function)
     he_pred = he_cryptonets(x_test)[0]
-    print('he_pred', he_pred)
     print_accuracy(he_pred, y_test)
 
 
 def run(FLAGS):
-    print('creating runtime')
-    he_runtime = ng.runtime(backend_name='HE_SEAL')
-    print('created runtime')
-
-    print('loading data')
     (x_train, y_train, x_test,
      y_test) = load_mnist_data(batch_size=FLAGS.batch_size)
-    print('loaded data')
-    print(x_test.shape)
 
     onnx_protobuf = onnx.load('cryptonets.onnx')
     ng_function = import_onnx_model(onnx_protobuf)

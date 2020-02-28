@@ -179,15 +179,15 @@ void add_seal(std::vector<HEType>& arg0, std::vector<HEType>& arg1,
               const Shape& arg1_shape, const element::Type& element_type,
               const op::AutoBroadcastSpec& broadcast_spec,
               HESealBackend& he_seal_backend) {
-  /* NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
-                "Unsupported type ", element_type);
-   NGRAPH_CHECK(count <= arg0.size(), "Count ", count,
-                " is too large for arg0, with size ", arg0.size());
-   NGRAPH_CHECK(count <= arg1.size(), "Count ", count,
-                " is too large for arg1, with size ", arg1.size()); */
+  NGRAPH_CHECK(he_seal_backend.is_supported_type(element_type),
+               "Unsupported type ", element_type);
 
   switch (broadcast_spec.m_type) {
     case op::AutoBroadcastType::NONE: {
+      NGRAPH_CHECK(count <= arg0.size(), "Count ", count,
+                   " is too large for arg0, with size ", arg0.size());
+      NGRAPH_CHECK(count <= arg1.size(), "Count ", count,
+                   " is too large for arg1, with size ", arg1.size());
 #pragma omp parallel for
       for (size_t i = 0; i < count; ++i) {
         scalar_add_seal(arg0[i], arg1[i], out[i], he_seal_backend);
