@@ -132,6 +132,7 @@ def main(FLAGS):
     cryptonets_model.compile(
         optimizer=optimizer, loss=loss, metrics=["accuracy"])
 
+    # TODO(fboemer): Enable validation data
     cryptonets_model.fit(
         x_train,
         y_train,

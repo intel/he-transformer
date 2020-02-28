@@ -18,6 +18,7 @@
 import time
 import numpy as np
 import tensorflow as tf
+import ngraph_bridge
 
 # Add parent directory to path
 from mnist_util import (
@@ -82,8 +83,5 @@ if __name__ == "__main__":
         )
     if FLAGS.model_file == "":
         raise Exception("FLAGS.model_file must be set")
-
-    if FLAGS.ngraph_bridge:
-        import ngraph_bridge
 
     test_network(FLAGS)

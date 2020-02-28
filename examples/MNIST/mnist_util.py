@@ -172,11 +172,6 @@ def client_argument_parser():
 
 def server_argument_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--tf",
-        type=bool,
-        default=True,
-        help="Whether or not to use ngraph-bridge")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
     parser.add_argument(
         "--enable_client",
