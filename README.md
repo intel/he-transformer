@@ -12,7 +12,7 @@ This project is meant as a proof-of-concept to demonstrate the feasibility of HE
 
 Currently, we support the [CKKS](https://eprint.iacr.org/2018/931.pdf) encryption scheme, implemented by the [Simple Encrypted Arithmetic Library (SEAL)](https://github.com/Microsoft/SEAL) from Microsoft Research.
 
-To help compute non-polynomial activiations, we additionally integrate with the [ABY](https://github.com/encryptogroup/ABY) multi-party computation library. See also the [NDSS 2015 paper](Ahttps://encrypto.de/papers/DSZ15.pdfBY) introducing ABY. For more details about our integration with ABY, please refer to our [ARES 2020 paper](https://eprint.iacr.org/2020/721.pdf).
+To help compute non-polynomial activiations, we additionally integrate with the [ABY](https://github.com/encryptogroup/ABY) multi-party computation library. See also the [NDSS 2015 paper](https://encrypto.de/papers/DSZ15.pdf) introducing ABY. For more details about our integration with ABY, please refer to our [ARES 2020 paper](https://eprint.iacr.org/2020/721.pdf).
 
 We also integrate with the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge) to allow users to run inference on trained neural networks through Tensorflow.
 
