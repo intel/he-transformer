@@ -22,6 +22,7 @@ set(NGRAPH_TF_CMAKE_PREFIX ext_ngraph_tf)
 set(NGRAPH_TF_REPO_URL https://github.com/tensorflow/ngraph-bridge.git)
 set(NGRAPH_TF_GIT_LABEL v0.22.0-rc3)
 set(NGRAPH_TF_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ngraph-tf.patch)
+set(NGRAPH_TF_PATCH2 ${CMAKE_CURRENT_SOURCE_DIR}/cmake/ngraph-tf-bfloat.patch)
 
 set(NGRAPH_TF_SRC_DIR
     ${CMAKE_BINARY_DIR}/${NGRAPH_TF_CMAKE_PREFIX}/src/${NGRAPH_TF_CMAKE_PREFIX})
@@ -49,6 +50,7 @@ ExternalProject_Add(ext_ngraph_tf
       BUILD_IN_SOURCE 1
       BUILD_BYPRODUCTS ${NGRAPH_TF_CMAKE_PREFIX}
       PATCH_COMMAND git apply ${NGRAPH_TF_PATCH}
+      COMMAND git apply ${NGRAPH_TF_PATCH2}
       BUILD_COMMAND python3 ${NGRAPH_TF_SRC_DIR}/build_ngtf.py --use_grappler_optimizer --ngraph_src_dir ${NGRAPH_SRC_DIR}
       INSTALL_COMMAND ln -fs ${NGRAPH_TF_VENV_DIR}
                       ${EXTERNAL_INSTALL_DIR}
