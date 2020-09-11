@@ -44,8 +44,11 @@ fi
 
 CONTEXT='.'
 
+# A docker tag name must be valid ASCII and may contain lowercase and uppercase letters, 
+# digits, underscores, periods and dashes. A tag name may not start with a period 
+# or a dash and may contain a maximum of 128 characters.
 DIMAGE_NAME="${DOCKER_IMAGE_NAME}"
-DIMAGE_VERSION=`date -Iseconds | sed -e 's/:/-/g'`
+DIMAGE_VERSION=`date -Iseconds | sed -e 's/:/-/g' | sed -e 's/+/-/g'`
 
 DIMAGE_ID="${DIMAGE_NAME}:${DIMAGE_VERSION}"
 
