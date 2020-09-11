@@ -40,7 +40,7 @@ fi
 
 DFILE="Dockerfile.he-transformer"
 DIMAGE_NAME="${DOCKER_IMAGE_NAME}"
-DIMAGE_VERSION=`date -Iseconds | sed -e 's/:/-/g'`
+DIMAGE_VERSION=`date "+%Y-%m-%dT%H:%M:%S%z" | sed -e 's/:/-/g'`
 
 DIMAGE_ID="${DIMAGE_NAME}:${DIMAGE_VERSION}"
 
