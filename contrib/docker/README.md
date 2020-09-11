@@ -61,7 +61,7 @@ make check_clang
 
 ```
 cd contrib/docker
-make check_gcc OS=ubuntu1804
+make check_gcc OS_ID=ubuntu1804
 ```
 
 * To build an Ubuntu 16.04 docker container with persistent builds, compile with gcc 7.4, and run unit tests:
