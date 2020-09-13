@@ -32,9 +32,8 @@ RUN apt-get update && apt-get install -y \
         unzip wget \
         sudo \
         bash-completion \
-        build-essential cmake \
+        build-essential make cmake \
         software-properties-common \
-        git \
         wget patch diffutils libtinfo-dev \
         autoconf libtool \
         doxygen graphviz \
@@ -44,16 +43,11 @@ RUN apt-get update && apt-get install -y \
 RUN         apt-get update \
                 && apt-get install -y \
                     software-properties-common \
-                    wget \
                 && add-apt-repository -y ppa:ubuntu-toolchain-r/test \
                 && apt-get update \
                 && apt-get install -y \
-                    make \
-                    git \
-                    curl \
                     vim \
                     vim-gnome \
-                    cmake \
                 && apt-get install -y \
                     gcc-8 g++-8 gcc-8-base \
                 && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 100 \
