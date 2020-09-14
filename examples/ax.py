@@ -44,6 +44,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
         "encryption_parameters"].s = FLAGS.encryption_parameters.encode()
     server_config.parameter_map["enable_client"].s = (str(
         FLAGS.enable_client)).encode()
+    server_config.parameter_map["port"].s = (str(FLAGS.port)).encode()
     if FLAGS.enable_client:
         server_config.parameter_map[tensor_param_name].s = b"client_input"
 
@@ -75,7 +76,11 @@ def main(FLAGS):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
+    parser.add_argument(
+        "--batch_size", 
+        type=int, 
+        default=1, 
+        help="Batch size")
     parser.add_argument(
         "--enable_client",
         type=str2bool,
@@ -89,6 +94,12 @@ if __name__ == "__main__":
         default="",
         help=
         "Filename containing json description of encryption parameters, or json description itself",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=34000,
+        help="Port number for the server",
     )
 
     FLAGS, unparsed = parser.parse_known_args()

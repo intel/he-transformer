@@ -235,6 +235,12 @@ def server_argument_parser():
         default="import/output/BiasAdd:0",
         help="Tensor name of model output",
     )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=34000,
+        help="Port number for the server",
+    )
 
     return parser
 
@@ -258,6 +264,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
         FLAGS.mask_gc_outputs)).encode()
     server_config.parameter_map["num_gc_threads"].s = (str(
         FLAGS.num_gc_threads)).encode()
+    server_config.parameter_map["port"].s = (str(FLAGS.port)).encode()
 
     if FLAGS.enable_client:
         server_config.parameter_map[tensor_param_name].s = b"client_input"
