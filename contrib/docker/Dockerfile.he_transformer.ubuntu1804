@@ -37,7 +37,10 @@ RUN apt-get update && apt-get install -y \
         wget patch diffutils libtinfo-dev \
         autoconf libtool \
         doxygen graphviz \
-        yapf3 python3-yapf
+        yapf3 python3-yapf \
+        libmpfr-dev \
+        libgmp-dev \
+        libssl-dev
         
 # install gcc-8
 RUN         apt-get update \
