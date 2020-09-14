@@ -268,6 +268,11 @@ class HESealBackend : public runtime::Backend {
     return m_num_garbled_circuit_threads;
   }
 
+  /// \brief Returns the port number used for the server
+  size_t port() const {
+    return m_port;
+  }
+
   /// \brief Returns whether or not the garbled circuit inputs should be masked
   /// for privacy
   bool mask_gc_inputs() const { return m_mask_gc_inputs; }
@@ -328,6 +333,7 @@ class HESealBackend : public runtime::Backend {
   bool m_mask_gc_inputs{false};
   bool m_mask_gc_outputs{false};
   size_t m_num_garbled_circuit_threads{1};
+  size_t m_port{34000};
 
   bool m_lazy_mod{string_to_bool(std::getenv("LAZY_MOD"), false)};
 

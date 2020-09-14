@@ -117,6 +117,9 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
       } else {
         NGRAPH_HE_LOG(3) << "Not masking garbled circuits outputs from config";
       }
+    } else if (option == "port") {
+      m_port = flag_to_int(setting.c_str(), 34000);
+      NGRAPH_HE_LOG(3) << "Setting " << m_port << " port number";
     } else {
       std::string lower_option = to_lower(option);
       std::vector<std::string> lower_settings = split(to_lower(setting), ',');
