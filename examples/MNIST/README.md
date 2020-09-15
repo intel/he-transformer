@@ -69,13 +69,15 @@ To test the client-server model, in one terminal call
 python test.py --backend=HE_SEAL \
                --model_file=models/cryptonets.pb \
                --enable_client=true \
-               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json
+               --encryption_parameters=$HE_TRANSFORMER/configs/he_seal_ckks_config_N13_L8.json \
+               --port 35000
 ```
 
 In another terminal (with the python environment active), call
 ```bash
 python pyclient_mnist.py --batch_size=1024 \
-                         --encrypt_data_str=encrypt
+                         --encrypt_data_str=encrypt \
+                         --port 35000
 ```
 
 ### Multi-party computation with garbled circuits (GC)
