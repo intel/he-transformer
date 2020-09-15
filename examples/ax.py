@@ -65,13 +65,17 @@ def main(FLAGS):
     c = tf.compat.v1.placeholder(tf.float32, shape=(1, 4))
     f = c * (a + b)
 
-    # Create config to load parameter b from client
-    config = server_config_from_flags(FLAGS, b.name)
-    print("config", config)
+    try:
+        while True:
+            # Create config to load parameter b from client
+            config = server_config_from_flags(FLAGS, b.name)
+            print("config", config)
 
-    with tf.compat.v1.Session(config=config) as sess:
-        f_val = sess.run(f, feed_dict={b: np.ones((1, 4)), c: np.ones((1, 4))})
-        print("Result: ", f_val)
+            with tf.compat.v1.Session(config=config) as sess:
+                f_val = sess.run(f, feed_dict={b: np.ones((1, 4)), c: np.ones((1, 4))})
+                print("Result: ", f_val)
+    except KeyboardInterrupt:
+        print("Stopping the server.")
 
 
 if __name__ == "__main__":
