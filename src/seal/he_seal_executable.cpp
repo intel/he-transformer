@@ -93,7 +93,7 @@ HESealExecutable::HESealExecutable(const std::shared_ptr<Function>& function,
   (void)enable_performance_collection;  // Avoid unused parameter warning
 
   m_context = he_seal_backend.get_context();
-  m_port = he_seal_backend.port()
+  m_port = he_seal_backend.port();
   m_function = function;
 
   if (!m_context->using_keyswitching()) {
