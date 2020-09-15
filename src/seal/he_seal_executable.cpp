@@ -88,11 +88,12 @@ namespace ngraph::runtime::he {
 HESealExecutable::HESealExecutable(const std::shared_ptr<Function>& function,
                                    bool enable_performance_collection,
                                    HESealBackend& he_seal_backend)
-    : m_he_seal_backend(he_seal_backend), m_batch_size{1}, m_port{34000} {
+    : m_he_seal_backend(he_seal_backend), m_batch_size{1} {
   // TODO(fboemer): Use
   (void)enable_performance_collection;  // Avoid unused parameter warning
 
   m_context = he_seal_backend.get_context();
+  m_port = he_seal_backend.port();
   m_function = function;
 
   if (!m_context->using_keyswitching()) {

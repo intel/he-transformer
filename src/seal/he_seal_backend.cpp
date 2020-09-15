@@ -83,6 +83,7 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
   (void)error;  // Avoid unused parameter warning
   NGRAPH_HE_LOG(3) << "Setting config";
   for (const auto& [option, setting] : config) {
+    NGRAPH_HE_LOG(3) << "option name: <" << option << ">";
     // Check whether client is enabled
     if (option == "enable_client") {
       bool client_enabled = string_to_bool(setting, false);
@@ -117,6 +118,9 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
       } else {
         NGRAPH_HE_LOG(3) << "Not masking garbled circuits outputs from config";
       }
+    } else if (option == "port") {
+      m_port = flag_to_int(setting.c_str(), 34000);
+      NGRAPH_HE_LOG(3) << "Setting " << m_port << " port number";
     } else {
       std::string lower_option = to_lower(option);
       std::vector<std::string> lower_settings = split(to_lower(setting), ',');
@@ -128,6 +132,7 @@ bool HESealBackend::set_config(const std::map<std::string, std::string>& config,
 
       static std::unordered_set<std::string> valid_config_settings{
           "client_input", "encrypt", "packed", ""};
+
       for (const auto& lower_setting : lower_settings) {
         NGRAPH_CHECK(valid_config_settings.find(lower_setting) !=
                          valid_config_settings.end(),

@@ -44,6 +44,7 @@ def server_config_from_flags(FLAGS, tensor_param_name):
         "encryption_parameters"].s = FLAGS.encryption_parameters.encode()
     server_config.parameter_map["enable_client"].s = (str(
         FLAGS.enable_client)).encode()
+    server_config.parameter_map["port"].s = (str(FLAGS.port)).encode()
     if FLAGS.enable_client:
         server_config.parameter_map[tensor_param_name].s = b"client_input"
 
@@ -64,18 +65,26 @@ def main(FLAGS):
     c = tf.compat.v1.placeholder(tf.float32, shape=(1, 4))
     f = c * (a + b)
 
-    # Create config to load parameter b from client
-    config = server_config_from_flags(FLAGS, b.name)
-    print("config", config)
+    try:
+        while True:
+            # Create config to load parameter b from client
+            config = server_config_from_flags(FLAGS, b.name)
+            print("config", config)
 
-    with tf.compat.v1.Session(config=config) as sess:
-        f_val = sess.run(f, feed_dict={b: np.ones((1, 4)), c: np.ones((1, 4))})
-        print("Result: ", f_val)
+            with tf.compat.v1.Session(config=config) as sess:
+                f_val = sess.run(f, feed_dict={b: np.ones((1, 4)), c: np.ones((1, 4))})
+                print("Result: ", f_val)
+    except KeyboardInterrupt:
+        print("Stopping the server.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
+    parser.add_argument(
+        "--batch_size", 
+        type=int, 
+        default=1, 
+        help="Batch size")
     parser.add_argument(
         "--enable_client",
         type=str2bool,
@@ -89,6 +98,12 @@ if __name__ == "__main__":
         default="",
         help=
         "Filename containing json description of encryption parameters, or json description itself",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=34000,
+        help="Port number for the server",
     )
 
     FLAGS, unparsed = parser.parse_known_args()

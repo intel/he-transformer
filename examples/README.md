@@ -32,13 +32,14 @@ For a simple demonstration of a server-client approach, run
 ```bash
 python $HE_TRANSFORMER/examples/ax.py \
   --backend=HE_SEAL \
-  --enable_client=yes
+  --enable_client=yes \
+  --port 35000
 ```
 
 This will discard the Tensorflow inputs and instead wait for a client to connect and provide encrypted inputs.
 To start the client, in a separate terminal on the same host (with the ngraph-tf bridge python environment active), run
 ```bash
-python $HE_TRANSFORMER/examples/pyclient.py
+python $HE_TRANSFORMER/examples/pyclient.py --port 35000
 ```
 
 Once the computation is complete, the output will be returned to the client and decrypted. The server will attempt decrypt the output as well; however, since it does not have the client's secret key, the output will be meaningless.
