@@ -33,7 +33,7 @@ For a simple demonstration of a server-client approach, run
 python $HE_TRANSFORMER/examples/ax.py \
   --backend=HE_SEAL \
   --enable_client=yes \
-  --port 350000
+  --port 35000
 ```
 
 This will discard the Tensorflow inputs and instead wait for a client to connect and provide encrypted inputs.
