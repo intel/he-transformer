@@ -24,7 +24,7 @@ The [examples](https://github.com/IntelAI/he-transformer/tree/master/examples) f
 ### Dependencies
 - Operating system: Ubuntu 16.04, Ubuntu 18.04.
 - CMake >= 3.12
-- Compiler: g++ version >= 6.0, clang >= 5.0
+- Compiler: g++ version >= 6.0, clang >= 5.0 (with ABY g++ version >= 8.4)
 - OpenMP is strongly suggested, though not strictly necessary. You may experience slow runtimes without OpenMP
 - python3 and pip3
 - virtualenv v16.1.0
