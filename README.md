@@ -12,7 +12,7 @@ This project is meant as a proof-of-concept to demonstrate the feasibility of HE
 
 Currently, we support the [CKKS](https://eprint.iacr.org/2018/931.pdf) encryption scheme, implemented by the [Simple Encrypted Arithmetic Library (SEAL)](https://github.com/Microsoft/SEAL) from Microsoft Research.
 
-To help compute non-polynomial activiations, we additionally integrate with the [ABY](https://github.com/encryptogroup/ABY) multi-party computation library. See also the [NDSS 2015 paper](https://encrypto.de/papers/DSZ15.pdf) introducing ABY. For more details about our integration with ABY, please refer to our [ARES 2020 paper](https://eprint.iacr.org/2020/721.pdf).
+To help compute non-polynomial activiations, we additionally integrate with the [ABY](https://github.com/encryptogroup/ABY) multi-party computation library. See also the [NDSS 2015 paper](https://encrypto.de/papers/DSZ15.pdf) introducing ABY. For more details about our integration with ABY, please refer to our [ARES 2020 paper](https://doi.org/10.1145/3407023.3407045).
 
 We also integrate with the [**Intel® nGraph™ Compiler and runtime engine for TensorFlow**](https://github.com/tensorflow/ngraph-bridge) to allow users to run inference on trained neural networks through Tensorflow.
 
@@ -73,6 +73,10 @@ To enable an integration with an experimental multi-party computation backend us
 ```bash
 cmake .. -DNGRAPH_HE_ABY_ENABLE=ON
 ```
+See [MP2ML](https://doi.org/10.1145/3407023.3407045) for details on the implementation.
+
+We would like to thank the [ENCRYPTO group](https://encrypto.de) from TU Darmstadt, particularly Hossein Yalame and Daniel Demmler, for helping with the ABY implementation.
+
 Note: this feature is experimental, and may suffer from performance and memory issues.
 To use this feature, build python bindings for the client, and see `3. python examples`.
 
@@ -125,10 +129,11 @@ See [examples/README.md](https://github.com/IntelAI/he-transformer/tree/master/e
 Please run `maint/apply-code-format.sh` before submitting a pull request.
 
 
-## Papers using he-transformer
+## Publications describing the HE Transformer Implementation
+
 - Fabian Boemer, Yixing Lao, Rosario Cammarota, and Casimir Wierzynski. nGraph-HE: a graph compiler for deep learning on homomorphically encrypted data. In ACM International Conference on Computing Frontiers 2019. https://dl.acm.org/doi/10.1145/3310273.3323047
 - Fabian Boemer, Anamaria Costache, Rosario Cammarota, and Casimir
 Wierzynski. 2019. nGraph-HE2: A High-Throughput Framework for
 Neural Network Inference on Encrypted Data. In WAHC’19. https://dl.acm.org/doi/pdf/10.1145/3338469.3358944
 - Fabian Boemer, Rosario Cammarota, Daniel Demmler, Thomas Schneider, and Hossein Yalame. 2020. MP2ML: A Mixed-Protocol Machine
-Learning Framework for Private Inference. In ARES’20. https://eprint.iacr.org/2020/721.pdf
+Learning Framework for Private Inference. In ARES’20. https://doi.org/10.1145/3407023.3407045
