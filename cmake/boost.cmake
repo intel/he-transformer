@@ -17,7 +17,7 @@
 include(ExternalProject)
 
 set(BOOST_REPO_URL
-    https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz)
+    https://boostorg.jfrog.io/artifactory/main/release/1.69.0/source/boost_1_69_0.tar.gz)
 
 ExternalProject_Add(
   ext_boost
